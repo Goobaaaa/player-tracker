@@ -62,7 +62,7 @@ export default function PlayerDetailPage() {
   if (!player) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Player not found</div>
+        <div className="text-white">Suspect not found</div>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function PlayerDetailPage() {
                 className="mb-4 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Players
+                Back to Suspects
               </Button>
             </div>
 
@@ -161,7 +161,7 @@ export default function PlayerDetailPage() {
               <TabsContent value="overview">
                 <Card className="bg-gray-800 border-gray-700">
                   <CardHeader>
-                    <CardTitle className="text-white">Player Information</CardTitle>
+                    <CardTitle className="text-white">Suspect Information</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -277,7 +277,7 @@ export default function PlayerDetailPage() {
                     <div className="text-center py-12">
                       <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                       <p className="text-gray-400">No documents attached to this player</p>
-                      <p className="text-gray-500 text-sm mt-2">Upload or link documents to track player-related files</p>
+                      <p className="text-gray-500 text-sm mt-2">Upload or link documents to track suspect-related files</p>
                     </div>
                   </CardContent>
                 </Card>

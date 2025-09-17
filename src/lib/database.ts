@@ -44,17 +44,6 @@ export interface FinanceTransaction {
   createdAt: string
 }
 
-export interface Task {
-  id: string
-  title: string
-  description?: string
-  assigneeUserId?: string
-  status: 'todo' | 'in-progress' | 'done'
-  priority: 'low' | 'medium' | 'high'
-  percentComplete: number
-  dueDate?: string
-  createdAt: string
-}
 
 export interface Document {
   id: string
@@ -65,12 +54,40 @@ export interface Document {
   storagePath?: string
   isGoogleDoc: boolean
   createdAt: string
+  description?: string
+  originalFilename?: string
+}
+
+export interface TaskComment {
+  id: string
+  taskId: string
+  userId: string
+  username: string
+  text: string
+  mediaUrls?: string[]
+  documentIds?: string[]
+  createdAt: string
+}
+
+export interface Task {
+  id: string
+  name: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  risk: 'dangerous' | 'high' | 'medium' | 'low'
+  assignedUsers: string[]
+  deadline: string
+  createdBy: string
+  createdAt: string
+  status: 'active' | 'completed' | 'overdue'
+  comments: TaskComment[]
 }
 
 export interface Mugshot {
   id: string
   playerId: string
   filename: string
+  displayName?: string
   url: string
   storagePath?: string
   isProfilePicture: boolean
@@ -81,6 +98,17 @@ export interface Media {
   id: string
   playerId: string
   filename: string
+  displayName?: string
+  url: string
+  storagePath?: string
+  createdAt: string
+}
+
+export interface HouseMedia {
+  id: string
+  playerId: string
+  filename: string
+  displayName?: string
   url: string
   storagePath?: string
   createdAt: string

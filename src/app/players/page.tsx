@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockPlayers, getPlayerProfilePicture, getPlayerAssets, addPlayer } from "@/lib/mock-data";
+import { mockPlayers, getPlayerProfilePicture, getPlayerAssets } from "@/lib/mock-data";
 import { Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -84,13 +84,18 @@ export default function PlayersPage() {
     setIsEditMode(false);
   };
 
-  const handlePlayerSaved = (_newPlayer: Player) => {
+  const handlePlayerSaved = () => {
     // The new player is already added to mockPlayers by addPlayer function
     // Reload players from mockPlayers to get the updated list without duplicates
     setPlayers([...mockPlayers]);
     setIsModalOpen(false);
     setSelectedPlayer(null);
     setIsEditMode(false);
+  };
+
+  const handlePlayerDeleted = (playerId: string) => {
+    // Remove the player from the local state to update UI immediately
+    setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));
   };
 
   const handleCreatePlayer = () => {
@@ -117,10 +122,10 @@ export default function PlayersPage() {
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-white">Players</h1>
+              <h1 className="text-3xl font-bold text-white">Suspects</h1>
               <Button onClick={handleCreatePlayer} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Player
+                Add Suspect
               </Button>
             </div>
 
@@ -129,7 +134,7 @@ export default function PlayersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search players by name or alias..."
+                  placeholder="Search suspects by name or alias..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
@@ -223,7 +228,7 @@ export default function PlayersPage() {
 
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">No players found</p>
+                <p className="text-gray-400 text-lg">No suspects found</p>
                 <p className="text-gray-500 text-sm mt-2">Try adjusting your search criteria</p>
               </div>
             )}
@@ -236,6 +241,7 @@ export default function PlayersPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onPlayerSaved={handlePlayerSaved}
+        onPlayerDeleted={handlePlayerDeleted}
         isEditMode={isEditMode}
       />
     </div>

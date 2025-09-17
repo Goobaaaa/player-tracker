@@ -6,73 +6,26 @@ import { mockGetSession } from "@/lib/mock-auth";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, ExternalLink, Plus } from "lucide-react";
+import { FileText, Upload, ExternalLink, Plus, X } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
+import { Document } from "@/lib/database";
 
-interface Document {
-  id: string;
-  filename: string;
-  url: string;
-  isGoogleDoc: boolean;
-  createdAt: string;
-  description?: string;
-}
-
-const mockDocuments: Document[] = [
-  {
-    id: "1",
-    filename: "Mission Brief - Operation Silent Night",
-    url: "https://docs.google.com/document/d/example1",
-    isGoogleDoc: true,
-    createdAt: "2024-12-16T10:30:00Z",
-    description: "Detailed mission brief for the stealth operation"
-  },
-  {
-    id: "2",
-    filename: "Player Evaluation - Shadow",
-    url: "https://docs.google.com/document/d/example2",
-    isGoogleDoc: true,
-    createdAt: "2024-12-15T15:20:00Z",
-    description: "Performance evaluation and skill assessment"
-  },
-  {
-    id: "3",
-    filename: "Equipment Manifest",
-    url: "https://docs.google.com/document/d/example3",
-    isGoogleDoc: true,
-    createdAt: "2024-12-14T09:45:00Z",
-    description: "Complete inventory of all equipment and assets"
-  },
-  {
-    id: "4",
-    filename: "Security Protocol v2.1",
-    url: "https://docs.google.com/document/d/example4",
-    isGoogleDoc: true,
-    createdAt: "2024-12-13T14:15:00Z",
-    description: "Updated security procedures and access controls"
-  },
-  {
-    id: "5",
-    filename: "Training Schedule Q4",
-    url: "https://docs.google.com/document/d/example5",
-    isGoogleDoc: true,
-    createdAt: "2024-12-12T11:30:00Z",
-    description: "Quarterly training program and schedule"
-  },
-  {
-    id: "6",
-    filename: "Asset Valuation Report",
-    url: "https://docs.google.com/document/d/example6",
-    isGoogleDoc: true,
-    createdAt: "2024-12-11T16:00:00Z",
-    description: "Current asset valuations and market analysis"
-  }
-];
+// Mock documents data - made mutable for adding new documents
+const mockDocuments: Document[] = [];
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showGoogleDocModal, setShowGoogleDocModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFileName, setUploadFileName] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
+  const [googleDocUrl, setGoogleDocUrl] = useState('');
+  const [googleDocName, setGoogleDocName] = useState('');
+  const [googleDocDescription, setGoogleDocDescription] = useState('');
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {
@@ -93,7 +46,8 @@ export default function DocumentsPage() {
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      setDocuments(mockDocuments);
+      // Make a copy of the mutable array
+      setDocuments([...mockDocuments]);
     } catch (error) {
       console.error("Error loading documents:", error);
     } finally {
@@ -102,13 +56,89 @@ export default function DocumentsPage() {
   };
 
   const handleUpload = () => {
-    // In a real app, this would open a file upload dialog
-    console.log("Upload document");
+    setShowUploadModal(true);
   };
 
   const handleLinkGoogleDoc = () => {
-    // In a real app, this would open Google OAuth flow
-    console.log("Link Google Doc");
+    setShowGoogleDocModal(true);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+
+      if (allowedTypes.includes(file.type)) {
+        setUploadFile(file);
+      } else {
+        alert('Please select a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
+      }
+    }
+  };
+
+  const handleFileUpload = () => {
+    if (uploadFile) {
+      // Use custom name if provided, otherwise use original filename
+      const displayName = uploadFileName.trim() || uploadFile.name;
+
+      const newDocument: Document = {
+        id: Date.now().toString(),
+        ownerUserId: "1", // Mock user ID
+        filename: displayName,
+        url: URL.createObjectURL(uploadFile), // In real app, this would be server URL
+        isGoogleDoc: false,
+        createdAt: new Date().toISOString(),
+        description: uploadDescription.trim() || undefined,
+        originalFilename: uploadFile.name
+      };
+
+      mockDocuments.push(newDocument);
+      setDocuments([...mockDocuments]);
+      setShowUploadModal(false);
+      setUploadFile(null);
+      setUploadFileName('');
+      setUploadDescription('');
+      alert('Document uploaded successfully!');
+    }
+  };
+
+  const handleGoogleDocLink = () => {
+    if (googleDocUrl.trim() && googleDocName.trim()) {
+      // Validate Google Doc URL
+      const isValidGoogleDocUrl = googleDocUrl.includes('docs.google.com/document');
+
+      if (!isValidGoogleDocUrl) {
+        alert('Please enter a valid Google Docs URL');
+        return;
+      }
+
+      const newDocument: Document = {
+        id: Date.now().toString(),
+        ownerUserId: "1", // Mock user ID
+        filename: googleDocName.trim(),
+        url: googleDocUrl.trim(),
+        isGoogleDoc: true,
+        createdAt: new Date().toISOString(),
+        description: googleDocDescription.trim() || undefined
+      };
+
+      mockDocuments.push(newDocument);
+      setDocuments([...mockDocuments]);
+      setShowGoogleDocModal(false);
+      setGoogleDocUrl('');
+      setGoogleDocName('');
+      setGoogleDocDescription('');
+      alert('Google Doc linked successfully!');
+    } else {
+      alert('Please fill in both URL and document name');
+    }
   };
 
   if (loading) {
@@ -162,14 +192,27 @@ export default function DocumentsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {document.description && (
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                        {document.description}
-                      </p>
-                    )}
-
-                    <div className="flex justify-between items-center text-sm text-gray-400 mb-4">
-                      <span>Created: {new Date(document.createdAt).toLocaleDateString()}</span>
+                    <div className="space-y-2 mb-4">
+                      {document.description && (
+                        <p className="text-gray-400 text-sm line-clamp-2">
+                          {document.description}
+                        </p>
+                      )}
+                      {document.originalFilename && document.originalFilename !== document.filename && (
+                        <p className="text-gray-500 text-xs">
+                          Original: {document.originalFilename}
+                        </p>
+                      )}
+                      <div className="flex justify-between items-center text-xs text-gray-400">
+                        <span>Created: {new Date(document.createdAt).toLocaleDateString()}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          document.isGoogleDoc
+                            ? 'bg-green-600 text-white'
+                            : 'bg-blue-600 text-white'
+                        }`}>
+                          {document.isGoogleDoc ? 'Google Doc' : 'Uploaded'}
+                        </span>
+                      </div>
                     </div>
 
                     <Button
@@ -197,6 +240,169 @@ export default function DocumentsPage() {
           </div>
         </main>
       </div>
+
+      {/* Upload Document Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Upload Document</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUploadModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Document
+                  </label>
+                  <input
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-lg"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Supported formats: PDF, DOC, DOCX, XLS, XLSX
+                  </p>
+                </div>
+                {uploadFile && (
+                  <div className="p-3 bg-gray-700 rounded-lg">
+                    <p className="text-sm text-white">Selected: {uploadFile.name}</p>
+                    <p className="text-xs text-gray-400">Size: {(uploadFile.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                )}
+                {uploadFile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Document Name (Optional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter a custom name for this document"
+                      value={uploadFileName}
+                      onChange={(e) => setUploadFileName(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      If empty, original filename will be used
+                    </p>
+                  </div>
+                )}
+                {uploadFile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Description (Optional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter a description for this document"
+                      value={uploadDescription}
+                      onChange={(e) => setUploadDescription(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    />
+                  </div>
+                )}
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowUploadModal(false)}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleFileUpload}
+                    disabled={!uploadFile}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Upload
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Doc Link Modal */}
+      {showGoogleDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Link Google Doc</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowGoogleDocModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Google Doc URL *
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={googleDocUrl}
+                    onChange={(e) => setGoogleDocUrl(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Document Name *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter document name"
+                    value={googleDocName}
+                    onChange={(e) => setGoogleDocName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter document description"
+                    value={googleDocDescription}
+                    onChange={(e) => setGoogleDocDescription(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowGoogleDocModal(false)}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleGoogleDocLink}
+                    disabled={!googleDocUrl.trim() || !googleDocName.trim()}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    Link Document
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

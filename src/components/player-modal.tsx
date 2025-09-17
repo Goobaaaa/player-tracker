@@ -2,36 +2,56 @@
 
 import React from "react";
 import Image from "next/image";
-import { Player, Asset, Mugshot, Media } from "@/lib/database";
-import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, mockAssets } from "@/lib/mock-data";
+import { Player, Asset, Mugshot, Media, HouseMedia, Document } from "@/lib/database";
+import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit } from "lucide-react";
+import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit, Trash2, ExternalLink } from "lucide-react";
 
 interface PlayerModalProps {
   player: Player | null;
   isOpen: boolean;
   onClose: () => void;
   onPlayerSaved?: (player: Player) => void;
+  onPlayerDeleted?: (playerId: string) => void;
   isEditMode?: boolean;
 }
 
-export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, isEditMode = false }: PlayerModalProps) {
+export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, onPlayerDeleted, isEditMode = false }: PlayerModalProps) {
   const [assets, setAssets] = React.useState<Asset[]>([]);
     const [mugshots, setMugshots] = React.useState<Mugshot[]>([]);
   const [media, setMedia] = React.useState<Media[]>([]);
+  const [houseMedia, setHouseMedia] = React.useState<HouseMedia[]>([]);
+  const [documents, setDocuments] = React.useState<Document[]>([]);
   const [showUrlModal, setShowUrlModal] = React.useState(false);
   const [showMediaUrlModal, setShowMediaUrlModal] = React.useState(false);
   const [showHouseImageModal, setShowHouseImageModal] = React.useState(false);
   const [showHouseUrlModal, setShowHouseUrlModal] = React.useState(false);
+  const [showHouseMediaModal, setShowHouseMediaModal] = React.useState(false);
   const [showVehicleModal, setShowVehicleModal] = React.useState(false);
+  const [showDocumentModal, setShowDocumentModal] = React.useState(false);
+  const [showGoogleDocModal, setShowGoogleDocModal] = React.useState(false);
   const [imageUrl, setImageUrl] = React.useState('');
   const [mediaUrl, setMediaUrl] = React.useState('');
   const [houseImageUrl, setHouseImageUrl] = React.useState('');
+  const [houseMediaUrl, setHouseMediaUrl] = React.useState('');
+  const [imageDisplayName, setImageDisplayName] = React.useState('');
+  const [mediaDisplayName, setMediaDisplayName] = React.useState('');
+  const [houseMediaDisplayName, setHouseMediaDisplayName] = React.useState('');
+  // State for document upload
+  const [documentFile, setDocumentFile] = React.useState<File | null>(null);
+  const [documentFileName, setDocumentFileName] = React.useState('');
+  const [documentDescription, setDocumentDescription] = React.useState('');
+  // State for Google Doc linking
+  const [googleDocUrl, setGoogleDocUrl] = React.useState('');
+  const [googleDocName, setGoogleDocName] = React.useState('');
+  const [googleDocDescription, setGoogleDocDescription] = React.useState('');
+  const [selectedImageUrl, setSelectedImageUrl] = React.useState('');
+  const [showImageModal, setShowImageModal] = React.useState(false);
 
   // State for adding new vehicle
   const [newVehicleForm, setNewVehicleForm] = React.useState({
@@ -75,6 +95,8 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
       setAssets(getPlayerAssets(player.id));
       setMugshots(getPlayerMugshots(player.id));
       setMedia(getPlayerMedia(player.id));
+      setHouseMedia(getPlayerHouseMedia(player.id));
+      setDocuments(getPlayerDocuments(player.id));
       setEditForm({
         name: player.name || '',
         alias: player.alias || '',
@@ -91,6 +113,8 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
       setAssets([]);
       setMugshots([]);
       setMedia([]);
+      setHouseMedia([]);
+      setDocuments([]);
       setEditForm({
         name: '',
         alias: '',
@@ -172,6 +196,48 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
     }
   };
 
+  const handleDeleteMugshot = (mugshotId: string) => {
+    if (player && confirm('Are you sure you want to delete this mugshot?')) {
+      // Remove from mockMugshots array
+      const mugshotIndex = mockMugshots.findIndex(m => m.id === mugshotId);
+      if (mugshotIndex !== -1) {
+        mockMugshots.splice(mugshotIndex, 1);
+      }
+
+      // Update local state
+      setMugshots(getPlayerMugshots(player.id));
+      alert('Mugshot deleted successfully!');
+    }
+  };
+
+  const handleDeleteMedia = (mediaId: string) => {
+    if (player && confirm('Are you sure you want to delete this media?')) {
+      // Remove from mockMedia array
+      const mediaIndex = mockMedia.findIndex(m => m.id === mediaId);
+      if (mediaIndex !== -1) {
+        mockMedia.splice(mediaIndex, 1);
+      }
+
+      // Update local state
+      setMedia(getPlayerMedia(player.id));
+      alert('Media deleted successfully!');
+    }
+  };
+
+  const handleDeleteHouseMedia = (houseMediaId: string) => {
+    if (player && confirm('Are you sure you want to delete this house media?')) {
+      // Remove from mockHouseMedia array
+      const houseMediaIndex = mockHouseMedia.findIndex(hm => hm.id === houseMediaId);
+      if (houseMediaIndex !== -1) {
+        mockHouseMedia.splice(houseMediaIndex, 1);
+      }
+
+      // Update local state
+      setHouseMedia(getPlayerHouseMedia(player.id));
+      alert('House media deleted successfully!');
+    }
+  };
+
   const handleSetProfilePicture = (mugshotId: string) => {
     if (player) {
       setProfilePicture(player.id, mugshotId);
@@ -182,10 +248,11 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
 
   const handleAddMugshot = () => {
     if (player && imageUrl.trim()) {
-      const newMugshot = addMugshot(player.id, imageUrl.trim());
+      const newMugshot = addMugshot(player.id, imageUrl.trim(), imageDisplayName.trim() || undefined);
       if (newMugshot) {
         setMugshots(getPlayerMugshots(player.id));
         setImageUrl('');
+        setImageDisplayName('');
         setShowUrlModal(false);
         alert('Mugshot added successfully!');
       } else {
@@ -196,14 +263,149 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
 
   const handleAddMedia = () => {
     if (player && mediaUrl.trim()) {
-      const newMedia = addMedia(player.id, mediaUrl.trim());
+      const newMedia = addMedia(player.id, mediaUrl.trim(), mediaDisplayName.trim() || undefined);
       if (newMedia) {
         setMedia(getPlayerMedia(player.id));
         setMediaUrl('');
+        setMediaDisplayName('');
         setShowMediaUrlModal(false);
         alert('Media added successfully!');
       } else {
         alert('Invalid media URL. Please use a URL ending with .jpg, .jpeg, .png, .gif, .bmp, .webp, .mp4, .avi, .mov, .mp3, .wav, .pdf, .doc, or .docx');
+      }
+    }
+  };
+
+  const handleAddHouseMedia = () => {
+    if (player && houseMediaUrl.trim()) {
+      const newHouseMedia = addHouseMedia(player.id, houseMediaUrl.trim(), houseMediaDisplayName.trim() || undefined);
+      if (newHouseMedia) {
+        setHouseMedia(getPlayerHouseMedia(player.id));
+        setHouseMediaUrl('');
+        setHouseMediaDisplayName('');
+        setShowHouseMediaModal(false);
+        alert('House media added successfully!');
+      } else {
+        alert('Invalid image URL. Please use a URL ending with .jpg, .jpeg, .png, .gif, .bmp, or .webp');
+      }
+    }
+  };
+
+  // Document handling functions
+  const handleDocumentFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+
+      if (allowedTypes.includes(file.type)) {
+        setDocumentFile(file);
+      } else {
+        alert('Please select a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
+      }
+    }
+  };
+
+  const handleAddDocument = () => {
+    if (player && documentFile) {
+      // Use custom name if provided, otherwise use original filename
+      const displayName = documentFileName.trim() || documentFile.name;
+
+      const newDocument = addPlayerDocument(
+        player.id,
+        URL.createObjectURL(documentFile), // In real app, this would be server URL
+        displayName,
+        false, // isGoogleDoc
+        documentDescription.trim() || undefined,
+        documentFile.name
+      );
+
+      if (newDocument) {
+        setDocuments(getPlayerDocuments(player.id));
+        setDocumentFile(null);
+        setDocumentFileName('');
+        setDocumentDescription('');
+        setShowDocumentModal(false);
+        alert('Document uploaded successfully!');
+      }
+    }
+  };
+
+  const handleAddGoogleDoc = () => {
+    if (player && googleDocUrl.trim() && googleDocName.trim()) {
+      // Validate Google Doc URL
+      const isValidGoogleDocUrl = googleDocUrl.includes('docs.google.com/document');
+
+      if (!isValidGoogleDocUrl) {
+        alert('Please enter a valid Google Docs URL');
+        return;
+      }
+
+      const newDocument = addPlayerDocument(
+        player.id,
+        googleDocUrl.trim(),
+        googleDocName.trim(),
+        true, // isGoogleDoc
+        googleDocDescription.trim() || undefined
+      );
+
+      if (newDocument) {
+        setDocuments(getPlayerDocuments(player.id));
+        setGoogleDocUrl('');
+        setGoogleDocName('');
+        setGoogleDocDescription('');
+        setShowGoogleDocModal(false);
+        alert('Google Doc linked successfully!');
+      }
+    } else {
+      alert('Please fill in both URL and document name');
+    }
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    if (player && confirm('Are you sure you want to delete this document?')) {
+      const success = deletePlayerDocument(documentId);
+      if (success) {
+        setDocuments(getPlayerDocuments(player.id));
+        alert('Document deleted successfully!');
+      } else {
+        alert('Failed to delete document.');
+      }
+    }
+  };
+
+  const handleSaveHouseAddress = () => {
+    if (player) {
+      updatePlayer(player.id, { houseAddress: editForm.houseAddress });
+      alert('House address saved successfully!');
+    }
+  };
+
+  const handleViewFullImage = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+    setShowImageModal(true);
+  };
+
+  const handleDeletePlayer = () => {
+    if (player) {
+      if (confirm(`Are you sure you want to delete ${player.name}? This action cannot be undone and will remove all associated data including assets, transactions, and media.`)) {
+        const success = deletePlayer(player.id);
+        if (success) {
+          alert('Player deleted successfully!');
+          // Notify parent component to update UI
+          if (onPlayerDeleted) {
+            onPlayerDeleted(player.id);
+          }
+          onClose();
+        } else {
+          alert('Failed to delete player.');
+        }
       }
     }
   };
@@ -348,13 +550,22 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
             </div>
             <div className="flex space-x-2">
               {isEditMode && (
-                <Button
-                  onClick={handleSave}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save
-                </Button>
+                <>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button
+                    onClick={handleDeletePlayer}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </>
               )}
               <Button
                 variant="outline"
@@ -709,18 +920,74 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <CardTitle className="text-white">Documents</CardTitle>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Document
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowDocumentModal(true)}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                        </Button>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowGoogleDocModal(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Link Google Doc
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-12">
-                      <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-400">No documents attached to this player</p>
-                      <p className="text-gray-500 text-sm mt-2">Upload or link documents to track player-related files</p>
-                    </div>
+                    {documents.length === 0 ? (
+                      <div className="text-center py-12">
+                        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <p className="text-gray-400">No documents attached to this player</p>
+                        <p className="text-gray-500 text-sm mt-2">Upload files or link Google Docs to track player-related documents</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {documents.map((document) => (
+                          <div key={document.id} className="p-3 bg-gray-700 rounded-lg">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-white">{document.filename}</h3>
+                                {document.originalFilename && document.originalFilename !== document.filename && (
+                                  <p className="text-xs text-gray-500 mt-1">Original: {document.originalFilename}</p>
+                                )}
+                                {document.description && (
+                                  <p className="text-sm text-gray-400 mt-1">{document.description}</p>
+                                )}
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <span className={`px-2 py-1 rounded text-xs ${
+                                    document.isGoogleDoc
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-blue-600 text-white'
+                                  }`}>
+                                    {document.isGoogleDoc ? 'Google Doc' : 'Uploaded'}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(document.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(document.url, '_blank')}
+                                  className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 h-7 w-7 p-0"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteDocument(document.id)}
+                                  className="bg-red-600 hover:bg-red-700 border-red-600 text-white h-7 w-7 p-0"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -747,23 +1014,43 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {mugshots.map((mugshot) => (
                           <div key={mugshot.id} className="relative group">
-                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
                               <Image
                                 src={mugshot.url}
                                 alt={mugshot.filename}
                                 width={200}
                                 height={200}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover cursor-pointer"
+                                onClick={() => handleViewFullImage(mugshot.url)}
+                                onError={(e) => {
+                                  const container = e.currentTarget.parentElement;
+                                  if (container) {
+                                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                  }
+                                }}
                               />
+                              <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mugshot.url)}>
+                                <Eye className="h-8 w-8 text-white" />
+                              </div>
                             </div>
                             <div className="mt-2 flex items-center justify-between">
-                              <p className="text-sm text-gray-400 truncate">{mugshot.filename}</p>
-                              {mugshot.isProfilePicture && (
-                                <Badge className="bg-blue-600 text-xs">
-                                  <Star className="mr-1 h-3 w-3" />
-                                  Profile
-                                </Badge>
-                              )}
+                              <p className="text-sm text-gray-400 truncate">{mugshot.displayName || mugshot.filename}</p>
+                              <div className="flex items-center space-x-2">
+                                {mugshot.isProfilePicture && (
+                                  <Badge className="bg-blue-600 text-xs">
+                                    <Star className="mr-1 h-3 w-3" />
+                                    Profile
+                                  </Badge>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteMugshot(mugshot.id)}
+                                  className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                             {!mugshot.isProfilePicture && (
                               <Button
@@ -806,23 +1093,43 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {media.map((mediaItem) => (
                           <div key={mediaItem.id} className="relative group">
-                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
                               {mediaItem.filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                <Image
-                                  src={mediaItem.url}
-                                  alt={mediaItem.filename}
-                                  width={200}
-                                  height={200}
-                                  className="w-full h-full object-cover"
-                                />
+                                <>
+                                  <Image
+                                    src={mediaItem.url}
+                                    alt={mediaItem.filename}
+                                    width={200}
+                                    height={200}
+                                    className="w-full h-full object-cover cursor-pointer"
+                                    onClick={() => handleViewFullImage(mediaItem.url)}
+                                    onError={(e) => {
+                                      const container = e.currentTarget.parentElement;
+                                      if (container) {
+                                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                      }
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mediaItem.url)}>
+                                    <Eye className="h-8 w-8 text-white" />
+                                  </div>
+                                </>
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                   <FileText className="h-8 w-8 text-gray-400" />
                                 </div>
                               )}
                             </div>
-                            <div className="mt-2">
-                              <p className="text-sm text-gray-400 truncate">{mediaItem.filename}</p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <p className="text-sm text-gray-400 truncate">{mediaItem.displayName || mediaItem.filename}</p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteMedia(mediaItem.id)}
+                                className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         ))}
@@ -837,56 +1144,84 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <CardTitle className="text-white">House Information</CardTitle>
-                      {isEditMode && (
-                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowHouseUrlModal(true)}>
-                          <Upload className="mr-2 h-4 w-4" />
-                          Add House Image
-                        </Button>
-                      )}
+                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowHouseMediaModal(true)}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Add House Media
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           Address
                         </label>
-                        {isEditMode ? (
+                        <div className="flex space-x-2">
                           <Input
                             value={editForm.houseAddress}
                             onChange={(e) => handleInputChange('houseAddress', e.target.value)}
                             placeholder="Enter house address"
-                            className="bg-gray-600 border-gray-500 text-white"
+                            className="flex-1 bg-gray-600 border-gray-500 text-white"
                           />
-                        ) : (
-                          <p className="text-lg text-white">{editForm.houseAddress || 'No address recorded'}</p>
-                        )}
+                          <Button
+                            size="sm"
+                            onClick={handleSaveHouseAddress}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Save
+                          </Button>
+                        </div>
                       </div>
 
-                      {editForm.houseImageUrl && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">
-                            House Image
-                          </label>
-                          <div className="relative">
-                            <Image
-                              src={editForm.houseImageUrl}
-                              alt="House"
-                              width={400}
-                              height={300}
-                              className="w-full max-w-md h-64 object-cover rounded-lg"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowHouseImageModal(true)}
-                              className="absolute top-2 right-2 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-4">
+                          House Media Gallery
+                        </label>
+                        {houseMedia.length === 0 ? (
+                          <div className="text-center py-8 border-2 border-dashed border-gray-600 rounded-lg">
+                            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                            <p className="text-gray-400">No house media uploaded</p>
+                            <p className="text-gray-500 text-sm mt-1">Click &quot;Add House Media&quot; to upload house pictures</p>
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {houseMedia.map((houseMediaItem) => (
+                              <div key={houseMediaItem.id} className="relative group">
+                                <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
+                                  <Image
+                                    src={houseMediaItem.url}
+                                    alt={houseMediaItem.filename}
+                                    width={200}
+                                    height={200}
+                                    className="w-full h-full object-cover cursor-pointer"
+                                    onClick={() => handleViewFullImage(houseMediaItem.url)}
+                                    onError={(e) => {
+                                      const container = e.currentTarget.parentElement;
+                                      if (container) {
+                                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                      }
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(houseMediaItem.url)}>
+                                    <Eye className="h-8 w-8 text-white" />
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between">
+                                  <p className="text-sm text-gray-400 truncate">{houseMediaItem.displayName || houseMediaItem.filename}</p>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteHouseMedia(houseMediaItem.id)}
+                                    className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -927,6 +1262,21 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                   <p className="text-xs text-gray-400 mt-1">
                     URL must end with .jpg, .jpeg, .png, .gif, .bmp, or .webp
                   </p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    Try: https://i.gyazo.com/70dfc2ed73318392bc4c39ba973c7db8.png
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Display Name (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter a custom name for this image"
+                    value={imageDisplayName}
+                    onChange={(e) => setImageDisplayName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -980,6 +1330,21 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                   <p className="text-xs text-gray-400 mt-1">
                     URL must end with .jpg, .jpeg, .png, .gif, .bmp, .webp, .mp4, .avi, .mov, .mp3, .wav, .pdf, .doc, or .docx
                   </p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    Try: https://i.gyazo.com/70dfc2ed73318392bc4c39ba973c7db8.png
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Display Name (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter a custom name for this media"
+                    value={mediaDisplayName}
+                    onChange={(e) => setMediaDisplayName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -1207,6 +1572,266 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, is
                 e.currentTarget.alt = 'Failed to load image';
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* House Media Upload Modal - Only for existing players */}
+      {player && showHouseMediaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Upload House Media</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowHouseMediaModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    House Media URL
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://example.com/house-image.jpg"
+                    value={houseMediaUrl}
+                    onChange={(e) => setHouseMediaUrl(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    URL must end with .jpg, .jpeg, .png, .gif, .bmp, or .webp
+                  </p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    Try: https://i.gyazo.com/70dfc2ed73318392bc4c39ba973c7db8.png
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Display Name (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter a custom name for this house media"
+                    value={houseMediaDisplayName}
+                    onChange={(e) => setHouseMediaDisplayName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowHouseMediaModal(false)}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddHouseMedia}
+                    disabled={!houseMediaUrl.trim()}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Add Media
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Upload Modal - Only for existing players */}
+      {player && showDocumentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Upload Document</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDocumentModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Document
+                  </label>
+                  <input
+                    type="file"
+                    onChange={handleDocumentFileSelect}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-lg"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Supported formats: PDF, DOC, DOCX, XLS, XLSX
+                  </p>
+                </div>
+                {documentFile && (
+                  <div className="p-3 bg-gray-700 rounded-lg">
+                    <p className="text-sm text-white">Selected: {documentFile.name}</p>
+                    <p className="text-xs text-gray-400">Size: {(documentFile.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                )}
+                {documentFile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Document Name (Optional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter a custom name for this document"
+                      value={documentFileName}
+                      onChange={(e) => setDocumentFileName(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      If empty, original filename will be used
+                    </p>
+                  </div>
+                )}
+                {documentFile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Description (Optional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter a description for this document"
+                      value={documentDescription}
+                      onChange={(e) => setDocumentDescription(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    />
+                  </div>
+                )}
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowDocumentModal(false)}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddDocument}
+                    disabled={!documentFile}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Upload
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Doc Link Modal - Only for existing players */}
+      {player && showGoogleDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Link Google Doc</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowGoogleDocModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Google Doc URL *
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={googleDocUrl}
+                    onChange={(e) => setGoogleDocUrl(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Document Name *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter document name"
+                    value={googleDocName}
+                    onChange={(e) => setGoogleDocName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Enter document description"
+                    value={googleDocDescription}
+                    onChange={(e) => setGoogleDocDescription(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowGoogleDocModal(false)}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddGoogleDoc}
+                    disabled={!googleDocUrl.trim() || !googleDocName.trim()}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    Link Document
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Size Image View Modal */}
+      {showImageModal && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20" onClick={() => setShowImageModal(false)}>
+          <div className="relative max-w-6xl max-h-[90vh] w-full m-4" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-4 right-4 z-10 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <div className="bg-gray-800 rounded-lg p-4 max-h-[85vh] overflow-auto">
+              <img
+                src={selectedImageUrl}
+                alt="Full size view"
+                className="max-w-full max-h-[75vh] object-contain mx-auto rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.src = '';
+                  e.currentTarget.alt = 'Failed to load image';
+                }}
+              />
+              <div className="mt-4 text-center">
+                <p className="text-gray-400 text-sm">Click anywhere outside the image or press X to close</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

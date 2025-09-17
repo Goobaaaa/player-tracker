@@ -1,4 +1,5 @@
-import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media } from './database';
+import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment } from './database';
+import { AuditLogEntry } from '../components/activity-feed';
 
 // Mock players data - made mutable for editing
 export const mockPlayers: Player[] = [];
@@ -6,8 +7,85 @@ export const mockPlayers: Player[] = [];
 // Mock assets data
 export const mockAssets: Asset[] = [];
 
+// Function to add an asset to a player
+export const addAsset = (
+  playerId: string,
+  vehicleName: string,
+  vehicleReg: string,
+  vehicleValue: number,
+  vehicleColour: string,
+  vehicleLocation: string,
+  notes?: string
+): Asset => {
+  const newAsset: Asset = {
+    id: Date.now().toString(),
+    playerId,
+    vehicleName,
+    vehicleReg,
+    vehicleVin: `VIN-${Date.now()}`, // Generate a VIN
+    vehicleColour,
+    vehicleValue,
+    vehicleLocation,
+    acquiredAt: new Date().toISOString(),
+    notes
+  };
+
+  mockAssets.push(newAsset);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'asset',
+    vehicleName,
+    newAsset.id,
+    `Added asset "${vehicleName}" (${vehicleReg}) to suspect "${playerName}" - Value: $${vehicleValue.toLocaleString()}`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newAsset;
+};
+
 // Mock transactions data
 export const mockTransactions: FinanceTransaction[] = [];
+
+// Function to add a transaction to a player
+export const addTransaction = (
+  playerId: string,
+  description: string,
+  amount: number,
+  type: 'credit' | 'debit'
+): FinanceTransaction => {
+  const newTransaction: FinanceTransaction = {
+    id: Date.now().toString(),
+    playerId,
+    description,
+    amount,
+    type,
+    createdAt: new Date().toISOString()
+  };
+
+  mockTransactions.push(newTransaction);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'asset',
+    `Transaction: ${description}`,
+    newTransaction.id,
+    `Added ${type} transaction of $${amount.toLocaleString()} to suspect "${playerName}" - ${description}`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newTransaction;
+};
 
 // Mock tasks data
 export const mockTasks: Task[] = [];
@@ -17,6 +95,75 @@ export const mockMugshots: Mugshot[] = [];
 
 // Mock media data - empty array for clean start
 export const mockMedia: Media[] = [];
+
+// Mock house media data - empty array for clean start
+export const mockHouseMedia: HouseMedia[] = [];
+
+// Mock player documents data - empty array for clean start
+export const mockPlayerDocuments: Document[] = [];
+
+// Mock task comments data - empty array for clean start
+export const mockTaskComments: TaskComment[] = [];
+
+// Dynamic audit log - will be updated as users perform actions
+export const mockAuditLog: AuditLogEntry[] = [
+  // Initial entries can remain, but new ones will be added dynamically
+  {
+    id: "1",
+    userId: "1",
+    username: "Officer Smith",
+    action: "create",
+    entityType: "suspect",
+    entityName: "John Doe",
+    entityId: "1",
+    details: "Created new suspect profile",
+    timestamp: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: "2",
+    userId: "2",
+    username: "Officer Johnson",
+    action: "update",
+    entityType: "suspect",
+    entityName: "Jane Smith",
+    entityId: "2",
+    details: "Updated suspect contact information",
+    timestamp: new Date(Date.now() - 7200000).toISOString()
+  }
+];
+
+// Audit log management functions
+export const addAuditLogEntry = (
+  action: 'create' | 'update' | 'delete' | 'add' | 'comment',
+  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment',
+  entityName: string,
+  entityId: string,
+  details: string,
+  userId: string = "1", // Default to current user
+  username: string = "Current User"
+): void => {
+  const newEntry: AuditLogEntry = {
+    id: Date.now().toString(),
+    userId,
+    username,
+    action,
+    entityType,
+    entityName,
+    entityId,
+    details,
+    timestamp: new Date().toISOString()
+  };
+
+  mockAuditLog.unshift(newEntry); // Add to beginning of array
+};
+
+// Get current user info (mock implementation)
+export const getCurrentUser = () => {
+  return {
+    id: "1",
+    username: "Current User"
+  };
+};
 
 // Mock dashboard summary
 export const mockDashboardSummary: DashboardSummary = {
@@ -75,7 +222,7 @@ export const setProfilePicture = (playerId: string, mugshotId: string): void => 
   }
 };
 
-export const addMugshot = (playerId: string, url: string): Mugshot | null => {
+export const addMugshot = (playerId: string, url: string, displayName?: string): Mugshot | null => {
   // Validate URL and file extension
   const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
   const urlLower = url.toLowerCase();
@@ -99,12 +246,28 @@ export const addMugshot = (playerId: string, url: string): Mugshot | null => {
     id,
     playerId,
     filename,
+    displayName,
     url,
     isProfilePicture: mockMugshots.length === 0, // Set as profile if first mugshot
     createdAt: new Date().toISOString()
   };
 
   mockMugshots.push(newMugshot);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'media',
+    displayName || `Mugshot for ${playerName}`,
+    id,
+    `Added mugshot to suspect "${playerName}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
   return newMugshot;
 };
 
@@ -113,7 +276,7 @@ export const getPlayerMedia = (playerId: string): Media[] => {
   return mockMedia.filter(media => media.playerId === playerId);
 };
 
-export const addMedia = (playerId: string, url: string): Media | null => {
+export const addMedia = (playerId: string, url: string, displayName?: string): Media | null => {
   // Validate URL and file extension
   const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.mp4', '.avi', '.mov', '.mp3', '.wav', '.pdf', '.doc', '.docx'];
   const urlLower = url.toLowerCase();
@@ -137,12 +300,81 @@ export const addMedia = (playerId: string, url: string): Media | null => {
     id,
     playerId,
     filename,
+    displayName,
     url,
     createdAt: new Date().toISOString()
   };
 
   mockMedia.push(newMedia);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'media',
+    displayName || `Media for ${playerName}`,
+    id,
+    `Added media to suspect "${playerName}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
   return newMedia;
+};
+
+// Helper functions to get house media by player ID
+export const getPlayerHouseMedia = (playerId: string): HouseMedia[] => {
+  return mockHouseMedia.filter(media => media.playerId === playerId);
+};
+
+export const addHouseMedia = (playerId: string, url: string, displayName?: string): HouseMedia | null => {
+  // Validate URL and file extension
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+  const urlLower = url.toLowerCase();
+
+  const hasValidExtension = validExtensions.some(ext =>
+    urlLower.endsWith(ext) || urlLower.includes(ext + '?')
+  );
+
+  if (!hasValidExtension) {
+    return null; // Invalid file extension
+  }
+
+  // Extract filename from URL
+  const filename = url.split('/').pop() || 'house.jpg';
+
+  // Generate unique ID
+  const id = Date.now().toString();
+
+  // Create new house media
+  const newHouseMedia: HouseMedia = {
+    id,
+    playerId,
+    filename,
+    displayName,
+    url,
+    createdAt: new Date().toISOString()
+  };
+
+  mockHouseMedia.push(newHouseMedia);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'media',
+    displayName || `House Media for ${playerName}`,
+    id,
+    `Added house media to suspect "${playerName}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newHouseMedia;
 };
 
 // Function to update player data
@@ -169,5 +401,320 @@ export const addPlayer = (playerData: Omit<Player, 'id' | 'createdAt'>): Player 
   // Update dashboard summary
   mockDashboardSummary.totalPlayers = mockPlayers.length;
 
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'create',
+    'suspect',
+    newPlayer.name,
+    newPlayer.id,
+    `Created new suspect profile: ${newPlayer.name} (${newPlayer.alias})`,
+    currentUser.id,
+    currentUser.username
+  );
+
   return newPlayer;
 };
+
+// Helper functions to manage player documents
+export const getPlayerDocuments = (playerId: string): Document[] => {
+  return mockPlayerDocuments.filter(doc => doc.playerId === playerId);
+};
+
+export const addPlayerDocument = (playerId: string, url: string, filename: string, isGoogleDoc: boolean, description?: string, originalFilename?: string): Document | null => {
+  // Generate unique ID
+  const id = Date.now().toString();
+
+  // Create new document
+  const newDocument: Document = {
+    id,
+    ownerUserId: 'system', // In a real app, this would be the current user
+    playerId,
+    filename,
+    url,
+    isGoogleDoc,
+    createdAt: new Date().toISOString(),
+    description,
+    originalFilename
+  };
+
+  mockPlayerDocuments.push(newDocument);
+
+  // Add audit log entry
+  const player = mockPlayers.find(p => p.id === playerId);
+  const playerName = player ? player.name : "Unknown Suspect";
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'add',
+    'document',
+    filename,
+    id,
+    `Added document "${filename}" to suspect "${playerName}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newDocument;
+};
+
+export const deletePlayerDocument = (documentId: string): boolean => {
+  const docIndex = mockPlayerDocuments.findIndex(doc => doc.id === documentId);
+  if (docIndex !== -1) {
+    mockPlayerDocuments.splice(docIndex, 1);
+    return true;
+  }
+  return false;
+};
+
+// Function to delete a player
+export const deletePlayer = (playerId: string): boolean => {
+  const playerIndex = mockPlayers.findIndex(player => player.id === playerId);
+  if (playerIndex !== -1) {
+    // Remove the player
+    mockPlayers.splice(playerIndex, 1);
+
+    // Remove related assets
+    const assetsToRemove = mockAssets.filter(asset => asset.playerId === playerId);
+    assetsToRemove.forEach(asset => {
+      const assetIndex = mockAssets.indexOf(asset);
+      if (assetIndex !== -1) mockAssets.splice(assetIndex, 1);
+    });
+
+    // Remove related transactions
+    const transactionsToRemove = mockTransactions.filter(transaction => transaction.playerId === playerId);
+    transactionsToRemove.forEach(transaction => {
+      const transactionIndex = mockTransactions.indexOf(transaction);
+      if (transactionIndex !== -1) mockTransactions.splice(transactionIndex, 1);
+    });
+
+    // Remove related documents
+    const documentsToRemove = mockPlayerDocuments.filter(doc => doc.playerId === playerId);
+    documentsToRemove.forEach(doc => {
+      const docIndex = mockPlayerDocuments.indexOf(doc);
+      if (docIndex !== -1) mockPlayerDocuments.splice(docIndex, 1);
+    });
+
+    // Remove related mugshots
+    const mugshotsToRemove = mockMugshots.filter(mugshot => mugshot.playerId === playerId);
+    mugshotsToRemove.forEach(mugshot => {
+      const mugshotIndex = mockMugshots.indexOf(mugshot);
+      if (mugshotIndex !== -1) mockMugshots.splice(mugshotIndex, 1);
+    });
+
+    // Remove related media
+    const mediaToRemove = mockMedia.filter(media => media.playerId === playerId);
+    mediaToRemove.forEach(media => {
+      const mediaIndex = mockMedia.indexOf(media);
+      if (mediaIndex !== -1) mockMedia.splice(mediaIndex, 1);
+    });
+
+    // Remove related house media
+    const houseMediaToRemove = mockHouseMedia.filter(houseMedia => houseMedia.playerId === playerId);
+    houseMediaToRemove.forEach(houseMedia => {
+      const houseMediaIndex = mockHouseMedia.indexOf(houseMedia);
+      if (houseMediaIndex !== -1) mockHouseMedia.splice(houseMediaIndex, 1);
+    });
+
+    // Update dashboard summary
+    mockDashboardSummary.totalPlayers = mockPlayers.length;
+
+    return true;
+  }
+  return false;
+};
+
+// Task management functions
+export const getAllTasks = (): Task[] => {
+  return [...mockTasks];
+};
+
+export const createTask = (
+  name: string,
+  description: string,
+  priority: 'high' | 'medium' | 'low',
+  risk: 'dangerous' | 'high' | 'medium' | 'low',
+  assignedUsers: string[],
+  deadline: string,
+  createdBy: string
+): Task => {
+  const newTask: Task = {
+    id: Date.now().toString(),
+    name,
+    description,
+    priority,
+    risk,
+    assignedUsers,
+    deadline,
+    createdBy,
+    createdAt: new Date().toISOString(),
+    status: 'active',
+    comments: []
+  };
+
+  mockTasks.push(newTask);
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  const assignedUserNames = assignedUsers.map(id => mockUsers.find(u => u.id === id)?.name || id).join(', ');
+  addAuditLogEntry(
+    'create',
+    'task',
+    name,
+    newTask.id,
+    `Created new task: ${name} (${priority} priority, ${risk} risk) assigned to: ${assignedUserNames}`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newTask;
+};
+
+export const updateTaskStatus = (taskId: string, status: 'active' | 'completed' | 'overdue'): boolean => {
+  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
+  if (taskIndex !== -1) {
+    const task = mockTasks[taskIndex];
+    const oldStatus = task.status;
+    mockTasks[taskIndex].status = status;
+
+    // Add audit log entry
+    const currentUser = getCurrentUser();
+    addAuditLogEntry(
+      'update',
+      'task',
+      task.name,
+      task.id,
+      `Updated task status from ${oldStatus} to ${status}`,
+      currentUser.id,
+      currentUser.username
+    );
+
+    return true;
+  }
+  return false;
+};
+
+export const deleteTask = (taskId: string): boolean => {
+  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
+  if (taskIndex !== -1) {
+    const task = mockTasks[taskIndex];
+
+    // Remove task comments
+    const commentsToRemove = mockTaskComments.filter(comment => comment.taskId === taskId);
+    commentsToRemove.forEach(comment => {
+      const commentIndex = mockTaskComments.indexOf(comment);
+      if (commentIndex !== -1) mockTaskComments.splice(commentIndex, 1);
+    });
+
+    mockTasks.splice(taskIndex, 1);
+
+    // Add audit log entry
+    const currentUser = getCurrentUser();
+    addAuditLogEntry(
+      'delete',
+      'task',
+      task.name,
+      task.id,
+      `Deleted task: ${task.name}`,
+      currentUser.id,
+      currentUser.username
+    );
+
+    return true;
+  }
+  return false;
+};
+
+export const addTaskComment = (
+  taskId: string,
+  userId: string,
+  username: string,
+  text: string,
+  mediaUrls?: string[],
+  documentIds?: string[]
+): TaskComment => {
+  const newComment: TaskComment = {
+    id: Date.now().toString(),
+    taskId,
+    userId,
+    username,
+    text,
+    mediaUrls,
+    documentIds,
+    createdAt: new Date().toISOString()
+  };
+
+  mockTaskComments.push(newComment);
+
+  // Add comment to task
+  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
+  let taskName = "Unknown Task";
+  if (taskIndex !== -1) {
+    mockTasks[taskIndex].comments.push(newComment);
+    taskName = mockTasks[taskIndex].name;
+  }
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  const mediaCount = mediaUrls?.length || 0;
+  const mediaText = mediaCount > 0 ? ` with ${mediaCount} attached file(s)` : '';
+  addAuditLogEntry(
+    'comment',
+    'task',
+    taskName,
+    taskId,
+    `Added comment to task "${taskName}"${mediaText}`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newComment;
+};
+
+export const getTaskComments = (taskId: string): TaskComment[] => {
+  return mockTaskComments.filter(comment => comment.taskId === taskId);
+};
+
+// Task utility functions
+export const isTaskOverdue = (deadline: string): boolean => {
+  return new Date(deadline) < new Date();
+};
+
+export const getDaysUntilDeadline = (deadline: string): number => {
+  const deadlineDate = new Date(deadline);
+  const currentDate = new Date();
+  const diffTime = deadlineDate.getTime() - currentDate.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+export const updateTaskOverdueStatus = (): void => {
+  mockTasks.forEach(task => {
+    if (task.status === 'active' && isTaskOverdue(task.deadline)) {
+      task.status = 'overdue';
+    }
+  });
+};
+
+// Filter functions
+export const filterTasksByRisk = (tasks: Task[], risk: string): Task[] => {
+  return tasks.filter(task => task.risk === risk);
+};
+
+export const filterTasksByDueDate = (tasks: Task[], days: number): Task[] => {
+  return tasks.filter(task => getDaysUntilDeadline(task.deadline) <= days);
+};
+
+export const filterTasksByTitle = (tasks: Task[], searchTerm: string): Task[] => {
+  return tasks.filter(task =>
+    task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+};
+
+// Mock users for task assignment
+export const mockUsers = [
+  { id: '1', name: 'Admin User', username: 'admin' },
+  { id: '2', name: 'John Doe', username: 'johndoe' },
+  { id: '3', name: 'Jane Smith', username: 'janesmith' },
+  { id: '4', name: 'Mike Johnson', username: 'mikej' },
+  { id: '5', name: 'Sarah Wilson', username: 'swilson' }
+];
