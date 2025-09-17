@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { mockTasks } from "@/lib/mock-data";
@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,9 +25,19 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const checkAuth = useCallback(async () => {
+    const { data: { session }, error } = await mockGetSession();
+    if (error || !session) {
+      router.push("/login");
+      return;
+    }
+
+    loadTasks();
+  }, [router]);
+
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   useEffect(() => {
     let filtered = tasks;
@@ -52,16 +62,6 @@ export default function TasksPage() {
 
     setFilteredTasks(filtered);
   }, [searchQuery, statusFilter, priorityFilter, tasks]);
-
-  const checkAuth = async () => {
-    const { data: { session }, error } = await mockGetSession();
-    if (error || !session) {
-      router.push("/login");
-      return;
-    }
-
-    loadTasks();
-  };
 
   const loadTasks = async () => {
     try {

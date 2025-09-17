@@ -1,30 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockPlayers } from "@/lib/mock-data";
+import { mockPlayers, getPlayerProfilePicture, getPlayerAssets, addPlayer } from "@/lib/mock-data";
 import { Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Search, Eye, Edit } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
+import PlayerModal from "@/components/player-modal";
 
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  
+    const router = useRouter();
+
+  const checkAuth = useCallback(async () => {
+    const { data: { session }, error } = await mockGetSession();
+    if (error || !session) {
+      router.push("/login");
+      return;
+    }
+
+    loadPlayers();
+  }, [router]);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   useEffect(() => {
     if (searchQuery === "") {
@@ -37,16 +51,6 @@ export default function PlayersPage() {
       setFilteredPlayers(filtered);
     }
   }, [searchQuery, players]);
-
-  const checkAuth = async () => {
-    const { data: { session }, error } = await mockGetSession();
-    if (error || !session) {
-      router.push("/login");
-      return;
-    }
-
-    loadPlayers();
-  };
 
   const loadPlayers = async () => {
     try {
@@ -62,13 +66,37 @@ export default function PlayersPage() {
     }
   };
 
-  const handleViewPlayer = (playerId: string) => {
-    router.push(`/players/${playerId}`);
+  const handleViewPlayer = (player: Player) => {
+    setSelectedPlayer(player);
+    setIsEditMode(false);
+    setIsModalOpen(true);
+  };
+
+  const handleEditPlayer = (player: Player) => {
+    setSelectedPlayer(player);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPlayer(null);
+    setIsEditMode(false);
+  };
+
+  const handlePlayerSaved = (_newPlayer: Player) => {
+    // The new player is already added to mockPlayers by addPlayer function
+    // Reload players from mockPlayers to get the updated list without duplicates
+    setPlayers([...mockPlayers]);
+    setIsModalOpen(false);
+    setSelectedPlayer(null);
+    setIsEditMode(false);
   };
 
   const handleCreatePlayer = () => {
-    // This would open a modal or navigate to a create page
-    console.log("Create player");
+    setSelectedPlayer(null);
+    setIsEditMode(true);
+    setIsModalOpen(true);
   };
 
   if (loading) {
@@ -110,14 +138,31 @@ export default function PlayersPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPlayers.map((player, index) => (
-                <FadeInCard key={player.id} delay={index + 1}>
-                  <Card className="bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102">
+              {filteredPlayers.map((player, index) => {
+                const assetCount = getPlayerAssets(player.id).length;
+                return (
+                <FadeInCard
+                    key={player.id}
+                    delay={index + 1}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                  >
+                  <Card
+                    className="bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                  >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={player.avatarUrl} alt={player.name} />
+                          <AvatarImage src={getPlayerProfilePicture(player.id) || player.avatarUrl} alt={player.name} />
                           <AvatarFallback className="bg-blue-600">
                             {player.name.charAt(0)}
                           </AvatarFallback>
@@ -127,9 +172,6 @@ export default function PlayersPage() {
                           <p className="text-gray-400 text-sm">{player.alias}</p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="border-gray-600 text-gray-300">
-                        ID: {player.id}
-                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -140,15 +182,19 @@ export default function PlayersPage() {
                     )}
 
                     <div className="flex justify-between items-center text-sm text-gray-400 mb-4">
-                      <span>Assets: 3</span>
-                      <span>Balance: $45,000</span>
+                      <span>Assets: {assetCount}</span>
                     </div>
 
                     <div className="flex space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewPlayer(player.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleViewPlayer(player);
+                          return false;
+                        }}
                         className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                       >
                         <Eye className="mr-2 h-4 w-4" />
@@ -157,6 +203,12 @@ export default function PlayersPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditPlayer(player);
+                          return false;
+                        }}
                         className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                       >
                         <Edit className="h-4 w-4" />
@@ -165,7 +217,8 @@ export default function PlayersPage() {
                   </CardContent>
                 </Card>
                 </FadeInCard>
-              ))}
+                );
+              })}
             </div>
 
             {filteredPlayers.length === 0 && (
@@ -177,6 +230,14 @@ export default function PlayersPage() {
           </div>
         </main>
       </div>
+
+      <PlayerModal
+        player={selectedPlayer}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onPlayerSaved={handlePlayerSaved}
+        isEditMode={isEditMode}
+      />
     </div>
   );
 }

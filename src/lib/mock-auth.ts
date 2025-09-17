@@ -39,10 +39,10 @@ export const mockGetSession = async () => {
   await new Promise(resolve => setTimeout(resolve, 100));
   return {
     data: {
-      session: mockAuth.isAuthenticated ? {
+      session: {
         access_token: 'mock-token',
         user: mockAuth.user
-      } : null
+      }
     },
     error: null
   };

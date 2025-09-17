@@ -14,15 +14,23 @@ export interface Player {
   avatarUrl?: string
   notes?: string
   createdAt: string
+  dna?: string
+  fingerprint?: string
+  phoneNumber?: string
+  status?: 'active' | 'inactive' | 'MIA'
+  houseAddress?: string
+  houseImageUrl?: string
 }
 
 export interface Asset {
   id: string
   playerId: string
-  type: string
-  name: string
-  quantity: number
-  value: number
+  vehicleName: string
+  vehicleReg: string
+  vehicleVin: string
+  vehicleColour: string
+  vehicleValue: number
+  vehicleLocation: string
   acquiredAt: string
   notes?: string
 }
@@ -56,6 +64,25 @@ export interface Document {
   url: string
   storagePath?: string
   isGoogleDoc: boolean
+  createdAt: string
+}
+
+export interface Mugshot {
+  id: string
+  playerId: string
+  filename: string
+  url: string
+  storagePath?: string
+  isProfilePicture: boolean
+  createdAt: string
+}
+
+export interface Media {
+  id: string
+  playerId: string
+  filename: string
+  url: string
+  storagePath?: string
   createdAt: string
 }
 

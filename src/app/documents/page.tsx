@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { Sidebar } from "@/components/sidebar";
@@ -75,11 +75,7 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const { data: { session }, error } = await mockGetSession();
     if (error || !session) {
       router.push("/login");
@@ -87,7 +83,11 @@ export default function DocumentsPage() {
     }
 
     loadDocuments();
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const loadDocuments = async () => {
     try {

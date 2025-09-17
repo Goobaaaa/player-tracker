@@ -24,36 +24,32 @@ export default function PlayerDetailPage() {
   const playerId = params.id as string;
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session }, error } = await mockGetSession();
-    if (error || !session) {
-      router.push("/login");
-      return;
-    }
-
-    loadPlayerData();
-  };
-
-  const loadPlayerData = async () => {
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const foundPlayer = mockPlayers.find(p => p.id === playerId);
-      if (foundPlayer) {
-        setPlayer(foundPlayer);
-        setAssets(getPlayerAssets(playerId));
-        setTransactions(getPlayerTransactions(playerId));
+    const loadPage = async () => {
+      const { data: { session }, error } = await mockGetSession();
+      if (error || !session) {
+        router.push("/login");
+        return;
       }
-    } catch (error) {
-      console.error("Error loading player data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const foundPlayer = mockPlayers.find(p => p.id === playerId);
+        if (foundPlayer) {
+          setPlayer(foundPlayer);
+          setAssets(getPlayerAssets(playerId));
+          setTransactions(getPlayerTransactions(playerId));
+        }
+      } catch (error) {
+        console.error("Error loading player data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPage();
+  }, [router, playerId]);
 
   if (loading) {
     return (
@@ -95,7 +91,7 @@ export default function PlayerDetailPage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={player.avatarUrl} alt={player.name} />
+                    <AvatarImage src={player.avatarUrl || undefined} alt={player.name} />
                     <AvatarFallback className="bg-blue-600 text-xl">
                       {player.name.charAt(0)}
                     </AvatarFallback>
@@ -189,10 +185,10 @@ export default function PlayerDetailPage() {
                   <Card className="bg-gray-800 border-gray-700">
                     <CardHeader>
                       <div className="flex justify-between items-center">
-                        <CardTitle className="text-white">Assets</CardTitle>
+                        <CardTitle className="text-white">Vehicles</CardTitle>
                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                           <Plus className="mr-2 h-4 w-4" />
-                          Add Asset
+                          Add Vehicle
                         </Button>
                       </div>
                     </CardHeader>
@@ -202,18 +198,16 @@ export default function PlayerDetailPage() {
                           <div key={asset.id} className="p-4 bg-gray-700 rounded-lg">
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <h3 className="font-medium text-white">{asset.name}</h3>
-                                <p className="text-sm text-gray-400">{asset.type}</p>
+                                <h3 className="font-medium text-white">{asset.vehicleName}</h3>
+                                <p className="text-sm text-gray-400">{asset.vehicleReg}</p>
                               </div>
                               <Badge variant="outline" className="border-gray-600 text-gray-300">
-                                Qty: {asset.quantity}
+                                ${asset.vehicleValue.toLocaleString()}
                               </Badge>
                             </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-400">Value: ${asset.value.toLocaleString()}</span>
-                              <span className="text-white">
-                                Total: ${(asset.value * asset.quantity).toLocaleString()}
-                              </span>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <span className="text-gray-400">Colour: {asset.vehicleColour}</span>
+                              <span className="text-gray-400">Location: {asset.vehicleLocation}</span>
                             </div>
                             {asset.notes && (
                               <p className="text-sm text-gray-400 mt-2">{asset.notes}</p>

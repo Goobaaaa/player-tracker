@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { mockSignIn } from "@/lib/mock-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -34,11 +35,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#4c4d4e' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-            <span className="text-white font-bold text-2xl">PT</span>
+          <div className="mx-auto w-64 h-64 flex items-center justify-center mb-6">
+            <Image src="/media/USMSBadge.png" alt="USMS Badge" width={256} height={256} className="object-contain" />
           </div>
         </div>
 
