@@ -30,7 +30,8 @@ export const addAsset = (
     vehicleValue,
     vehicleLocation,
     acquiredAt: new Date().toISOString(),
-    notes
+    notes,
+    vehicleImages: []
   };
 
   mockAssets.push(newAsset);
@@ -53,6 +54,79 @@ export const addAsset = (
   );
 
   return newAsset;
+};
+
+// Function to add vehicle images to an asset
+export const addVehicleImage = (assetId: string, imageUrl: string): boolean => {
+  const assetIndex = mockAssets.findIndex(asset => asset.id === assetId);
+  if (assetIndex !== -1) {
+    const asset = mockAssets[assetIndex];
+
+    // Initialize vehicleImages array if it doesn't exist
+    if (!asset.vehicleImages) {
+      asset.vehicleImages = [];
+    }
+
+    // Add the new image
+    asset.vehicleImages.push(imageUrl);
+
+    // Update dashboard summary
+    updateDashboardSummary();
+
+    // Add audit log entry
+    const player = mockPlayers.find(p => p.id === asset.playerId);
+    const playerName = player ? player.name : "Unknown Suspect";
+    const currentUser = getCurrentUser();
+    addAuditLogEntry(
+      'add',
+      'asset',
+      asset.vehicleName,
+      asset.id,
+      `Added image to vehicle "${asset.vehicleName}" (${asset.vehicleReg}) for suspect "${playerName}"`,
+      currentUser.id,
+      currentUser.username
+    );
+
+    return true;
+  }
+  return false;
+};
+
+// Function to remove a vehicle image from an asset
+export const removeVehicleImage = (assetId: string, imageIndex: number): boolean => {
+  const assetIndex = mockAssets.findIndex(asset => asset.id === assetId);
+  if (assetIndex !== -1 && mockAssets[assetIndex].vehicleImages) {
+    const asset = mockAssets[assetIndex];
+    const vehicleImages = asset.vehicleImages!;
+
+    if (imageIndex >= 0 && imageIndex < vehicleImages.length) {
+      // Remove the image
+      vehicleImages.splice(imageIndex, 1);
+
+      // Save to storage
+      saveToStorage(STORAGE_KEYS.assets, mockAssets);
+
+      // Update dashboard summary
+      updateDashboardSummary();
+
+      // Add audit log entry
+      const player = mockPlayers.find(p => p.id === asset.playerId);
+      const playerName = player ? player.name : "Unknown Suspect";
+      const currentUser = getCurrentUser();
+      addAuditLogEntry(
+        'delete',
+        'asset',
+        asset.vehicleName,
+        asset.id,
+        `Removed image from vehicle "${asset.vehicleName}" (${asset.vehicleReg}) for suspect "${playerName}"`,
+        currentUser.id,
+        currentUser.username
+      );
+
+      return true;
+    }
+  }
+  return false;
 };
 
 // Mock transactions data
@@ -145,7 +219,8 @@ const STORAGE_KEYS = {
   tasks: 'playerTracker_tasks',
   taskComments: 'playerTracker_taskComments',
   auditLog: 'playerTracker_auditLog',
-  incidents: 'playerTracker_incidents'
+  incidents: 'playerTracker_incidents',
+  assets: 'playerTracker_assets'
 };
 
 const saveToStorage = (key: string, data: unknown) => {
@@ -692,29 +767,56 @@ export const createTask = (
   return newTask;
 };
 
-export const updateTaskStatus = (taskId: string, status: 'active' | 'completed' | 'overdue'): boolean => {
+export const updateTask = (taskId: string, updates: Partial<Task>): boolean => {
   const taskIndex = mockTasks.findIndex(task => task.id === taskId);
   if (taskIndex !== -1) {
     const task = mockTasks[taskIndex];
-    const oldStatus = task.status;
-    mockTasks[taskIndex].status = status;
+    const oldTask = { ...task };
+
+    // Update the task with new values
+    mockTasks[taskIndex] = { ...task, ...updates };
     saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
 
-    // Add audit log entry
+    // Add audit log entry for significant changes
     const currentUser = getCurrentUser();
-    addAuditLogEntry(
-      'update',
-      'task',
-      task.name,
-      task.id,
-      `Updated task status from ${oldStatus} to ${status}`,
-      currentUser.id,
-      currentUser.username
-    );
+    const changes = [];
+
+    if (updates.name && updates.name !== oldTask.name) {
+      changes.push(`name from "${oldTask.name}" to "${updates.name}"`);
+    }
+    if (updates.priority && updates.priority !== oldTask.priority) {
+      changes.push(`priority from ${oldTask.priority} to ${updates.priority}`);
+    }
+    if (updates.risk && updates.risk !== oldTask.risk) {
+      changes.push(`risk from ${oldTask.risk} to ${updates.risk}`);
+    }
+    if (updates.status && updates.status !== oldTask.status) {
+      changes.push(`status from ${oldTask.status} to ${updates.status}`);
+    }
+    if (updates.deadline && updates.deadline !== oldTask.deadline) {
+      changes.push(`deadline from ${new Date(oldTask.deadline).toLocaleDateString()} to ${new Date(updates.deadline).toLocaleDateString()}`);
+    }
+
+    if (changes.length > 0) {
+      const taskName = updates.name || oldTask.name;
+      addAuditLogEntry(
+        'update',
+        'task',
+        taskName,
+        taskId,
+        `Updated task: ${changes.join(', ')}`,
+        currentUser.id,
+        currentUser.username
+      );
+    }
 
     return true;
   }
   return false;
+};
+
+export const updateTaskStatus = (taskId: string, status: 'active' | 'completed' | 'overdue'): boolean => {
+  return updateTask(taskId, { status });
 };
 
 export const deleteTask = (taskId: string): boolean => {

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { Player, Asset, Mugshot, Media, HouseMedia, Document, Weapon } from "@/lib/database";
-import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, addWeapon, getPlayerWeapons, mockWeapons } from "@/lib/mock-data";
+import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, addWeapon, getPlayerWeapons, mockWeapons, addVehicleImage, removeVehicleImage } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +66,11 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
     vehicleLocation: '',
     notes: ''
   });
+
+  // State for vehicle image uploads
+  const [showVehicleImageModal, setShowVehicleImageModal] = React.useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | null>(null);
+  const [vehicleImageUrl, setVehicleImageUrl] = React.useState('');
 
   // State for adding new weapon
   const [newWeaponForm, setNewWeaponForm] = React.useState({
@@ -1012,6 +1017,58 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                                   <span className="text-gray-300 ml-1">{asset.notes}</span>
                                 </div>
                               )}
+
+                              {/* Vehicle Images Section */}
+                              <div className="pt-2 border-t border-gray-600">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-gray-400 text-sm">Images:</span>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedVehicleId(asset.id);
+                                      setShowVehicleImageModal(true);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 h-6 px-2 text-xs"
+                                  >
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    Add Image
+                                  </Button>
+                                </div>
+
+                                {asset.vehicleImages && asset.vehicleImages.length > 0 ? (
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {asset.vehicleImages.map((imageUrl, index) => (
+                                      <div key={index} className="relative group">
+                                        <img
+                                          src={imageUrl}
+                                          alt={`Vehicle ${index + 1}`}
+                                          className="w-full h-16 object-cover rounded border border-gray-600"
+                                          onClick={() => setSelectedImageUrl(imageUrl)}
+                                        />
+                                        <button
+                                          onClick={() => {
+                                            if (confirm('Remove this image?')) {
+                                              removeVehicleImage(asset.id, index);
+                                              // Update local state
+                                              const updatedAssets = assets.map(a =>
+                                                a.id === asset.id
+                                                  ? { ...a, vehicleImages: a.vehicleImages?.filter((_, i) => i !== index) }
+                                                  : a
+                                              );
+                                              setAssets(updatedAssets);
+                                            }
+                                          }}
+                                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500 text-xs">No images uploaded</p>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1673,6 +1730,82 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                   >
                     Add Vehicle
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vehicle Image Upload Modal */}
+      {player && showVehicleImageModal && selectedVehicleId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Add Vehicle Image</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowVehicleImageModal(false);
+                    setSelectedVehicleId(null);
+                    setVehicleImageUrl('');
+                  }}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Image URL
+                  </label>
+                  <Input
+                    type="text"
+                    value={vehicleImageUrl}
+                    onChange={(e) => setVehicleImageUrl(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter image URL"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => {
+                      setShowVehicleImageModal(false);
+                      setSelectedVehicleId(null);
+                      setVehicleImageUrl('');
+                    }}
+                    variant="outline"
+                    className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (vehicleImageUrl.trim()) {
+                        addVehicleImage(selectedVehicleId, vehicleImageUrl.trim());
+                        // Update local state
+                        const updatedAssets = assets.map(asset =>
+                          asset.id === selectedVehicleId
+                            ? {
+                                ...asset,
+                                vehicleImages: [...(asset.vehicleImages || []), vehicleImageUrl.trim()]
+                              }
+                            : asset
+                        );
+                        setAssets(updatedAssets);
+                        setShowVehicleImageModal(false);
+                        setSelectedVehicleId(null);
+                        setVehicleImageUrl('');
+                        alert('Vehicle image added successfully!');
+                      }
+                    }}
+                    disabled={!vehicleImageUrl.trim()}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Add Image
                   </Button>
                 </div>
               </div>

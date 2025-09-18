@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar, MapPin, Users, UserCheck, FileText, Plus, Edit, Trash2, AlertTriangle, Eye } from "lucide-react";
+import { Calendar, Users, UserCheck, FileText, Plus, Edit, Trash2, AlertTriangle, Eye, X } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
 
 export default function IncidentsPage() {
@@ -24,6 +24,8 @@ export default function IncidentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [incidentToView, setIncidentToView] = useState<Incident | null>(null);
   const router = useRouter();
 
   // Form state
@@ -36,6 +38,10 @@ export default function IncidentsPage() {
     description: "",
     mediaUrls: [] as string[]
   });
+
+  // Input states for Add button functionality
+  const [officerInput, setOfficerInput] = useState("");
+  const [individualInput, setIndividualInput] = useState("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -64,7 +70,7 @@ export default function IncidentsPage() {
 
   const handleCreateIncident = async () => {
     try {
-      const newIncident = addIncident(
+      addIncident(
         formData.title,
         formData.incidentDateTime,
         formData.suspects,
@@ -105,7 +111,8 @@ export default function IncidentsPage() {
   };
 
   const handleViewIncident = (incident: Incident) => {
-    alert(`Incident Details:\n\nTitle: ${incident.title}\nDate: ${formatDate(incident.incidentDateTime)}\nStatus: ${incident.status.replace('_', ' ')}\n\nSuspects: ${incident.suspects.join(', ') || 'None'}\nOfficers: ${incident.officers.join(', ') || 'None'}\nOther Individuals: ${incident.otherIndividuals.join(', ') || 'None'}\n\nDescription: ${incident.description}`);
+    setIncidentToView(incident);
+    setIsViewModalOpen(true);
   };
 
   const resetForm = () => {
@@ -118,6 +125,12 @@ export default function IncidentsPage() {
       description: "",
       mediaUrls: []
     });
+    setOfficerInput("");
+    setIndividualInput("");
+    setSelectedIncident(null);
+    setIncidentToView(null);
+    setIsEditModalOpen(false);
+    setIsViewModalOpen(false);
   };
 
   const handleEditIncident = (incident: Incident) => {
@@ -131,6 +144,8 @@ export default function IncidentsPage() {
       description: incident.description,
       mediaUrls: [...incident.mediaUrls]
     });
+    setOfficerInput("");
+    setIndividualInput("");
     setIsEditModalOpen(true);
   };
 
@@ -269,42 +284,30 @@ export default function IncidentsPage() {
 
                     <div>
                       <Label className="text-white">Officers</Label>
-                      <Input
-                        value={formData.officers.join(", ")}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          if (inputValue.endsWith(",")) {
-                            const newOfficer = inputValue.slice(0, -1).trim().split(",").pop()?.trim();
+                      <div className="flex space-x-2">
+                        <Input
+                          value={officerInput}
+                          onChange={(e) => setOfficerInput(e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Type officer name"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const newOfficer = officerInput.trim();
                             if (newOfficer && !formData.officers.includes(newOfficer)) {
                               setFormData(prev => ({
                                 ...prev,
                                 officers: [...prev.officers, newOfficer]
                               }));
+                              setOfficerInput("");
                             }
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              officers: inputValue.split(",").map(s => s.trim()).filter(Boolean)
-                            }));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const inputValue = (e.target as HTMLInputElement).value;
-                            const newOfficer = inputValue.trim();
-                            if (newOfficer && !formData.officers.includes(newOfficer)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                officers: [...prev.officers, newOfficer]
-                              }));
-                              (e.target as HTMLInputElement).value = "";
-                            }
-                          }
-                        }}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="Type officer name and press Enter"
-                      />
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 px-3"
+                        >
+                          Add
+                        </Button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.officers.map((officer, index) => (
                           <Badge key={index} variant="secondary" className="bg-blue-600 text-white">
@@ -325,42 +328,30 @@ export default function IncidentsPage() {
 
                     <div>
                       <Label className="text-white">Other Individuals</Label>
-                      <Input
-                        value={formData.otherIndividuals.join(", ")}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          if (inputValue.endsWith(",")) {
-                            const newIndividual = inputValue.slice(0, -1).trim().split(",").pop()?.trim();
+                      <div className="flex space-x-2">
+                        <Input
+                          value={individualInput}
+                          onChange={(e) => setIndividualInput(e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Type individual name"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const newIndividual = individualInput.trim();
                             if (newIndividual && !formData.otherIndividuals.includes(newIndividual)) {
                               setFormData(prev => ({
                                 ...prev,
                                 otherIndividuals: [...prev.otherIndividuals, newIndividual]
                               }));
+                              setIndividualInput("");
                             }
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              otherIndividuals: inputValue.split(",").map(s => s.trim()).filter(Boolean)
-                            }));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const inputValue = (e.target as HTMLInputElement).value;
-                            const newIndividual = inputValue.trim();
-                            if (newIndividual && !formData.otherIndividuals.includes(newIndividual)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                otherIndividuals: [...prev.otherIndividuals, newIndividual]
-                              }));
-                              (e.target as HTMLInputElement).value = "";
-                            }
-                          }
-                        }}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="Type name and press Enter"
-                      />
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 px-3"
+                        >
+                          Add
+                        </Button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.otherIndividuals.map((individual, index) => (
                           <Badge key={index} variant="secondary" className="bg-gray-600 text-white">
@@ -483,42 +474,30 @@ export default function IncidentsPage() {
 
                     <div>
                       <Label className="text-white">Officers</Label>
-                      <Input
-                        value={formData.officers.join(", ")}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          if (inputValue.endsWith(",")) {
-                            const newOfficer = inputValue.slice(0, -1).trim().split(",").pop()?.trim();
+                      <div className="flex space-x-2">
+                        <Input
+                          value={officerInput}
+                          onChange={(e) => setOfficerInput(e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Type officer name"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const newOfficer = officerInput.trim();
                             if (newOfficer && !formData.officers.includes(newOfficer)) {
                               setFormData(prev => ({
                                 ...prev,
                                 officers: [...prev.officers, newOfficer]
                               }));
+                              setOfficerInput("");
                             }
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              officers: inputValue.split(",").map(s => s.trim()).filter(Boolean)
-                            }));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const inputValue = (e.target as HTMLInputElement).value;
-                            const newOfficer = inputValue.trim();
-                            if (newOfficer && !formData.officers.includes(newOfficer)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                officers: [...prev.officers, newOfficer]
-                              }));
-                              (e.target as HTMLInputElement).value = "";
-                            }
-                          }
-                        }}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="Type officer name and press Enter"
-                      />
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 px-3"
+                        >
+                          Add
+                        </Button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.officers.map((officer, index) => (
                           <Badge key={index} variant="secondary" className="bg-blue-600 text-white">
@@ -539,42 +518,30 @@ export default function IncidentsPage() {
 
                     <div>
                       <Label className="text-white">Other Individuals</Label>
-                      <Input
-                        value={formData.otherIndividuals.join(", ")}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          if (inputValue.endsWith(",")) {
-                            const newIndividual = inputValue.slice(0, -1).trim().split(",").pop()?.trim();
+                      <div className="flex space-x-2">
+                        <Input
+                          value={individualInput}
+                          onChange={(e) => setIndividualInput(e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          placeholder="Type individual name"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const newIndividual = individualInput.trim();
                             if (newIndividual && !formData.otherIndividuals.includes(newIndividual)) {
                               setFormData(prev => ({
                                 ...prev,
                                 otherIndividuals: [...prev.otherIndividuals, newIndividual]
                               }));
+                              setIndividualInput("");
                             }
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              otherIndividuals: inputValue.split(",").map(s => s.trim()).filter(Boolean)
-                            }));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const inputValue = (e.target as HTMLInputElement).value;
-                            const newIndividual = inputValue.trim();
-                            if (newIndividual && !formData.otherIndividuals.includes(newIndividual)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                otherIndividuals: [...prev.otherIndividuals, newIndividual]
-                              }));
-                              (e.target as HTMLInputElement).value = "";
-                            }
-                          }
-                        }}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        placeholder="Type name and press Enter"
-                      />
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 px-3"
+                        >
+                          Add
+                        </Button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.otherIndividuals.map((individual, index) => (
                           <Badge key={index} variant="secondary" className="bg-gray-600 text-white">
@@ -626,6 +593,153 @@ export default function IncidentsPage() {
                       </Button>
                     </div>
                   </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* View Incident Modal */}
+              <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+                <DialogContent className="bg-gray-800 border-gray-700 max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <div className="flex justify-between items-center">
+                      <DialogTitle className="text-white text-xl">Incident Details</DialogTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsViewModalOpen(false)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </DialogHeader>
+
+                  {incidentToView && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-1">Title</h3>
+                          <p className="text-white font-semibold text-lg">{incidentToView.title}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-1">Status</h3>
+                          <Badge className={`${getStatusColor(incidentToView.status)} text-white`}>
+                            {incidentToView.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-1">Date & Time</h3>
+                          <p className="text-white">{formatDate(incidentToView.incidentDateTime)}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-1">Created At</h3>
+                          <p className="text-white">{formatDate(incidentToView.createdAt)}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                            <Users className="h-4 w-4 mr-2" />
+                            Suspects ({incidentToView.suspects.length})
+                          </h3>
+                          <div className="space-y-1">
+                            {incidentToView.suspects.length > 0 ? (
+                              incidentToView.suspects.map((suspect, index) => (
+                                <div key={index} className="bg-gray-700 text-white px-3 py-1 rounded text-sm">
+                                  {suspect}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 text-sm">No suspects</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Officers ({incidentToView.officers.length})
+                          </h3>
+                          <div className="space-y-1">
+                            {incidentToView.officers.length > 0 ? (
+                              incidentToView.officers.map((officer, index) => (
+                                <div key={index} className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded text-sm border border-blue-600/30">
+                                  {officer}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 text-sm">No officers assigned</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                            <Users className="h-4 w-4 mr-2" />
+                            Other Individuals ({incidentToView.otherIndividuals.length})
+                          </h3>
+                          <div className="space-y-1">
+                            {incidentToView.otherIndividuals.length > 0 ? (
+                              incidentToView.otherIndividuals.map((individual, index) => (
+                                <div key={index} className="bg-gray-700 text-white px-3 py-1 rounded text-sm">
+                                  {individual}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 text-sm">No other individuals</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Description
+                        </h3>
+                        <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                          <p className="text-white whitespace-pre-wrap">{incidentToView.description}</p>
+                        </div>
+                      </div>
+
+                      {incidentToView.mediaUrls && incidentToView.mediaUrls.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-400 mb-2">Media Files</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {incidentToView.mediaUrls.map((url, index) => (
+                              <div key={index} className="bg-gray-700 rounded-lg overflow-hidden">
+                                <img
+                                  src={url}
+                                  alt={`Incident media ${index + 1}`}
+                                  className="w-full h-24 object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end space-x-2 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsViewModalOpen(false)}
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                        >
+                          Close
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setIsViewModalOpen(false);
+                            handleEditIncident(incidentToView);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Incident
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>

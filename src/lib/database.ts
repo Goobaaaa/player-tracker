@@ -33,6 +33,7 @@ export interface Asset {
   vehicleLocation: string
   acquiredAt: string
   notes?: string
+  vehicleImages?: string[]
 }
 
 export interface FinanceTransaction {

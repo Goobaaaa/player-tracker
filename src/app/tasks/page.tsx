@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment } from "@/lib/mock-data";
+import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment } from "@/lib/mock-data";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -153,7 +153,8 @@ export default function TasksPage() {
 
   const handleDeleteTask = (taskId: string) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter(task => task.id !== taskId));
+      deleteTask(taskId);
+      loadTasks(); // Reload tasks from data store to reflect deletion
     }
   };
 
@@ -213,19 +214,21 @@ export default function TasksPage() {
     if (taskName.trim() && taskDeadline && selectedUsers.length > 0) {
       if (editingTask) {
         // Update existing task
-        const updatedTask: Task = {
-          ...editingTask,
+        const success = updateTask(editingTask.id, {
           name: taskName.trim(),
           description: taskDescription.trim(),
           priority: taskPriority,
           risk: taskRisk,
           assignedUsers: selectedUsers,
           deadline: taskDeadline,
-        };
+        });
 
-        setTasks(tasks.map(task => task.id === editingTask.id ? updatedTask : task));
-        setEditingTask(null);
-        alert("Task updated successfully!");
+        if (success) {
+          setEditingTask(null);
+          alert("Task updated successfully!");
+        } else {
+          alert("Failed to update task.");
+        }
       } else {
         // Create new task
         const newTask = createTask(
@@ -243,7 +246,7 @@ export default function TasksPage() {
         }
       }
 
-      loadTasks(); // Reload tasks
+      loadTasks(); // Reload tasks from data store
       setShowCreateModal(false);
       // Reset form
       setTaskName("");
