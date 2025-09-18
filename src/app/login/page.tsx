@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const { data, error } = await mockSignIn(email, password);
+      const { data, error } = await mockSignIn(username, password);
 
       if (error) {
         setError(error.message);
@@ -46,11 +46,11 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <Input
-              id="email"
-              type="email"
+              id="username"
+              type="text"
               placeholder="Username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 h-12 text-center"
               required
             />

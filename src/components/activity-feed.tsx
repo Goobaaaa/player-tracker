@@ -6,7 +6,7 @@ export interface AuditLogEntry {
   userId: string;
   username: string;
   action: 'create' | 'update' | 'delete' | 'add' | 'comment';
-  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment';
+  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident';
   entityName: string;
   entityId: string;
   details?: string;
@@ -37,6 +37,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
       case "asset": return "🚗";
       case "media": return "🖼️";
       case "comment": return "💬";
+      case "incident": return "🚨";
       default: return "📌";
     }
   };

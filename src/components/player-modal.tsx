@@ -2,15 +2,16 @@
 
 import React from "react";
 import Image from "next/image";
-import { Player, Asset, Mugshot, Media, HouseMedia, Document } from "@/lib/database";
-import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument } from "@/lib/mock-data";
+import { Player, Asset, Mugshot, Media, HouseMedia, Document, Weapon } from "@/lib/database";
+import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, addWeapon, getPlayerWeapons, mockWeapons } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit, Trash2, ExternalLink } from "lucide-react";
+import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit, Trash2, ExternalLink, Shield } from "lucide-react";
 
 interface PlayerModalProps {
   player: Player | null;
@@ -27,12 +28,14 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
   const [media, setMedia] = React.useState<Media[]>([]);
   const [houseMedia, setHouseMedia] = React.useState<HouseMedia[]>([]);
   const [documents, setDocuments] = React.useState<Document[]>([]);
+  const [weapons, setWeapons] = React.useState<Weapon[]>([]);
   const [showUrlModal, setShowUrlModal] = React.useState(false);
   const [showMediaUrlModal, setShowMediaUrlModal] = React.useState(false);
   const [showHouseImageModal, setShowHouseImageModal] = React.useState(false);
   const [showHouseUrlModal, setShowHouseUrlModal] = React.useState(false);
   const [showHouseMediaModal, setShowHouseMediaModal] = React.useState(false);
   const [showVehicleModal, setShowVehicleModal] = React.useState(false);
+  const [showWeaponModal, setShowWeaponModal] = React.useState(false);
   const [showDocumentModal, setShowDocumentModal] = React.useState(false);
   const [showGoogleDocModal, setShowGoogleDocModal] = React.useState(false);
   const [imageUrl, setImageUrl] = React.useState('');
@@ -64,6 +67,15 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
     notes: ''
   });
 
+  // State for adding new weapon
+  const [newWeaponForm, setNewWeaponForm] = React.useState({
+    gunName: '',
+    serialNumber: '',
+    ballisticsReference: '',
+    status: 'not_seized' as 'seized' | 'not_seized',
+    notes: ''
+  });
+
   // State for editable fields
   const [editForm, setEditForm] = React.useState({
     name: '',
@@ -89,6 +101,16 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
     notes: ''
   });
 
+  // State for weapon editing
+  const [editingWeaponId, setEditingWeaponId] = React.useState<string | null>(null);
+  const [weaponEditForm, setWeaponEditForm] = React.useState({
+    gunName: '',
+    serialNumber: '',
+    ballisticsReference: '',
+    status: 'not_seized' as 'seized' | 'not_seized',
+    notes: ''
+  });
+
   React.useEffect(() => {
     if (player) {
       // Editing existing player
@@ -97,6 +119,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       setMedia(getPlayerMedia(player.id));
       setHouseMedia(getPlayerHouseMedia(player.id));
       setDocuments(getPlayerDocuments(player.id));
+      setWeapons(getPlayerWeapons(player.id));
       setEditForm({
         name: player.name || '',
         alias: player.alias || '',
@@ -115,6 +138,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       setMedia([]);
       setHouseMedia([]);
       setDocuments([]);
+      setWeapons([]);
       setEditForm({
         name: '',
         alias: '',
@@ -193,6 +217,85 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       setAssets(updatedAssets);
       setEditingVehicleId(null);
       alert('Vehicle deleted successfully!');
+    }
+  };
+
+  const handleWeaponEdit = (weapon: Weapon) => {
+    setEditingWeaponId(weapon.id);
+    setWeaponEditForm({
+      gunName: weapon.gunName,
+      serialNumber: weapon.serialNumber,
+      ballisticsReference: weapon.ballisticsReference,
+      status: weapon.status,
+      notes: weapon.notes || ''
+    });
+  };
+
+  const handleWeaponSave = () => {
+    if (editingWeaponId && player) {
+      const weaponIndex = mockWeapons.findIndex(w => w.id === editingWeaponId);
+      if (weaponIndex !== -1) {
+        mockWeapons[weaponIndex] = {
+          ...mockWeapons[weaponIndex],
+          gunName: weaponEditForm.gunName,
+          serialNumber: weaponEditForm.serialNumber,
+          ballisticsReference: weaponEditForm.ballisticsReference,
+          status: weaponEditForm.status,
+          notes: weaponEditForm.notes
+        };
+        setWeapons(getPlayerWeapons(player.id));
+        setEditingWeaponId(null);
+        alert('Weapon updated successfully!');
+      }
+    }
+  };
+
+  const handleWeaponEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setWeaponEditForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleWeaponDelete = (weaponId: string) => {
+    if (player && confirm('Are you sure you want to delete this weapon?')) {
+      const updatedWeapons = weapons.filter(weapon => weapon.id !== weaponId);
+      const mockWeaponIndex = mockWeapons.findIndex(weapon => weapon.id === weaponId);
+      if (mockWeaponIndex !== -1) {
+        mockWeapons.splice(mockWeaponIndex, 1);
+      }
+      setWeapons(updatedWeapons);
+      setEditingWeaponId(null);
+      alert('Weapon deleted successfully!');
+    }
+  };
+
+  const handleNewWeaponInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewWeaponForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddWeapon = () => {
+    if (player && newWeaponForm.gunName && newWeaponForm.serialNumber) {
+      const newWeapon: Weapon = {
+        id: Date.now().toString(),
+        playerId: player.id,
+        gunName: newWeaponForm.gunName,
+        serialNumber: newWeaponForm.serialNumber,
+        ballisticsReference: newWeaponForm.ballisticsReference,
+        status: newWeaponForm.status,
+        notes: newWeaponForm.notes,
+        createdAt: new Date().toISOString()
+      };
+      mockWeapons.push(newWeapon);
+      setWeapons(getPlayerWeapons(player.id));
+      setNewWeaponForm({
+        gunName: '',
+        serialNumber: '',
+        ballisticsReference: '',
+        status: 'not_seized',
+        notes: ''
+      });
+      setShowWeaponModal(false);
+      alert('Weapon added successfully!');
     }
   };
 
@@ -738,6 +841,9 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                   <TabsTrigger value="assets" className="text-gray-300 data-[state=active]:bg-gray-600">
                     Vehicles
                   </TabsTrigger>
+                  <TabsTrigger value="weapons" className="text-gray-300 data-[state=active]:bg-gray-600">
+                    Weapons
+                  </TabsTrigger>
                   <TabsTrigger value="documents" className="text-gray-300 data-[state=active]:bg-gray-600">
                     Documents
                   </TabsTrigger>
@@ -911,6 +1017,84 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                         </div>
                       ))}
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="weapons">
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-white">Weapons</CardTitle>
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowWeaponModal(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Weapon
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {weapons.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Shield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <p className="text-gray-400">No weapons registered for this player</p>
+                        <p className="text-gray-500 text-sm mt-2">Add weapons to track player&apos;s armaments</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {weapons.map((weapon) => (
+                          <div key={weapon.id} className="p-3 bg-gray-700 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h3 className="text-white font-medium">{weapon.gunName}</h3>
+                                  <Badge className={
+                                    weapon.status === 'seized'
+                                      ? 'bg-red-600 text-white'
+                                      : 'bg-yellow-600 text-white'
+                                  }>
+                                    {weapon.status === 'seized' ? 'Seized' : 'Not Seized'}
+                                  </Badge>
+                                </div>
+                                <div className="mt-1 space-y-1">
+                                  <div className="text-sm">
+                                    <span className="text-gray-400">Serial:</span>
+                                    <span className="text-white ml-1">{weapon.serialNumber}</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <span className="text-gray-400">Ballistics:</span>
+                                    <span className="text-white ml-1">{weapon.ballisticsReference}</span>
+                                  </div>
+                                  {weapon.notes && (
+                                    <div className="text-sm">
+                                      <span className="text-gray-400">Notes:</span>
+                                      <span className="text-gray-300 ml-1">{weapon.notes}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleWeaponEdit(weapon)}
+                                  className="border-gray-600 text-gray-300 hover:bg-gray-600"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleWeaponDelete(weapon.id)}
+                                  className="border-red-600 text-red-400 hover:bg-red-600/20"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1489,6 +1673,214 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                   >
                     Add Vehicle
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Weapon Modal - Only for existing players */}
+      {player && showWeaponModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Add Weapon</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowWeaponModal(false)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Gun Name *
+                  </label>
+                  <Input
+                    type="text"
+                    value={newWeaponForm.gunName}
+                    onChange={handleNewWeaponInputChange}
+                    name="gunName"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter gun name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Serial Number *
+                  </label>
+                  <Input
+                    type="text"
+                    value={newWeaponForm.serialNumber}
+                    onChange={handleNewWeaponInputChange}
+                    name="serialNumber"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter serial number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Ballistics Reference
+                  </label>
+                  <Input
+                    type="text"
+                    value={newWeaponForm.ballisticsReference}
+                    onChange={handleNewWeaponInputChange}
+                    name="ballisticsReference"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter ballistics reference"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={newWeaponForm.status}
+                    onChange={handleNewWeaponInputChange}
+                    name="status"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="not_seized">Not Seized</option>
+                    <option value="seized">Seized</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Notes
+                  </label>
+                  <Textarea
+                    value={newWeaponForm.notes}
+                    onChange={handleNewWeaponInputChange}
+                    name="notes"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter additional notes"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowWeaponModal(false)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddWeapon}
+                    disabled={!newWeaponForm.gunName || !newWeaponForm.serialNumber}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Add Weapon
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Weapon Modal */}
+      {editingWeaponId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Edit Weapon</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingWeaponId(null)}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Gun Name *
+                  </label>
+                  <Input
+                    type="text"
+                    value={weaponEditForm.gunName}
+                    onChange={handleWeaponEditInputChange}
+                    name="gunName"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter gun name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Serial Number *
+                  </label>
+                  <Input
+                    type="text"
+                    value={weaponEditForm.serialNumber}
+                    onChange={handleWeaponEditInputChange}
+                    name="serialNumber"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter serial number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Ballistics Reference
+                  </label>
+                  <Input
+                    type="text"
+                    value={weaponEditForm.ballisticsReference}
+                    onChange={handleWeaponEditInputChange}
+                    name="ballisticsReference"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter ballistics reference"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={weaponEditForm.status}
+                    onChange={handleWeaponEditInputChange}
+                    name="status"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="not_seized">Not Seized</option>
+                    <option value="seized">Seized</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Notes
+                  </label>
+                  <Textarea
+                    value={weaponEditForm.notes}
+                    onChange={handleWeaponEditInputChange}
+                    name="notes"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    placeholder="Enter additional notes"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingWeaponId(null)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleWeaponSave}
+                    disabled={!weaponEditForm.gunName || !weaponEditForm.serialNumber}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Save Changes
                   </Button>
                 </div>
               </div>

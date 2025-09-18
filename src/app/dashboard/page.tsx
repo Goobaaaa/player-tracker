@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getDaysUntilDeadline, mockAuditLog } from "@/lib/mock-data";
+import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getDaysUntilDeadline, getCurrentAuditLog, addTaskComment } from "@/lib/mock-data";
 import { Task, DashboardSummary } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
@@ -42,9 +42,8 @@ export default function DashboardPage() {
   // Update audit log every second to show new entries
   useEffect(() => {
     const interval = setInterval(() => {
-      if (mockAuditLog.length > 0) {
-        setAuditLog([...mockAuditLog]);
-      }
+      const currentLog = getCurrentAuditLog();
+      setAuditLog(currentLog);
     }, 1000);
 
     return () => clearInterval(interval);
@@ -58,7 +57,7 @@ export default function DashboardPage() {
       updateTaskOverdueStatus(); // Update overdue status
       setSummary(mockDashboardSummary);
       setTasks(getAllTasks());
-      setAuditLog(mockAuditLog);
+      setAuditLog(getCurrentAuditLog());
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
@@ -73,28 +72,27 @@ export default function DashboardPage() {
 
   const handleAddComment = () => {
     if (newComment.trim() && selectedTask) {
-      const newCommentObj = {
-        id: Date.now().toString(),
-        taskId: selectedTask.id,
-        userId: "current_user",
-        username: "Current User",
-        text: newComment.trim(),
-        createdAt: new Date().toISOString(),
-      };
+      // Use the addTaskComment function which creates audit log entry
+      const newCommentObj = addTaskComment(
+        selectedTask.id,
+        "current_user",
+        "Current User",
+        newComment.trim()
+      );
 
-      setTasks(tasks.map(task =>
-        task.id === selectedTask.id
-          ? { ...task, comments: [...task.comments, newCommentObj] }
-          : task
-      ));
+      if (newCommentObj) {
+        // Reload tasks to get the updated comments from the data store
+        loadDashboardData();
 
-      // Update the selected task with the new comment
-      setSelectedTask({
-        ...selectedTask,
-        comments: [...selectedTask.comments, newCommentObj]
-      });
+        // Update the selected task
+        const updatedTasks = getAllTasks();
+        const updatedTask = updatedTasks.find(task => task.id === selectedTask.id);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
 
-      setNewComment("");
+        setNewComment("");
+      }
     }
   };
 

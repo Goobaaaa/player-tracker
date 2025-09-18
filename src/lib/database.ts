@@ -114,6 +114,31 @@ export interface HouseMedia {
   createdAt: string
 }
 
+export interface Incident {
+  id: string
+  title: string
+  incidentDateTime: string
+  suspects: string[]
+  officers: string[]
+  otherIndividuals: string[]
+  description: string
+  mediaUrls: string[]
+  createdBy: string
+  createdAt: string
+  status: 'open' | 'closed' | 'under_investigation'
+}
+
+export interface Weapon {
+  id: string
+  playerId: string
+  gunName: string
+  serialNumber: string
+  ballisticsReference: string
+  status: 'seized' | 'not_seized'
+  notes?: string
+  createdAt: string
+}
+
 export interface DashboardSummary {
   totalPlayers: number
   totalAssetsValue: number

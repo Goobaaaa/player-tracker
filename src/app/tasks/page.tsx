@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline } from "@/lib/mock-data";
+import { getAllTasks, createTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment } from "@/lib/mock-data";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -165,25 +165,23 @@ export default function TasksPage() {
         `mock-media-url-${Date.now()}-${index}-${file.name}`
       ) || [];
 
-      const newCommentObj = {
-        id: Date.now().toString(),
+      // Use the addTaskComment function which creates audit log entry
+      const newCommentObj = addTaskComment(
         taskId,
-        userId: "current_user",
-        username: "Current User",
-        text: commentText || "",
-        mediaUrls,
-        createdAt: new Date().toISOString(),
-      };
+        "current_user",
+        "Current User",
+        commentText || "",
+        mediaUrls
+      );
 
-      setTasks(tasks.map(task =>
-        task.id === taskId
-          ? { ...task, comments: [...task.comments, newCommentObj] }
-          : task
-      ));
+      if (newCommentObj) {
+        // Reload tasks to get the updated comments from the data store
+        loadTasks();
 
-      // Clear the comment input and attachments
-      setNewComment({ ...newComment, [taskId]: "" });
-      setCommentAttachments({ ...commentAttachments, [taskId]: [] });
+        // Clear the comment input and attachments
+        setNewComment({ ...newComment, [taskId]: "" });
+        setCommentAttachments({ ...commentAttachments, [taskId]: [] });
+      }
     }
   };
 

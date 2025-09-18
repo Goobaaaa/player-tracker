@@ -2,27 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bell, Search, Settings, User } from "lucide-react";
+import { Bell, Settings, User } from "lucide-react";
+import { SearchBar } from "@/components/search-bar";
 
 export function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
-
   return (
     <header className="bg-gray-800 border-b border-gray-700">
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center space-x-4 flex-1">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Search players, tasks, documents..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-            />
-          </div>
-        </div>
+        <SearchBar />
 
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">

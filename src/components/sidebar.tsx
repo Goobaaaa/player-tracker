@@ -11,6 +11,8 @@ const navigation = [
   { name: "Suspects", href: "/players", icon: "👥" },
   { name: "Documents", href: "/documents", icon: "📄" },
   { name: "Tasks", href: "/tasks", icon: "✅" },
+  { name: "Incidents", href: "/incidents", icon: "🚨" },
+  { name: "OCR Text Finder", href: "/ocr-text-finder", icon: "🔍" },
   { name: "Settings", href: "/settings", icon: "⚙️" },
 ];
 
