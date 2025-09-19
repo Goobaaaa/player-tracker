@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Bell, Settings, User } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 
@@ -9,9 +9,13 @@ export function Header() {
   return (
     <header className="bg-gray-800 border-b border-gray-700">
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="text-white text-lg font-semibold">Player Tracker</div>
+        <div className="text-white text-lg font-semibold flex items-center">
+          <Image src="/media/usmsbadge.png" alt="USMS Badge" width={32} height={32} className="w-8 h-8 mr-2" />
+          USMS Dashboard
+        </div>
 
         <div className="flex items-center space-x-4">
+          <SearchBar />
           <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
             <Bell className="h-5 w-5" />
           </Button>

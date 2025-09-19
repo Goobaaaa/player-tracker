@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
+
 import Image from "next/image";
 import { Player, Asset, Mugshot, Media, HouseMedia, Document, Weapon } from "@/lib/database";
-import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, addWeapon, getPlayerWeapons, mockWeapons, addVehicleImage, removeVehicleImage } from "@/lib/mock-data";
+import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, getPlayerWeapons, mockWeapons, addVehicleImage, removeVehicleImage } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1039,9 +1040,11 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                                   <div className="grid grid-cols-4 gap-2">
                                     {asset.vehicleImages.map((imageUrl, index) => (
                                       <div key={index} className="relative group">
-                                        <img
+                                        <Image
                                           src={imageUrl}
                                           alt={`Vehicle ${index + 1}`}
+                                          width={64}
+                                          height={64}
                                           className="w-full h-16 object-cover rounded border border-gray-600"
                                           onClick={() => setSelectedImageUrl(imageUrl)}
                                         />
@@ -2344,9 +2347,11 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
               <X className="h-6 w-6" />
             </Button>
             <div className="bg-gray-800 rounded-lg p-4 max-h-[85vh] overflow-auto">
-              <img
+              <Image
                 src={selectedImageUrl}
                 alt="Full size view"
+                width={1000}
+                height={1000}
                 className="max-w-full max-h-[75vh] object-contain mx-auto rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = '';

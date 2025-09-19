@@ -82,6 +82,7 @@ export interface Task {
   createdAt: string
   status: 'active' | 'completed' | 'overdue'
   comments: TaskComment[]
+  mediaUrls?: string[]
 }
 
 export interface Mugshot {

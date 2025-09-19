@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Player Tracker",
-  description: "Track players' assets, finances, tasks, and documents",
+  title: "USMS Dashboard",
+  description: "Track suspects' assets, finances, tasks, and documents",
 };
 
 export default function RootLayout({

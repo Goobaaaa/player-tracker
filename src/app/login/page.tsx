@@ -41,6 +41,7 @@ export default function LoginPage() {
           <div className="mx-auto w-64 h-64 flex items-center justify-center mb-6">
             <Image src="/media/USMSBadge.png" alt="USMS Badge" width={256} height={256} className="object-contain" />
           </div>
+          <h1 className="text-3xl font-bold text-white mb-6">USMS Dashboard</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -51,7 +52,7 @@ export default function LoginPage() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 h-12 text-center"
+              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 h-12 text-center"
               required
             />
           </div>
@@ -63,7 +64,7 @@ export default function LoginPage() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 h-12 text-center"
+              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 h-12 text-center"
               required
             />
           </div>

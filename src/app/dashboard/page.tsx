@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getDaysUntilDeadline, getCurrentAuditLog, addTaskComment } from "@/lib/mock-data";
+import { mockDashboardSummary, getAllTasks, updateTask, updateTaskOverdueStatus, mockUsers, getDaysUntilDeadline, getCurrentAuditLog, addTaskComment, updateDashboardSummary, initializeSampleData } from "@/lib/mock-data";
 import { Task, DashboardSummary } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
@@ -12,7 +12,8 @@ import { SummaryCard } from "@/components/summary-card";
 import { TaskList } from "@/components/task-list";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, User, Calendar, X, MessageSquare } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, User, Calendar, X, MessageSquare, Upload, Eye, Image as ImageIcon, FileText } from "lucide-react";
+import Image from "next/image";
 import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 
@@ -23,6 +24,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [taskMediaUrl, setTaskMediaUrl] = useState("");
+  const [taskMediaName, setTaskMediaName] = useState("");
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
+  const [showImageModal, setShowImageModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -55,6 +60,8 @@ export default function DashboardPage() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       updateTaskOverdueStatus(); // Update overdue status
+      initializeSampleData(); // Initialize sample data if none exists
+      updateDashboardSummary(); // Update dashboard summary with fresh calculations
       setSummary(mockDashboardSummary);
       setTasks(getAllTasks());
       setAuditLog(getCurrentAuditLog());
@@ -94,6 +101,33 @@ export default function DashboardPage() {
         setNewComment("");
       }
     }
+  };
+
+  const handleAddTaskMedia = () => {
+    if (taskMediaUrl.trim() && selectedTask) {
+      // Add media URL to the task
+      const updatedTask = {
+        ...selectedTask,
+        mediaUrls: [...(selectedTask.mediaUrls || []), taskMediaUrl.trim()]
+      };
+
+      const success = updateTask(selectedTask.id, updatedTask);
+      if (success) {
+        loadDashboardData();
+        const updatedTasks = getAllTasks();
+        const taskWithMedia = updatedTasks.find(task => task.id === selectedTask.id);
+        if (taskWithMedia) {
+          setSelectedTask(taskWithMedia);
+        }
+        setTaskMediaUrl("");
+        setTaskMediaName("");
+      }
+    }
+  };
+
+  const handleViewFullImage = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+    setShowImageModal(true);
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
@@ -194,7 +228,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FadeInCard delay={4}>
-                <TaskList tasks={tasks} onTaskClick={handleTaskClick} />
+                <TaskList tasks={tasks} onTaskClick={handleTaskClick} isDashboard={true} />
               </FadeInCard>
               <FadeInCard delay={5}>
                 <ActivityFeed activities={auditLog} />
@@ -206,8 +240,8 @@ export default function DashboardPage() {
 
       {/* Task Detail Modal */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
-          <div className="bg-gray-800 rounded-lg w-full max-w-4xl m-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-x-0 top-0 z-50 flex justify-center pt-8 backdrop-blur-sm bg-black/50 h-full">
+          <div className="bg-gray-800 rounded-lg max-w-2xl shadow-2xl mx-auto mt-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
                 <div className="flex-1">
@@ -252,6 +286,102 @@ export default function DashboardPage() {
                 </Button>
               </div>
 
+              {/* Task Media Section */}
+              {(selectedTask.mediaUrls && selectedTask.mediaUrls.length > 0) && (
+                <div className="border-t border-gray-700 pt-6">
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <ImageIcon className="mr-2 h-5 w-5" />
+                    Task Media ({selectedTask.mediaUrls.length})
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {selectedTask.mediaUrls.map((url, index) => {
+                      const isImage = url.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+                      return (
+                        <div key={index} className="relative group cursor-pointer">
+                          <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            {isImage ? (
+                              <>
+                                <Image
+                                  src={url}
+                                  alt={`Task media ${index + 1}`}
+                                  width={200}
+                                  height={200}
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => handleViewFullImage(url)}
+                                  onError={(e) => {
+                                    const container = e.currentTarget.parentElement;
+                                    if (container) {
+                                      container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                    }
+                                  }}
+                                />
+                                <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(url)}>
+                                  <Eye className="h-8 w-8 text-white" />
+                                </div>
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <FileText className="h-8 w-8 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-400 truncate">Media {index + 1}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Add Task Media Section */}
+              <div className="border-t border-gray-700 pt-6">
+                <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <Upload className="mr-2 h-5 w-5" />
+                  Add Media to Task
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Media URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      value={taskMediaUrl}
+                      onChange={(e) => setTaskMediaUrl(e.target.value)}
+                      className="w-full p-3 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Supported: Images (JPG, PNG, GIF, WEBP), Videos (MP4, MOV), PDFs, and direct links
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Display Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter a name for this media"
+                      value={taskMediaName}
+                      onChange={(e) => setTaskMediaName(e.target.value)}
+                      className="w-full p-3 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleAddTaskMedia}
+                      disabled={!taskMediaUrl.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Add Media
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               {/* Comments Section */}
               <div className="border-t border-gray-700 pt-6">
                 <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -279,18 +409,50 @@ export default function DashboardPage() {
                               <span className="mr-2">📎</span>
                               {comment.mediaUrls.length} file(s) attached
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                              {comment.mediaUrls.map((url, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-gray-600 rounded p-2 text-xs text-gray-300 cursor-pointer hover:bg-gray-500 transition-colors"
-                                  onClick={() => alert(`Viewing: ${url.split('-').pop()?.substring(0, 20) || 'File'}${index + 1}`)}
-                                >
-                                  {url.includes('image') ? '🖼️ Image' :
-                                   url.includes('video') ? '🎥 Video' :
-                                   url.includes('pdf') ? '📄 PDF' : '📎 File'} {index + 1}
-                                </div>
-                              ))}
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                              {comment.mediaUrls.map((url, index) => {
+                                const isImage = url.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+                                return (
+                                  <div
+                                    key={index}
+                                    className="relative group cursor-pointer"
+                                    onClick={() => {
+                                      if (isImage) {
+                                        handleViewFullImage(url);
+                                      } else {
+                                        window.open(url, '_blank');
+                                      }
+                                    }}
+                                  >
+                                    <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                                      {isImage ? (
+                                        <>
+                                          <Image
+                                            src={url}
+                                            alt={`Comment media ${index + 1}`}
+                                            width={100}
+                                            height={100}
+                                            className="w-full h-full object-cover cursor-pointer"
+                                            onError={(e) => {
+                                              const container = e.currentTarget.parentElement;
+                                              if (container) {
+                                                container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                              }
+                                            }}
+                                          />
+                                          <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                            <Eye className="h-6 w-6 text-white" />
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <FileText className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -311,15 +473,102 @@ export default function DashboardPage() {
                     className="w-full p-3 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg resize-none"
                     rows={3}
                   />
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Add Media URL (optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full p-2 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg text-sm"
+                      id={`media-url-${selectedTask?.id}`}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Supported: Images (JPG, PNG, GIF), Videos (MP4, MOV), PDFs, and direct links
+                    </p>
+                  </div>
                   <div className="flex justify-end mt-3">
                     <Button
-                      onClick={handleAddComment}
-                      disabled={!newComment.trim()}
+                      onClick={() => {
+                        const mediaInput = document.getElementById(`media-url-${selectedTask?.id}`) as HTMLInputElement;
+                        const mediaUrl = mediaInput?.value.trim();
+
+                        if (newComment.trim() || mediaUrl) {
+                          // Add comment with media URL if provided
+                          if (mediaUrl) {
+                            // For demo purposes, we'll just add the URL as a media attachment
+                            // In a real app, you'd validate and possibly upload the media
+                            const commentWithMedia = addTaskComment(
+                              selectedTask!.id,
+                              "current_user",
+                              "Current User",
+                              newComment.trim() || "Added media attachment",
+                              [mediaUrl]
+                            );
+
+                            if (commentWithMedia) {
+                              loadDashboardData();
+                              const updatedTasks = getAllTasks();
+                              const updatedTask = updatedTasks.find(task => task.id === selectedTask!.id);
+                              if (updatedTask) {
+                                setSelectedTask(updatedTask);
+                              }
+                              setNewComment("");
+                              if (mediaInput) mediaInput.value = "";
+                            }
+                          } else {
+                            handleAddComment();
+                          }
+                        }
+                      }}
+                      disabled={!newComment.trim() && !(document.getElementById(`media-url-${selectedTask?.id}`) as HTMLInputElement)?.value.trim()}
                       className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600"
                     >
                       Post Comment
                     </Button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Size Image View Modal */}
+      {showImageModal && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20" onClick={() => setShowImageModal(false)}>
+          <div className="relative max-w-6xl max-h-[90vh] w-full m-4" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-4 right-4 z-10 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <div className="bg-gray-800 rounded-lg p-4 max-h-[85vh] overflow-auto">
+              <div className="mt-4 text-center">
+                <Image
+                  src={selectedImageUrl}
+                  alt="Full size image"
+                  width={800}
+                  height={600}
+                  className="max-w-full h-auto rounded-lg"
+                  onError={(e) => {
+                    const container = e.currentTarget.parentElement;
+                    if (container) {
+                      container.innerHTML = '<div class="w-full h-64 flex items-center justify-center bg-gray-700 rounded-lg"><div class="text-center"><svg class="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><p class="text-gray-400">Failed to load image</p></div></div>';
+                    }
+                  }}
+                />
+                <div className="mt-4">
+                  <a
+                    href={selectedImageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Open in new tab
+                  </a>
                 </div>
               </div>
             </div>

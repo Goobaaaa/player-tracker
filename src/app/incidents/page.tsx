@@ -15,8 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar, Users, UserCheck, FileText, Plus, Edit, Trash2, AlertTriangle, Eye, X } from "lucide-react";
+import { Calendar, Users, UserCheck, FileText, Plus, Edit, Trash2, AlertTriangle, Eye } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
+import Image from "next/image";
 
 export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -258,9 +259,9 @@ export default function IncidentsPage() {
                         <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                           <SelectValue placeholder="Add suspect" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gray-800 border-gray-600 text-white">
                           {mockPlayers.map(player => (
-                            <SelectItem key={player.id} value={player.name}>{player.name}</SelectItem>
+                            <SelectItem key={player.id} value={player.name} className="text-white hover:bg-gray-700 focus:bg-gray-700">{player.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -448,9 +449,9 @@ export default function IncidentsPage() {
                         <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                           <SelectValue placeholder="Add suspect" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gray-800 border-gray-600 text-white">
                           {mockPlayers.map(player => (
-                            <SelectItem key={player.id} value={player.name}>{player.name}</SelectItem>
+                            <SelectItem key={player.id} value={player.name} className="text-white hover:bg-gray-700 focus:bg-gray-700">{player.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -600,17 +601,7 @@ export default function IncidentsPage() {
               <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
                 <DialogContent className="bg-gray-800 border-gray-700 max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <div className="flex justify-between items-center">
-                      <DialogTitle className="text-white text-xl">Incident Details</DialogTitle>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsViewModalOpen(false)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <DialogTitle className="text-white text-xl">Incident Details</DialogTitle>
                   </DialogHeader>
 
                   {incidentToView && (
@@ -708,9 +699,11 @@ export default function IncidentsPage() {
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {incidentToView.mediaUrls.map((url, index) => (
                               <div key={index} className="bg-gray-700 rounded-lg overflow-hidden">
-                                <img
+                                <Image
                                   src={url}
                                   alt={`Incident media ${index + 1}`}
+                                  width={96}
+                                  height={96}
                                   className="w-full h-24 object-cover"
                                 />
                               </div>
@@ -834,10 +827,10 @@ export default function IncidentsPage() {
                               <SelectTrigger className="w-32 h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="open">Open</SelectItem>
-                                <SelectItem value="under_investigation">Under Investigation</SelectItem>
-                                <SelectItem value="closed">Closed</SelectItem>
+                              <SelectContent className="bg-gray-800 border-gray-600 text-white">
+                                <SelectItem value="open" className="text-white hover:bg-gray-700 focus:bg-gray-700">Open</SelectItem>
+                                <SelectItem value="under_investigation" className="text-white hover:bg-gray-700 focus:bg-gray-700">Under Investigation</SelectItem>
+                                <SelectItem value="closed" className="text-white hover:bg-gray-700 focus:bg-gray-700">Closed</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

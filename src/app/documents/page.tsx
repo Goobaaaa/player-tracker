@@ -8,7 +8,7 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, ExternalLink, Plus, X } from "lucide-react";
+import { FileText, Upload, ExternalLink, Plus, X, Trash2 } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
 import { Document } from "@/lib/database";
 
@@ -109,6 +109,17 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleDeleteDocument = (documentId: string) => {
+    if (confirm('Are you sure you want to delete this document?')) {
+      const index = mockDocuments.findIndex(doc => doc.id === documentId);
+      if (index !== -1) {
+        mockDocuments.splice(index, 1);
+        setDocuments([...mockDocuments]);
+        alert('Document deleted successfully!');
+      }
+    }
+  };
+
   const handleGoogleDocLink = () => {
     if (googleDocUrl.trim() && googleDocName.trim()) {
       // Validate Google Doc URL
@@ -180,8 +191,13 @@ export default function DocumentsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <FileText className="h-5 w-5 text-blue-400" />
-                        <CardTitle className="text-white text-sm truncate">
-                          {document.filename}
+                        <CardTitle
+                          className="text-white text-sm cursor-pointer group relative max-w-[200px]"
+                          title={document.filename}
+                        >
+                          <span className="truncate block group-hover:whitespace-normal group-hover:break-words transition-all">
+                            {document.filename}
+                          </span>
                         </CardTitle>
                       </div>
                       {document.isGoogleDoc && (
@@ -199,7 +215,7 @@ export default function DocumentsPage() {
                         </p>
                       )}
                       {document.originalFilename && document.originalFilename !== document.filename && (
-                        <p className="text-gray-500 text-xs">
+                        <p className="text-gray-500 text-xs truncate">
                           Original: {document.originalFilename}
                         </p>
                       )}
@@ -215,15 +231,25 @@ export default function DocumentsPage() {
                       </div>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(document.url, '_blank')}
-                      className="w-full bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Open Document
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(document.url, '_blank')}
+                        className="flex-1 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        className="bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
                 </FadeInCard>

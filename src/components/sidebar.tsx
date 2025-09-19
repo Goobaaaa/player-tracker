@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { mockSignOut } from "@/lib/mock-auth";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -51,10 +52,8 @@ export function Sidebar() {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">PT</span>
-              </div>
-              <span className="text-white font-semibold text-lg">Player Tracker</span>
+              <Image src="/media/usmsbadge.png" alt="USMS Badge" width={32} height={32} className="w-8 h-8" />
+              <span className="text-white font-semibold text-lg">USMS Dashboard</span>
             </div>
           </div>
 

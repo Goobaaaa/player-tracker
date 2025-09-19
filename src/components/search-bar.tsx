@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { mockPlayers, getAllTasks, mockDocuments } from "@/lib/mock-data";
-import { Player, Task, Document } from "@/lib/database";
+
 
 interface SearchResult {
   id: string;
@@ -22,7 +22,7 @@ export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isDropdownFocused, setIsDropdownFocused] = useState(false);
+  
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
 

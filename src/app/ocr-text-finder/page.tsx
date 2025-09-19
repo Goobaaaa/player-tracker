@@ -8,10 +8,11 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Download, Eye, Trash2, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, Search, Download, Eye, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { createWorker } from 'tesseract.js';
+import Image from "next/image";
 
 interface OCRResult {
   id: string;
@@ -187,9 +188,11 @@ export default function OCRTextFinderPage() {
                     <div className="space-y-2">
                       <h3 className="text-white font-medium">Preview:</h3>
                       <div className="relative">
-                        <img
+                        <Image
                           src={previewUrl}
                           alt="Preview"
+                          width={192}
+                          height={192}
                           className="w-full h-48 object-cover rounded-lg"
                         />
                         <button

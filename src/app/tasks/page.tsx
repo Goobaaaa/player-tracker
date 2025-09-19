@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment } from "@/lib/mock-data";
+import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted } from "@/lib/mock-data";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare } from "lucide-react";
 import { Task } from "@/lib/database";
 import FadeInCard from "@/components/fade-in-card";
+import Image from "next/image";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -34,6 +35,8 @@ export default function TasksPage() {
   const [taskPriority, setTaskPriority] = useState<"high" | "medium" | "low">("medium");
   const [taskRisk, setTaskRisk] = useState<"dangerous" | "high" | "medium" | "low">("medium");
   const [taskDeadline, setTaskDeadline] = useState("");
+  const [taskMediaFiles, setTaskMediaFiles] = useState<File[]>([]);
+  const [taskMediaUrls, setTaskMediaUrls] = useState<string[]>([]);
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {
@@ -149,6 +152,13 @@ export default function TasksPage() {
     setTaskRisk(task.risk);
     setTaskDeadline(task.deadline.split('T')[0]);
     setSelectedUsers(task.assignedUsers);
+    setTaskMediaUrls(task.mediaUrls || []);
+    setTaskMediaFiles([]); // Reset files, they'll need to be re-selected
+  };
+
+  const handleToggleCompleted = (taskId: string) => {
+    toggleTaskCompleted(taskId);
+    loadTasks();
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -160,11 +170,19 @@ export default function TasksPage() {
 
   const handleAddComment = (taskId: string) => {
     const commentText = newComment[taskId]?.trim();
-    if (commentText || (commentAttachments[taskId]?.length > 0)) {
+    const urlInput = document.getElementById(`media-url-${taskId}`) as HTMLInputElement;
+    const mediaUrl = urlInput?.value.trim();
+
+    if (commentText || (commentAttachments[taskId]?.length > 0) || mediaUrl) {
       // Create mock media URLs for attachments
       const mediaUrls = commentAttachments[taskId]?.map((file, index) =>
         `mock-media-url-${Date.now()}-${index}-${file.name}`
       ) || [];
+
+      // Add URL if provided
+      if (mediaUrl) {
+        mediaUrls.push(mediaUrl);
+      }
 
       // Use the addTaskComment function which creates audit log entry
       const newCommentObj = addTaskComment(
@@ -182,6 +200,12 @@ export default function TasksPage() {
         // Clear the comment input and attachments
         setNewComment({ ...newComment, [taskId]: "" });
         setCommentAttachments({ ...commentAttachments, [taskId]: [] });
+
+        // Clear URL input
+        const urlInput = document.getElementById(`media-url-${taskId}`) as HTMLInputElement;
+        if (urlInput) {
+          urlInput.value = "";
+        }
       }
     }
   };
@@ -214,6 +238,12 @@ export default function TasksPage() {
     if (taskName.trim() && taskDeadline && selectedUsers.length > 0) {
       if (editingTask) {
         // Update existing task
+        // Combine existing media URLs with new ones
+        const allMediaUrls = [
+          ...(editingTask.mediaUrls || []),
+          ...taskMediaUrls.filter(url => !(editingTask.mediaUrls || []).includes(url))
+        ];
+
         const success = updateTask(editingTask.id, {
           name: taskName.trim(),
           description: taskDescription.trim(),
@@ -221,6 +251,7 @@ export default function TasksPage() {
           risk: taskRisk,
           assignedUsers: selectedUsers,
           deadline: taskDeadline,
+          mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : undefined,
         });
 
         if (success) {
@@ -238,7 +269,8 @@ export default function TasksPage() {
           taskRisk,
           selectedUsers,
           taskDeadline,
-          "current_user" // In a real app, this would be the actual user ID
+          "current_user", // In a real app, this would be the actual user ID
+          taskMediaUrls.length > 0 ? taskMediaUrls : undefined
         );
 
         if (newTask) {
@@ -330,7 +362,7 @@ export default function TasksPage() {
             <div className="grid grid-cols-1 gap-6">
               {filteredTasks.map((task, index) => (
                 <FadeInCard key={task.id} delay={index + 1}>
-                  <Card className="bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102">
+                  <Card className={`bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102 ${task.status === 'completed' ? 'bg-gray-900' : ''}`}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3 flex-1">
@@ -381,6 +413,15 @@ export default function TasksPage() {
                         </span>
                       </div>
                       <div className="flex space-x-2">
+<Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleCompleted(task.id)}
+                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                        >
+                          {task.status === 'completed' ? <Clock className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                        </Button>
+                        
                         <Button
                           variant="outline"
                           size="sm"
@@ -514,6 +555,19 @@ export default function TasksPage() {
                             </div>
                           )}
 
+                          {/* URL Attachment */}
+                          <div className="mt-2">
+                            <input
+                              type="url"
+                              placeholder="https://example.com/image.jpg"
+                              className="w-full p-2 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg text-xs"
+                              id={`media-url-${task.id}`}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                              Add media URL (images, videos, PDFs)
+                            </p>
+                          </div>
+
                           <div className="flex justify-between items-center mt-2">
                             <div className="flex items-center space-x-2">
                               <input
@@ -537,7 +591,7 @@ export default function TasksPage() {
                             <Button
                               size="sm"
                               onClick={() => handleAddComment(task.id)}
-                              disabled={!newComment[task.id]?.trim() && !commentAttachments[task.id]?.length}
+                              disabled={!newComment[task.id]?.trim() && !commentAttachments[task.id]?.length && !(document.getElementById(`media-url-${task.id}`) as HTMLInputElement)?.value.trim()}
                               className="bg-blue-600 hover:bg-blue-700 text-xs disabled:bg-gray-600"
                             >
                               Post Comment
@@ -584,6 +638,8 @@ export default function TasksPage() {
                     setTaskRisk("medium");
                     setTaskDeadline("");
                     setSelectedUsers([]);
+                    setTaskMediaFiles([]);
+                    setTaskMediaUrls([]);
                   }}
                   className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                 >
@@ -662,10 +718,10 @@ export default function TasksPage() {
                     Deadline *
                   </label>
                   <Input
-                    type="date"
+                    type="datetime-local"
                     value={taskDeadline}
                     onChange={(e) => setTaskDeadline(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date().toISOString().slice(0, 16)}
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
@@ -691,6 +747,68 @@ export default function TasksPage() {
                         <span className="text-gray-400 text-xs">({user.username})</span>
                       </label>
                     ))}
+                  </div>
+                </div>
+
+                {/* Media Attachments */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Media Attachments (Optional)
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,video/*,.pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setTaskMediaFiles(files);
+
+                        // Create mock URLs for preview
+                        const urls = files.map(file => URL.createObjectURL(file));
+                        setTaskMediaUrls(urls);
+                      }}
+                      className="w-full p-2 bg-gray-700 border border-gray-600 text-white rounded-lg text-sm"
+                    />
+                    <p className="text-xs text-gray-400">
+                      Supported: Images, Videos, PDFs, DOC/DOCX files
+                    </p>
+
+                    {/* Preview selected files */}
+                    {taskMediaUrls.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {taskMediaUrls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            {taskMediaFiles[index] && taskMediaFiles[index].type.startsWith('image/') ? (
+                              <Image
+                                src={url}
+                                alt={`Preview ${index + 1}`}
+                                width={64}
+                                height={64}
+                                className="w-16 h-16 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center">
+                                <span className="text-2xl">
+                                  {taskMediaFiles[index] && taskMediaFiles[index].type.startsWith('video/') ? '🎥' :
+                                   taskMediaFiles[index] && taskMediaFiles[index].type.includes('pdf') ? '📄' : '📎'}
+                                </span>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskMediaFiles(prev => prev.filter((_, i) => i !== index));
+                                setTaskMediaUrls(prev => prev.filter((_, i) => i !== index));
+                              }}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

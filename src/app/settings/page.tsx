@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, User, Shield, Database, Palette, Upload } from "lucide-react";
+import Image from "next/image";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -84,7 +85,7 @@ export default function SettingsPage() {
                           Application Name
                         </label>
                         <Input
-                          defaultValue="Player Tracker"
+                          defaultValue="USMS Dashboard"
                           className="bg-gray-700 border-gray-600 text-white"
                         />
                       </div>
@@ -93,9 +94,7 @@ export default function SettingsPage() {
                           Logo
                         </label>
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold">PT</span>
-                          </div>
+                          <Image src="/media/usmsbadge.png" alt="USMS Badge" width={48} height={48} className="w-12 h-12" />
                           <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
                             <Upload className="mr-2 h-4 w-4" />
                             Upload Logo
@@ -140,7 +139,7 @@ export default function SettingsPage() {
                             </div>
                             <div>
                               <p className="text-white font-medium">Admin User</p>
-                              <p className="text-gray-400 text-sm">admin@playertracker.com</p>
+                              <p className="text-gray-400 text-sm">admin@usmsdashboard.com</p>
                             </div>
                           </div>
                           <Badge className="bg-purple-600">Admin</Badge>
@@ -153,7 +152,7 @@ export default function SettingsPage() {
                             </div>
                             <div>
                               <p className="text-white font-medium">User Account</p>
-                              <p className="text-gray-400 text-sm">user@playertracker.com</p>
+                              <p className="text-gray-400 text-sm">user@usmsdashboard.com</p>
                             </div>
                           </div>
                           <Badge className="bg-green-600">User</Badge>

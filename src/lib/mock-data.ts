@@ -216,6 +216,7 @@ export const getPlayerWeapons = (playerId: string): Weapon[] => {
 
 // LocalStorage helpers
 const STORAGE_KEYS = {
+  players: 'playerTracker_players',
   tasks: 'playerTracker_tasks',
   taskComments: 'playerTracker_taskComments',
   auditLog: 'playerTracker_auditLog',
@@ -732,7 +733,8 @@ export const createTask = (
   risk: 'dangerous' | 'high' | 'medium' | 'low',
   assignedUsers: string[],
   deadline: string,
-  createdBy: string
+  createdBy: string,
+  mediaUrls?: string[]
 ): Task => {
   const newTask: Task = {
     id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -745,7 +747,8 @@ export const createTask = (
     createdBy,
     createdAt: new Date().toISOString(),
     status: 'active',
-    comments: []
+    comments: [],
+    mediaUrls
   };
 
   mockTasks.push(newTask);
@@ -774,7 +777,19 @@ export const updateTask = (taskId: string, updates: Partial<Task>): boolean => {
     const oldTask = { ...task };
 
     // Update the task with new values
-    mockTasks[taskIndex] = { ...task, ...updates };
+    const updatedTask = { ...task, ...updates };
+    mockTasks[taskIndex] = updatedTask;
+
+    // Reorder the tasks
+    if (updates.status) {
+      mockTasks.splice(taskIndex, 1);
+      if (updates.status === 'completed') {
+        mockTasks.push(updatedTask);
+      } else {
+        mockTasks.unshift(updatedTask);
+      }
+    }
+
     saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
 
     // Add audit log entry for significant changes
@@ -817,6 +832,15 @@ export const updateTask = (taskId: string, updates: Partial<Task>): boolean => {
 
 export const updateTaskStatus = (taskId: string, status: 'active' | 'completed' | 'overdue'): boolean => {
   return updateTask(taskId, { status });
+};
+
+export const toggleTaskCompleted = (taskId: string): boolean => {
+  const task = mockTasks.find(task => task.id === taskId);
+  if (task) {
+    const newStatus = task.status === 'completed' ? 'active' : 'completed';
+    return updateTaskStatus(taskId, newStatus);
+  }
+  return false;
 };
 
 export const deleteTask = (taskId: string): boolean => {
@@ -1066,3 +1090,92 @@ export const mockUsers = [
   { id: '4', name: 'Mike Johnson', username: 'mikej' },
   { id: '5', name: 'Sarah Wilson', username: 'swilson' }
 ];
+
+// Initialize sample data if none exists
+export const initializeSampleData = () => {
+  // Only initialize if there's no data in localStorage
+  const storedPlayers = loadFromStorage(STORAGE_KEYS.players, []);
+  
+
+  if (storedPlayers.length === 0) {
+    // Create sample players
+    const samplePlayers = [
+      {
+        id: 'player-1',
+        name: 'John Smith',
+        alias: 'Johnny S',
+        notes: 'High-value target with known associates',
+        createdAt: new Date().toISOString(),
+        status: 'active' as const,
+        phoneNumber: '+1-555-0123',
+        houseAddress: '123 Main St, City, State 12345'
+      },
+      {
+        id: 'player-2',
+        name: 'Jane Doe',
+        alias: 'JD',
+        notes: 'Suspected money laundering operations',
+        createdAt: new Date().toISOString(),
+        status: 'active' as const,
+        phoneNumber: '+1-555-0456',
+        houseAddress: '456 Oak Ave, City, State 67890'
+      }
+    ];
+
+    // Create sample assets
+    const sampleAssets = [
+      {
+        id: 'asset-1',
+        playerId: 'player-1',
+        vehicleName: 'Mercedes-Benz S-Class',
+        vehicleReg: 'ABC123',
+        vehicleVin: 'WDD2228211A123456',
+        vehicleColour: 'Black',
+        vehicleValue: 95000,
+        vehicleLocation: '123 Main St, City, State 12345',
+        acquiredAt: '2023-01-15T10:00:00Z',
+        notes: 'Luxury sedan, black color',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'asset-2',
+        playerId: 'player-1',
+        vehicleName: 'BMW X5',
+        vehicleReg: 'XYZ789',
+        vehicleVin: 'WBAJR9C52KB123456',
+        vehicleColour: 'Silver',
+        vehicleValue: 65000,
+        vehicleLocation: '123 Main St, City, State 12345',
+        acquiredAt: '2023-03-20T14:30:00Z',
+        notes: 'SUV, silver color',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'asset-3',
+        playerId: 'player-2',
+        vehicleName: 'Audi A8',
+        vehicleReg: 'DEF456',
+        vehicleVin: 'WAUZZ4GF7JN123456',
+        vehicleColour: 'White',
+        vehicleValue: 85000,
+        vehicleLocation: '456 Oak Ave, City, State 67890',
+        acquiredAt: '2023-02-10T09:15:00Z',
+        notes: 'Luxury sedan, white color',
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    // Save sample data to localStorage
+    saveToStorage(STORAGE_KEYS.players, samplePlayers);
+    saveToStorage(STORAGE_KEYS.assets, sampleAssets);
+
+    // Update in-memory arrays
+    mockPlayers.length = 0;
+    mockPlayers.push(...samplePlayers);
+    mockAssets.length = 0;
+    mockAssets.push(...sampleAssets);
+
+    // Update dashboard summary
+    updateDashboardSummary();
+  }
+};

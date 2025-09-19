@@ -1,15 +1,18 @@
 import { Task } from "@/lib/database";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle, User, Calendar } from "lucide-react";
-import { mockUsers, getDaysUntilDeadline } from "@/lib/mock-data";
+import { mockUsers, getDaysUntilDeadline, toggleTaskCompleted } from "@/lib/mock-data";
 
 interface TaskListProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
+  isDashboard?: boolean;
 }
 
-export function TaskList({ tasks, onTaskClick }: TaskListProps) {
+export function TaskList({ tasks, onTaskClick, isDashboard = false }: TaskListProps) {
   const getStatusIcon = (status: Task["status"]) => {
     switch (status) {
       case "completed": return <CheckCircle className="h-4 w-4 text-green-400" />;
@@ -56,12 +59,25 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
     return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
   };
 
+  const handleToggleCompleted = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleTaskCompleted(taskId);
+    // Refresh the task list
+    if (onTaskClick) {
+      const updatedTasks = tasks.map(task => task.id === taskId ? { ...task, status: (task.status === 'completed' ? 'active' : 'completed') as Task["status"] } : task);
+      const clickedTask = updatedTasks.find(t => t.id === taskId);
+      if (clickedTask) {
+        onTaskClick(clickedTask);
+      }
+    }
+  };
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
         <CardTitle className="text-white flex items-center">
           <CheckCircle className="mr-2 h-5 w-5" />
-          Recent Tasks
+          {isDashboard ? 'Active Tasks' : 'All Tasks'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -73,10 +89,18 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
               <p className="text-gray-500 text-sm">Create your first task to get started</p>
             </div>
           ) : (
-            tasks.slice(0, 5).map((task) => (
+            tasks
+              .sort((a, b) => {
+                if (a.status === 'completed' && b.status !== 'completed') return 1;
+                if (a.status !== 'completed' && b.status === 'completed') return -1;
+                return 0;
+              })
+              .filter(task => isDashboard ? task.status !== 'completed' : true) // Hide completed tasks on dashboard
+              .slice(0, isDashboard ? 5 : undefined) // Limit to 5 on dashboard
+              .map((task) => (
               <div
                 key={task.id}
-                className="p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer"
+                className={`p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer ${task.status === 'completed' ? 'opacity-50' : ''}`}
                 onClick={() => onTaskClick?.(task)}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -91,6 +115,15 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
                     <Badge className={`${getRiskColor(task.risk)} text-xs`}>
                       {task.risk}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-green-400 hover:text-green-300 hover:bg-green-900/20"
+                      onClick={(e) => handleToggleCompleted(task.id, e)}
+                      title={task.status === 'completed' ? 'Mark as active' : 'Mark as complete'}
+                    >
+                      {task.status === 'completed' ? <Clock className="h-4 w-4" /> : null}
+                    </Button>
                   </div>
                 </div>
 
@@ -143,6 +176,57 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
                           <span className="text-gray-400 text-xs">
                             +{task.comments.reduce((total, comment) =>
                               total + (comment.mediaUrls?.length || 0), 0) - 6}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Direct Task Media Attachments */}
+                {task.mediaUrls && task.mediaUrls.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-600">
+                    <div className="flex items-center space-x-2 overflow-x-auto">
+                      {task.mediaUrls.slice(0, 6).map((url, index) => (
+                        <div
+                          key={`task-${index}`}
+                          className="relative group cursor-pointer flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (url.includes('image')) {
+                              window.open(url, '_blank');
+                            } else {
+                              alert(`Opening: ${url.split('/').pop()?.substring(0, 20) || 'File'}${index + 1}`);
+                            }
+                          }}
+                        >
+                          {url.includes('image') ? (
+                            <>
+                              <Image
+                                src={url}
+                                alt={`Task media ${index + 1}`}
+                                width={48}
+                                height={48}
+                                className="w-12 h-12 object-cover rounded-lg bg-gray-600"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span className="text-white text-xs">👁️</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
+                              <span className="text-lg">
+                                {url.includes('video') ? '🎥' :
+                                 url.includes('pdf') ? '📄' : '📎'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {task.mediaUrls.length > 6 && (
+                        <div className="flex-shrink-0 w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">
+                            +{task.mediaUrls.length - 6}
                           </span>
                         </div>
                       )}
