@@ -6,18 +6,17 @@ const nextConfig: NextConfig = {
 
   // Configure domains for external images
   images: {
-    domains: [
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'picsum.photos',
-      'i.imgur.com',
-      'i.ibb.co',
-      'upload.wikimedia.org',
-      'www.w3schools.com',
-      'cdn.pixabay.com',
-      'www.freepnglogos.com',
-      'upload.wikimedia.org',
-      'i.gyazo.com',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'i.imgur.com' },
+      { protocol: 'https', hostname: 'i.ibb.co' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+      { protocol: 'https', hostname: 'www.w3schools.com' },
+      { protocol: 'https', hostname: 'cdn.pixabay.com' },
+      { protocol: 'https', hostname: 'www.freepnglogos.com' },
+      { protocol: 'https', hostname: 'i.gyazo.com' },
     ],
   },
 };
