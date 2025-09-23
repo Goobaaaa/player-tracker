@@ -928,6 +928,39 @@ export const getTaskComments = (taskId: string): TaskComment[] => {
   return mockTaskComments.filter(comment => comment.taskId === taskId);
 };
 
+export const deleteTaskComment = (taskId: string, commentId: string): boolean => {
+  // Remove from global comments array
+  const commentIndex = mockTaskComments.findIndex(comment => comment.id === commentId);
+  if (commentIndex === -1) return false;
+
+  mockTaskComments.splice(commentIndex, 1);
+  saveToStorage(STORAGE_KEYS.taskComments, mockTaskComments);
+
+  // Remove from task's comments array
+  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
+  if (taskIndex !== -1) {
+    const task = mockTasks[taskIndex];
+    task.comments = task.comments.filter(comment => comment.id !== commentId);
+    saveToStorage(STORAGE_KEYS.tasks, mockTasks);
+
+    // Add audit log entry
+    const currentUser = getCurrentUser();
+    addAuditLogEntry(
+      'delete',
+      'comment',
+      'task comment',
+      commentId,
+      `Deleted comment from task "${task.name}"`,
+      currentUser.id,
+      currentUser.username
+    );
+
+    return true;
+  }
+
+  return false;
+};
+
 // Task utility functions
 export const isTaskOverdue = (deadline: string): boolean => {
   return new Date(deadline) < new Date();

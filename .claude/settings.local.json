@@ -25,7 +25,13 @@
       "Bash(npx eslint:*)",
       "Bash(npm run seed:*)",
       "Bash(wmic:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(ndm:*)",
+      "Bash(timeout:*)",
+      "Bash(node:*)",
+      "Bash(git restore:*)",
+      "Bash(tskill:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

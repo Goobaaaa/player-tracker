@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted } from "@/lib/mock-data";
+import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted, deleteTaskComment } from "@/lib/mock-data";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,10 @@ export default function TasksPage() {
   const [showCommentsTask, setShowCommentsTask] = useState<string | null>(null);
   const [newComment, setNewComment] = useState<{[taskId: string]: string}>({});
   const [commentAttachments, setCommentAttachments] = useState<{[taskId: string]: File[]}>({});
+  const [mediaFileNames, setMediaFileNames] = useState<{[taskId: string]: {[index: number]: string}}>({});
+  const [imageAttachments, setImageAttachments] = useState<{[taskId: string]: Array<{url: string, name: string}>}>({});
+  const [selectedImageUrl, setSelectedImageUrl] = React.useState('');
+  const [showImageModal, setShowImageModal] = React.useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   // Form state
   const [taskName, setTaskName] = useState("");
@@ -140,6 +144,11 @@ export default function TasksPage() {
     }
   };
 
+  const truncateDescription = (description: string, maxLength: number = 150) => {
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength).trim() + "...";
+  };
+
   const handleCreateTask = () => {
     setShowCreateModal(true);
   };
@@ -168,23 +177,43 @@ export default function TasksPage() {
     }
   };
 
-  const handleAddComment = (taskId: string) => {
+  const handleAddComment = async (taskId: string) => {
     const commentText = newComment[taskId]?.trim();
-    const urlInput = document.getElementById(`media-url-${taskId}`) as HTMLInputElement;
-    const mediaUrl = urlInput?.value.trim();
 
-    if (commentText || (commentAttachments[taskId]?.length > 0) || mediaUrl) {
-      // Create mock media URLs for attachments
-      const mediaUrls = commentAttachments[taskId]?.map((file, index) =>
-        `mock-media-url-${Date.now()}-${index}-${file.name}`
-      ) || [];
+    if (commentText || (commentAttachments[taskId]?.length > 0) || (imageAttachments[taskId]?.[0]?.url.trim())) {
+      const mediaUrls = [];
 
-      // Add URL if provided
-      if (mediaUrl) {
-        mediaUrls.push(mediaUrl);
+      // Process file attachments
+      if (commentAttachments[taskId]?.length > 0) {
+        const fileArray = commentAttachments[taskId];
+        const fileNamesArray = mediaFileNames[taskId] || {};
+
+        for (let index = 0; index < fileArray.length; index++) {
+          const file = fileArray[index];
+          const customName = fileNamesArray[index] || file.name;
+
+          if (file.type.startsWith('image/')) {
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target?.result as string);
+              reader.readAsDataURL(file);
+            });
+            mediaUrls.push(`${customName}:${dataUrl}`);
+          } else {
+            mediaUrls.push(`${customName}:mock-file-${Date.now()}-${file.name}`);
+          }
+        }
       }
 
-      // Use the addTaskComment function which creates audit log entry
+      // Process URL attachments
+      if (imageAttachments[taskId]?.[0]?.url.trim()) {
+        imageAttachments[taskId].forEach(img => {
+          if (img.url.trim()) {
+            mediaUrls.push(img.name ? `${img.name}:${img.url}` : img.url);
+          }
+        });
+      }
+
       const newCommentObj = addTaskComment(
         taskId,
         "current_user",
@@ -194,18 +223,11 @@ export default function TasksPage() {
       );
 
       if (newCommentObj) {
-        // Reload tasks to get the updated comments from the data store
         loadTasks();
-
-        // Clear the comment input and attachments
         setNewComment({ ...newComment, [taskId]: "" });
         setCommentAttachments({ ...commentAttachments, [taskId]: [] });
-
-        // Clear URL input
-        const urlInput = document.getElementById(`media-url-${taskId}`) as HTMLInputElement;
-        if (urlInput) {
-          urlInput.value = "";
-        }
+        setMediaFileNames({ ...mediaFileNames, [taskId]: {} });
+        setImageAttachments({ ...imageAttachments, [taskId]: [{ url: "", name: "" }] });
       }
     }
   };
@@ -213,9 +235,24 @@ export default function TasksPage() {
   const handleFileAttachment = (taskId: string, files: FileList | null) => {
     if (files) {
       const newFiles = Array.from(files);
+      const currentFiles = commentAttachments[taskId] || [];
+      const startIndex = currentFiles.length;
+
+      // Initialize file names for new files
+      const newFileNames = { ...mediaFileNames[taskId] };
+      newFiles.forEach((file, index) => {
+        const fileIndex = startIndex + index;
+        newFileNames[fileIndex] = file.name;
+      });
+
       setCommentAttachments({
         ...commentAttachments,
-        [taskId]: [...(commentAttachments[taskId] || []), ...newFiles]
+        [taskId]: [...currentFiles, ...newFiles]
+      });
+
+      setMediaFileNames({
+        ...mediaFileNames,
+        [taskId]: newFileNames
       });
     }
   };
@@ -223,7 +260,21 @@ export default function TasksPage() {
   const removeAttachment = (taskId: string, index: number) => {
     const newAttachments = [...(commentAttachments[taskId] || [])];
     newAttachments.splice(index, 1);
+
+    // Clean up file names and reindex
+    const newFileNames = { ...mediaFileNames[taskId] };
+    delete newFileNames[index];
+
+    // Reindex remaining file names
+    const reindexedNames: {[index: number]: string} = {};
+    Object.keys(newFileNames).sort().forEach(key => {
+      const oldIndex = parseInt(key);
+      const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
+      reindexedNames[newIndex] = newFileNames[oldIndex];
+    });
+
     setCommentAttachments({ ...commentAttachments, [taskId]: newAttachments });
+    setMediaFileNames({ ...mediaFileNames, [taskId]: reindexedNames });
   };
 
   const handleUserSelection = (userId: string) => {
@@ -234,6 +285,31 @@ export default function TasksPage() {
     }
   };
 
+  const handleDeleteAttachment = (taskId: string, commentId: string, attachmentIndex: number) => {
+    if (confirm('Are you sure you want to delete this attachment?')) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        const comment = task.comments.find(c => c.id === commentId);
+        if (comment && comment.mediaUrls) {
+          comment.mediaUrls.splice(attachmentIndex, 1);
+          updateTask(taskId, { comments: task.comments });
+          loadTasks();
+        }
+      }
+    }
+  };
+
+  const handleDeleteComment = (taskId: string, commentId: string) => {
+    if (confirm('Are you sure you want to delete this comment?')) {
+      // Use the data store function to delete the comment
+      if (deleteTaskComment(taskId, commentId)) {
+        // Reload tasks to get the updated state from the data store
+        loadTasks();
+      }
+    }
+  };
+
+  
   const handleSubmitTask = () => {
     if (taskName.trim() && taskDeadline && selectedUsers.length > 0) {
       if (editingTask) {
@@ -369,7 +445,9 @@ export default function TasksPage() {
                         {getStatusIcon(task.status)}
                         <div className="flex-1">
                           <h3 className="font-medium text-white text-lg">{task.name}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{task.description}</p>
+                          <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                            {showCommentsTask === task.id ? task.description : truncateDescription(task.description)}
+                          </p>
                           <div className="flex items-center space-x-2 mt-2">
                             <User className="h-3 w-3 text-gray-400" />
                             <span className="text-sm text-gray-400">
@@ -449,42 +527,7 @@ export default function TasksPage() {
                       </div>
                     </div>
 
-                  {/* Media Attachments */}
-                  {task.comments.some(comment => comment.mediaUrls && comment.mediaUrls.length > 0) && (
-                    <div className="mt-4 pt-4 border-t border-gray-700">
-                      <div className="flex items-center text-gray-400 text-xs mb-2">
-                        <span className="mr-2">📎</span>
-                        {task.comments.reduce((total, comment) => total + (comment.mediaUrls?.length || 0), 0)} file(s) attached
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {task.comments
-                          .filter(comment => comment.mediaUrls && comment.mediaUrls.length > 0)
-                          .flatMap(comment => comment.mediaUrls || [])
-                          .slice(0, 8)
-                          .map((url, index) => (
-                            <div
-                              key={index}
-                              className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-500 transition-colors"
-                              onClick={() => alert(`Media file: ${url.split('-').pop()?.substring(0, 20) || 'File'}${index + 1}`)}
-                            >
-                              <span className="text-gray-400 text-xs">
-                                {url.includes('image') ? '🖼️' :
-                                 url.includes('video') ? '🎥' :
-                                 url.includes('pdf') ? '📄' : '📎'}
-                              </span>
-                            </div>
-                          ))}
-                        {task.comments.reduce((total, comment) => total + (comment.mediaUrls?.length || 0), 0) > 8 && (
-                          <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">
-                              +{task.comments.reduce((total, comment) => total + (comment.mediaUrls?.length || 0), 0) - 8}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  </CardContent>
+                    </CardContent>
 
                   {/* Comments Section */}
                   {showCommentsTask === task.id && (
@@ -504,20 +547,79 @@ export default function TasksPage() {
                                       {new Date(comment.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
+                                  <button
+                                    onClick={() => handleDeleteComment(task.id, comment.id)}
+                                    className="text-red-400 hover:text-red-300 text-xs"
+                                    title="Delete comment"
+                                  >
+                                    Delete
+                                  </button>
                                 </div>
                                 <p className="text-gray-300 text-sm">{comment.text}</p>
                                 {comment.mediaUrls && comment.mediaUrls.length > 0 && (
                                   <div className="mt-2">
-                                    <div className="flex items-center text-gray-400 text-xs mb-1">
+                                    <div className="flex items-center text-gray-400 text-xs mb-2">
                                       <span className="mr-2">📎</span>
                                       {comment.mediaUrls.length} file(s) attached
                                     </div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {comment.mediaUrls.map((url, index) => (
-                                        <div key={index} className="bg-gray-600 rounded px-2 py-1 text-xs text-gray-300">
-                                          {url.split('-').pop()?.substring(0, 15) || `File ${index + 1}`}
-                                        </div>
-                                      ))}
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                      {comment.mediaUrls.map((url, index) => {
+                                        let displayUrl = url;
+                                        let fileName = `File ${index + 1}`;
+
+                                        // Handle named URLs (format: "name:url")
+                                        const nameIndex = url.indexOf(':');
+                                        if (nameIndex > 0 && !url.startsWith('http')) {
+                                          const name = url.substring(0, nameIndex);
+                                          const actualUrl = url.substring(nameIndex + 1);
+
+                                          if (actualUrl.startsWith('data:')) {
+                                            displayUrl = actualUrl;
+                                            fileName = name;
+                                          }
+                                        } else {
+                                          fileName = url.split('/').pop() || `File ${index + 1}`;
+                                        }
+
+                                        const isImage = (displayUrl.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(displayUrl)) && !displayUrl.startsWith('mock-file');
+                                        const isVideo = displayUrl.startsWith('data:video/') || /\.(mp4|avi|mov|webm)$/i.test(displayUrl);
+
+                                        const handleViewFullImage = (url: string) => {
+                                          setSelectedImageUrl(url);
+                                          setShowImageModal(true);
+                                        };
+
+                                        return (
+                                          <div key={index} className="relative group">
+                                            <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center hover:bg-gray-500 transition-colors cursor-pointer" onClick={() => handleViewFullImage(displayUrl)}>
+                                              {isImage ? (
+                                                <Image
+                                                  src={displayUrl}
+                                                  alt={fileName}
+                                                  width={200}
+                                                  height={200}
+                                                  className="w-full h-full object-cover"
+                                                  unoptimized
+                                                />
+                                              ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-600">
+                                                  <span className="text-2xl">
+                                                    {isVideo ? '🎥' :
+                                                     displayUrl.includes('pdf') ? '📄' : '📎'}
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="mt-1 text-xs text-gray-300 text-center truncate">{fileName}</div>
+                                            <button
+                                              onClick={() => handleDeleteAttachment(task.id, comment.id, index)}
+                                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                                            >
+                                              ×
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 )}
@@ -528,76 +630,124 @@ export default function TasksPage() {
                           )}
                         </div>
 
-                        {/* Add Comment Form */}
-                        <div className="border-t border-gray-600 pt-3">
-                          <textarea
-                            placeholder="Add a comment..."
-                            value={newComment[task.id] || ""}
-                            onChange={(e) => setNewComment({ ...newComment, [task.id]: e.target.value })}
-                            className="w-full p-2 bg-gray-800 border border-gray-600 text-white placeholder-gray-400 rounded-lg resize-none text-sm"
-                            rows={2}
-                          />
-
-                          {/* File Attachments */}
-                          {(commentAttachments[task.id]?.length > 0) && (
-                            <div className="mt-2 space-y-1">
-                              {commentAttachments[task.id].map((file, index) => (
-                                <div key={index} className="flex items-center justify-between bg-gray-700 rounded p-2 text-xs">
-                                  <span className="text-gray-300 truncate flex-1">{file.name}</span>
-                                  <button
-                                    onClick={() => removeAttachment(task.id, index)}
-                                    className="text-red-400 hover:text-red-300 ml-2"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* URL Attachment */}
-                          <div className="mt-2">
-                            <input
-                              type="url"
-                              placeholder="https://example.com/image.jpg"
-                              className="w-full p-2 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg text-xs"
-                              id={`media-url-${task.id}`}
-                            />
-                            <p className="text-xs text-gray-400 mt-1">
-                              Add media URL (images, videos, PDFs)
-                            </p>
-                          </div>
-
-                          <div className="flex justify-between items-center mt-2">
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="file"
-                                id={`file-${task.id}`}
-                                className="hidden"
-                                multiple
-                                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-                                onChange={(e) => handleFileAttachment(task.id, e.target.files)}
-                              />
-                              <label
-                                htmlFor={`file-${task.id}`}
-                                className="cursor-pointer inline-flex items-center px-2 py-1 border border-gray-600 text-xs font-medium rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                              >
-                                Attach Media
-                              </label>
-                              <span className="text-gray-500 text-xs">
-                                {commentAttachments[task.id]?.length || 0} file(s)
-                              </span>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => handleAddComment(task.id)}
-                              disabled={!newComment[task.id]?.trim() && !commentAttachments[task.id]?.length && !(document.getElementById(`media-url-${task.id}`) as HTMLInputElement)?.value.trim()}
-                              className="bg-blue-600 hover:bg-blue-700 text-xs disabled:bg-gray-600"
-                            >
-                              Post Comment
-                            </Button>
-                          </div>
-                        </div>
+                                                  {/* Add Comment Form */}
+                                                <div className="border-t border-gray-600 pt-3">
+                                                  <textarea
+                                                    placeholder="Add a comment..."
+                                                    value={newComment[task.id] || ""}
+                                                    onChange={(e) => setNewComment({ ...newComment, [task.id]: e.target.value })}
+                                                    className="w-full p-2 bg-gray-800 border border-gray-600 text-white placeholder-gray-400 rounded-lg resize-none text-sm"
+                                                    rows={2}
+                                                  />
+                        
+                                                  {/* Unified Attachments Section */}
+                                                  <div className="mt-3">
+                                                    <div className="text-xs text-gray-400 mb-2">Add Attachments:</div>
+                        
+                                                    {/* File Upload */}
+                                                    <div className="flex items-center space-x-2 mb-3">
+                                                      <label
+                                                        htmlFor={`file-${task.id}`}
+                                                        className="cursor-pointer inline-flex items-center px-2 py-1 border border-gray-600 text-xs font-medium rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                      >
+                                                        Upload File
+                                                      </label>
+                                                      <input
+                                                        type="file"
+                                                        id={`file-${task.id}`}
+                                                        className="hidden"
+                                                        multiple
+                                                        onChange={(e) => handleFileAttachment(task.id, e.target.files)}
+                                                      />
+                                                      <span className="text-gray-500 text-xs">
+                                                        {commentAttachments[task.id]?.length || 0} file(s) selected
+                                                      </span>
+                                                    </div>
+                        
+                                                    {/* URL Attachment */}
+                                                    <div className="space-y-2 mb-3">
+                                                      {(imageAttachments[task.id] || [{ url: "", name: "" }]).map((img, index) => (
+                                                        <div key={index} className="flex gap-2 items-center">
+                                                          <div className="flex-1">
+                                                            <input
+                                                              type="url"
+                                                              value={img.url}
+                                                              onChange={(e) => {
+                                                                const currentImages = imageAttachments[task.id] || [{ url: "", name: "" }];
+                                                                const newImages = [...currentImages];
+                                                                newImages[index] = { ...newImages[index], url: e.target.value };
+                                                                setImageAttachments({
+                                                                  ...imageAttachments,
+                                                                  [task.id]: newImages
+                                                                });
+                                                              }}
+                                                              placeholder="https://example.com/image.jpg"
+                                                              className="w-full p-1 bg-gray-600 border border-gray-500 text-white placeholder-gray-400 rounded text-xs"
+                                                            />
+                                                          </div>
+                                                          <div className="flex-1 flex items-center gap-2">
+                                                            <input
+                                                              type="text"
+                                                              value={img.name}
+                                                              onChange={(e) => {
+                                                                const currentImages = imageAttachments[task.id] || [{ url: "", name: "" }];
+                                                                const newImages = [...currentImages];
+                                                                newImages[index] = { ...newImages[index], name: e.target.value };
+                                                                setImageAttachments({
+                                                                  ...imageAttachments,
+                                                                  [task.id]: newImages
+                                                                });
+                                                              }}
+                                                              placeholder="Attachment name"
+                                                              className="flex-1 p-1 bg-gray-600 border border-gray-500 text-white placeholder-gray-400 rounded text-xs"
+                                                            />
+                                                            {index === (imageAttachments[task.id]?.length || 1) - 1 && (
+                                                              <button
+                                                                onClick={() => {
+                                                                  const currentImages = imageAttachments[task.id] || [{ url: "", name: "" }];
+                                                                  setImageAttachments({
+                                                                    ...imageAttachments,
+                                                                    [task.id]: [...currentImages, { url: "", name: "" }]
+                                                                  });
+                                                                }}
+                                                                className="w-6 h-6 bg-green-600 hover:bg-green-700 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                                                                title="Add another URL"
+                                                              >
+                                                                +
+                                                              </button>
+                                                            )}
+                                                          </div>
+                                                          {(imageAttachments[task.id]?.length || 1) > 1 && (
+                                                            <button
+                                                              onClick={() => {
+                                                                const currentImages = imageAttachments[task.id] || [{ url: "", name: "" }];
+                                                                const newImages = currentImages.filter((_, i) => i !== index);
+                                                                setImageAttachments({
+                                                                  ...imageAttachments,
+                                                                  [task.id]: newImages.length > 0 ? newImages : [{ url: "", name: "" }]
+                                                                });
+                                                              }}
+                                                              className="w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs"
+                                                              title="Remove this URL"
+                                                            >
+                                                              ×
+                                                            </button>
+                                                          )}
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                        
+                                                  <div className="flex justify-end items-center mt-2">
+                                                    <Button
+                                                      size="sm"
+                                                      onClick={async () => await handleAddComment(task.id)}
+                                                      disabled={!newComment[task.id]?.trim() && !commentAttachments[task.id]?.length && !(imageAttachments[task.id]?.[0]?.url.trim())}
+                                                      className="bg-blue-600 hover:bg-blue-700 text-xs disabled:bg-gray-600"
+                                                    >
+                                                      Post Comment
+                                                    </Button>
+                                                  </div>                        </div>
                       </div>
                     </div>
                   )}
