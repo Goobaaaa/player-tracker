@@ -26,6 +26,8 @@ export default function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCommentsTask, setShowCommentsTask] = useState<string | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [newComment, setNewComment] = useState<{[taskId: string]: string}>({});
   const [commentAttachments, setCommentAttachments] = useState<{[taskId: string]: File[]}>({});
   const [mediaFileNames, setMediaFileNames] = useState<{[taskId: string]: {[index: number]: string}}>({});
@@ -148,6 +150,28 @@ export default function TasksPage() {
   const truncateDescription = (description: string, maxLength: number = 150) => {
     if (description.length <= maxLength) return description;
     return description.substring(0, maxLength).trim() + "...";
+  };
+
+  const toggleDescription = (taskId: string) => {
+    const newExpanded = new Set(expandedDescriptions);
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+    } else {
+      newExpanded.add(taskId);
+    }
+    setExpandedDescriptions(newExpanded);
+  };
+
+  const toggleComments = (taskId: string) => {
+    const newExpanded = new Set(expandedComments);
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+      setShowCommentsTask(null);
+    } else {
+      newExpanded.add(taskId);
+      setShowCommentsTask(taskId);
+    }
+    setExpandedComments(newExpanded);
   };
 
   const handleCreateTask = () => {
@@ -446,9 +470,21 @@ export default function TasksPage() {
                         {getStatusIcon(task.status)}
                         <div className="flex-1">
                           <h3 className="font-medium text-white text-lg">{task.name}</h3>
-                          <p className="text-gray-400 text-sm mt-1 line-clamp-2">
-                            {showCommentsTask === task.id ? task.description : truncateDescription(task.description)}
-                          </p>
+                          <div className="mt-1">
+                            <p className="text-gray-400 text-sm">
+                              {expandedDescriptions.has(task.id) || task.description.length <= 150
+                                ? task.description
+                                : truncateDescription(task.description)}
+                            </p>
+                            {task.description.length > 150 && (
+                              <button
+                                onClick={() => toggleDescription(task.id)}
+                                className="text-blue-400 hover:text-blue-300 text-xs mt-1 transition-colors"
+                              >
+                                {expandedDescriptions.has(task.id) ? "Show less" : "Show more"}
+                              </button>
+                            )}
+                          </div>
                           <div className="flex items-center space-x-2 mt-2">
                             <User className="h-3 w-3 text-gray-400" />
                             <span className="text-sm text-gray-400">
@@ -504,7 +540,7 @@ export default function TasksPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowCommentsTask(showCommentsTask === task.id ? null : task.id)}
+                          onClick={() => toggleComments(task.id)}
                           className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                         >
                           <MessageSquare className="h-4 w-4" />
