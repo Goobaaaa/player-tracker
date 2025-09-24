@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare, Eye } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare, Eye, FolderOpen } from "lucide-react";
 import { Task } from "@/lib/database";
 import FadeInCard from "@/components/fade-in-card";
 import Image from "next/image";
@@ -81,6 +81,13 @@ export default function TasksPage() {
       filtered = filtered.filter(task => task.priority === priorityFilter);
     }
 
+    // Sort tasks by due date (closest due dates first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.deadline);
+      const dateB = new Date(b.deadline);
+      return dateA.getTime() - dateB.getTime();
+    });
+
     setFilteredTasks(filtered);
   }, [searchQuery, riskFilter, priorityFilter, tasks]);
 
@@ -134,7 +141,12 @@ export default function TasksPage() {
     }
   };
 
-  const getDeadlineDisplay = (deadline: string) => {
+  const getDeadlineDisplay = (deadline: string, taskStatus?: Task["status"]) => {
+    // If task is completed, show "Complete"
+    if (taskStatus === "completed") {
+      return { text: "Complete", color: "text-green-400" };
+    }
+
     const daysUntil = getDaysUntilDeadline(deadline);
     if (daysUntil < 0) {
       return { text: `${Math.abs(daysUntil)} days overdue`, color: "text-red-400" };
@@ -467,7 +479,9 @@ export default function TasksPage() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start space-x-3 flex-1">
-                        {getStatusIcon(task.status)}
+                        <div className="mt-1">
+                          {getStatusIcon(task.status)}
+                        </div>
                         <div className="flex-1">
                           <h3 className="font-medium text-white text-lg mb-2">{task.name}</h3>
                           <div className="flex items-center space-x-2 mb-2">
@@ -477,7 +491,7 @@ export default function TasksPage() {
                             </span>
                           </div>
                           <div>
-                            <p className={`text-gray-400 text-sm leading-relaxed ${expandedDescriptions.has(task.id) ? '' : 'line-clamp-2'}`}>
+                            <p className={`text-gray-400 text-sm leading-relaxed ${expandedDescriptions.has(task.id) ? '' : 'line-clamp-3'}`}>
                               {task.description}
                             </p>
                             {task.description.length > 80 && (
@@ -491,8 +505,8 @@ export default function TasksPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col space-y-3">
-                        <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col items-end space-y-3">
+                        <div className="flex flex-wrap gap-2 justify-end">
                           <Badge className={getStatusColor(task.status)}>
                             {task.status}
                           </Badge>
@@ -504,27 +518,28 @@ export default function TasksPage() {
                           </Badge>
                         </div>
 
-                        <div className="text-sm space-y-2">
-                          <div className="flex items-center space-x-2">
+                        <div className="text-sm space-y-1 text-right">
+                          <div className="flex items-center justify-end space-x-2">
                             <Calendar className="h-4 w-4 text-gray-400" />
                             <span className="text-gray-400">
-                              Due Date: {new Date(task.deadline).toLocaleDateString()}
+                              Due: {new Date(task.deadline).toLocaleDateString()}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center justify-end space-x-2">
                             <Clock className="h-4 w-4 text-gray-400" />
-                            <span className={getDeadlineDisplay(task.deadline).color}>
-                              {getDeadlineDisplay(task.deadline).text}
+                            <span className={`text-sm ${getDeadlineDisplay(task.deadline, task.status).color}`}>
+                              {getDeadlineDisplay(task.deadline, task.status).text}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">
+                          <div className="flex items-center justify-end space-x-2">
+                            <FolderOpen className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-400">
                               Created: {new Date(task.createdAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center justify-end space-x-2">
                             <MessageSquare className="h-4 w-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">
+                            <span className="text-gray-400">
                               {task.comments.length} comments
                             </span>
                           </div>
