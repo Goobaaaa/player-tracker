@@ -413,7 +413,7 @@ export default function TasksPage() {
         <Header />
 
         <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-white">Tasks</h1>
               <Button onClick={handleCreateTask} className="bg-blue-600 hover:bg-blue-700">
@@ -460,7 +460,7 @@ export default function TasksPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-6">
               {filteredTasks.map((task, index) => (
                 <FadeInCard key={task.id} delay={index + 1}>
                   <Card className={`bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102 ${task.status === 'completed' ? 'bg-gray-900' : ''}`}>
