@@ -147,9 +147,9 @@ export default function TasksPage() {
     }
   };
 
-  const truncateDescription = (description: string, maxLength: number = 150) => {
-    if (description.length <= maxLength) return description;
-    return description.substring(0, maxLength).trim() + "...";
+  const truncateDescription = (description: string) => {
+    // This function is no longer needed for line-based truncation
+    return description;
   };
 
   const toggleDescription = (taskId: string) => {
@@ -463,7 +463,7 @@ export default function TasksPage() {
             <div className="space-y-6">
               {filteredTasks.map((task, index) => (
                 <FadeInCard key={task.id} delay={index + 1}>
-                  <Card className={`bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-102 ${task.status === 'completed' ? 'bg-gray-900' : ''}`}>
+                  <Card className={`bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-[1.014] ${task.status === 'completed' ? 'bg-gray-900' : ''}`}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3 flex-1">
@@ -471,12 +471,10 @@ export default function TasksPage() {
                         <div className="flex-1">
                           <h3 className="font-medium text-white text-lg">{task.name}</h3>
                           <div className="mt-1">
-                            <p className="text-gray-400 text-sm">
-                              {expandedDescriptions.has(task.id) || task.description.length <= 150
-                                ? task.description
-                                : truncateDescription(task.description)}
+                            <p className={`text-gray-400 text-sm leading-relaxed ${expandedDescriptions.has(task.id) ? '' : 'line-clamp-2'}`}>
+                              {task.description}
                             </p>
-                            {task.description.length > 150 && (
+                            {task.description.length > 80 && (
                               <button
                                 onClick={() => toggleDescription(task.id)}
                                 className="text-blue-400 hover:text-blue-300 text-xs mt-1 transition-colors"
@@ -573,7 +571,7 @@ export default function TasksPage() {
                         <h4 className="text-white font-medium mb-3">Comments ({task.comments.length})</h4>
 
                         {/* Comment List */}
-                        <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                        <div className="space-y-3 mb-4 max-h-[480px] overflow-y-auto">
                           {task.comments.length > 0 ? (
                             task.comments.map((comment) => (
                               <div key={comment.id} className="bg-gray-700 rounded-lg p-3">
@@ -599,7 +597,7 @@ export default function TasksPage() {
                                       <span className="mr-2">📎</span>
                                       {comment.mediaUrls.length} file(s) attached
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                                       {comment.mediaUrls.map((url, index) => {
                                         let displayUrl = url;
                                         let fileName = `File ${index + 1}`;
@@ -689,27 +687,7 @@ export default function TasksPage() {
                                                   {/* Unified Attachments Section */}
                                                   <div className="mt-3">
                                                     <div className="text-xs text-gray-400 mb-2">Add Attachments:</div>
-                        
-                                                    {/* File Upload */}
-                                                    <div className="flex items-center space-x-2 mb-3">
-                                                      <label
-                                                        htmlFor={`file-${task.id}`}
-                                                        className="cursor-pointer inline-flex items-center px-2 py-1 border border-gray-600 text-xs font-medium rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                                      >
-                                                        Upload File
-                                                      </label>
-                                                      <input
-                                                        type="file"
-                                                        id={`file-${task.id}`}
-                                                        className="hidden"
-                                                        multiple
-                                                        onChange={(e) => handleFileAttachment(task.id, e.target.files)}
-                                                      />
-                                                      <span className="text-gray-500 text-xs">
-                                                        {commentAttachments[task.id]?.length || 0} file(s) selected
-                                                      </span>
-                                                    </div>
-                        
+
                                                     {/* URL Attachment */}
                                                     <div className="space-y-2 mb-3">
                                                       {(imageAttachments[task.id] || [{ url: "", name: "" }]).map((img, index) => (
@@ -781,6 +759,26 @@ export default function TasksPage() {
                                                           )}
                                                         </div>
                                                       ))}
+                                                    </div>
+
+                                                    {/* File Upload */}
+                                                    <div className="flex items-center space-x-2">
+                                                      <label
+                                                        htmlFor={`file-${task.id}`}
+                                                        className="cursor-pointer inline-flex items-center px-2 py-1 border border-gray-600 text-xs font-medium rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                      >
+                                                        Upload File
+                                                      </label>
+                                                      <input
+                                                        type="file"
+                                                        id={`file-${task.id}`}
+                                                        className="hidden"
+                                                        multiple
+                                                        onChange={(e) => handleFileAttachment(task.id, e.target.files)}
+                                                      />
+                                                      <span className="text-gray-500 text-xs">
+                                                        {commentAttachments[task.id]?.length || 0} file(s) selected
+                                                      </span>
                                                     </div>
                                                   </div>
                         
