@@ -466,11 +466,17 @@ export default function TasksPage() {
                   <Card className={`bg-gray-800 border-gray-700 transition-all-smooth hover:shadow-lg hover:border-blue-500 hover:scale-[1.014] ${task.status === 'completed' ? 'bg-gray-900' : ''}`}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-start space-x-3 flex-1">
                         {getStatusIcon(task.status)}
                         <div className="flex-1">
-                          <h3 className="font-medium text-white text-lg">{task.name}</h3>
-                          <div className="mt-1">
+                          <h3 className="font-medium text-white text-lg mb-2">{task.name}</h3>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <User className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm text-gray-300 font-medium">
+                              {getAssignedUserNames(task.assignedUsers)}
+                            </span>
+                          </div>
+                          <div>
                             <p className={`text-gray-400 text-sm leading-relaxed ${expandedDescriptions.has(task.id) ? '' : 'line-clamp-2'}`}>
                               {task.description}
                             </p>
@@ -483,85 +489,84 @@ export default function TasksPage() {
                               </button>
                             )}
                           </div>
-                          <div className="flex items-center space-x-2 mt-2">
-                            <User className="h-3 w-3 text-gray-400" />
-                            <span className="text-sm text-gray-400">
-                              {getAssignedUserNames(task.assignedUsers)}
+                        </div>
+                      </div>
+                      <div className="flex flex-col space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={getStatusColor(task.status)}>
+                            {task.status}
+                          </Badge>
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {task.priority} priority
+                          </Badge>
+                          <Badge className={getRiskColor(task.risk)}>
+                            {task.risk} risk
+                          </Badge>
+                        </div>
+
+                        <div className="text-sm space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-400">
+                              Due Date: {new Date(task.deadline).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className={getDeadlineDisplay(task.deadline).color}>
+                              {getDeadlineDisplay(task.deadline).text}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              Created: {new Date(task.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MessageSquare className="h-4 w-4 text-gray-400" />
+                            <span className="text-xs text-gray-500">
+                              {task.comments.length} comments
                             </span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className={getStatusColor(task.status)}>
-                          {task.status}
-                        </Badge>
-                        <Badge className={getPriorityColor(task.priority)}>
-                          {task.priority} priority
-                        </Badge>
-                        <Badge className={getRiskColor(task.risk)}>
-                          {task.risk} risk
-                        </Badge>
+
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleCompleted(task.id)}
+                            className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                          >
+                            {task.status === 'completed' ? <Clock className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleComments(task.id)}
+                            className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditTask(task)}
+                            className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTask(task.id)}
+                            className="bg-red-700 border-red-600 text-red-300 hover:bg-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-400">
-                          Deadline: {new Date(task.deadline).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <span className={getDeadlineDisplay(task.deadline).color}>
-                        {getDeadlineDisplay(task.deadline).text}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="text-xs text-gray-500">
-                        <span>
-                          Created: {new Date(task.createdAt).toLocaleDateString()}
-                        </span>
-                        <span className="ml-4">
-                          {task.comments.length} comments
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-<Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleCompleted(task.id)}
-                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                        >
-                          {task.status === 'completed' ? <Clock className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleComments(task.id)}
-                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditTask(task)}
-                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="bg-red-700 border-red-600 text-red-300 hover:bg-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
                     </CardContent>
 
                   {/* Comments Section */}
