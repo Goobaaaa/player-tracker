@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare, Eye } from "lucide-react";
 import { Task } from "@/lib/database";
 import FadeInCard from "@/components/fade-in-card";
 import Image from "next/image";
@@ -32,6 +32,7 @@ export default function TasksPage() {
   const [imageAttachments, setImageAttachments] = useState<{[taskId: string]: Array<{url: string, name: string}>}>({});
   const [selectedImageUrl, setSelectedImageUrl] = React.useState('');
   const [showImageModal, setShowImageModal] = React.useState(false);
+  const [fullscreenImage, setFullscreenImage] = React.useState<{url: string, name: string} | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   // Form state
   const [taskName, setTaskName] = useState("");
@@ -569,11 +570,12 @@ export default function TasksPage() {
 
                                         // Handle named URLs (format: "name:url")
                                         const nameIndex = url.indexOf(':');
-                                        if (nameIndex > 0 && !url.startsWith('http')) {
+                                        if (nameIndex > 0) {
                                           const name = url.substring(0, nameIndex);
                                           const actualUrl = url.substring(nameIndex + 1);
 
-                                          if (actualUrl.startsWith('data:')) {
+                                          // If it's a data URL or external URL, use it
+                                          if (actualUrl.startsWith('data:') || actualUrl.startsWith('http://') || actualUrl.startsWith('https://')) {
                                             displayUrl = actualUrl;
                                             fileName = name;
                                           }
@@ -581,8 +583,8 @@ export default function TasksPage() {
                                           fileName = url.split('/').pop() || `File ${index + 1}`;
                                         }
 
-                                        const isImage = (displayUrl.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(displayUrl)) && !displayUrl.startsWith('mock-file');
-                                        const isVideo = displayUrl.startsWith('data:video/') || /\.(mp4|avi|mov|webm)$/i.test(displayUrl);
+                                        const isImage = (displayUrl.startsWith('data:image') || (displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(displayUrl)) && !displayUrl.startsWith('mock-file');
+                                        const isVideo = displayUrl.startsWith('data:video/') || ((displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(mp4|avi|mov|webm)$/i.test(displayUrl));
 
                                         const handleViewFullImage = (url: string) => {
                                           setSelectedImageUrl(url);
@@ -591,16 +593,24 @@ export default function TasksPage() {
 
                                         return (
                                           <div key={index} className="relative group">
-                                            <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center hover:bg-gray-500 transition-colors cursor-pointer" onClick={() => handleViewFullImage(displayUrl)}>
+                                            <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center hover:bg-gray-500 transition-colors cursor-pointer" onClick={() => isImage ? setFullscreenImage({ url: displayUrl, name: fileName }) : handleViewFullImage(displayUrl)}>
                                               {isImage ? (
-                                                <Image
-                                                  src={displayUrl}
-                                                  alt={fileName}
-                                                  width={200}
-                                                  height={200}
-                                                  className="w-full h-full object-cover"
-                                                  unoptimized
-                                                />
+                                                <>
+                                                  <Image
+                                                    src={displayUrl}
+                                                    alt={fileName}
+                                                    width={200}
+                                                    height={200}
+                                                    className="w-full h-full object-cover"
+                                                    unoptimized
+                                                  />
+                                                  {/* Eye icon overlay */}
+                                                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="bg-black bg-opacity-50 rounded-full p-2">
+                                                      <Eye className="w-6 h-6 text-white" />
+                                                    </div>
+                                                  </div>
+                                                </>
                                               ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-600">
                                                   <span className="text-2xl">
@@ -990,6 +1000,35 @@ export default function TasksPage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 backdrop-blur-sm bg-black/80" onClick={() => setFullscreenImage(null)}>
+          <div className="relative mt-8">
+            {/* Image container with background */}
+            <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={fullscreenImage.url}
+                alt={fullscreenImage.name}
+                width={1200}
+                height={800}
+                className="max-w-[90vw] max-h-[80vh] object-contain"
+                unoptimized
+                onError={(e) => {
+                  // Fallback for failed image loads
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+
+            {/* Image name overlay */}
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg">
+              <p className="text-sm font-medium truncate max-w-md">{fullscreenImage.name}</p>
             </div>
           </div>
         </div>
