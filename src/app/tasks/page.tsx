@@ -1035,7 +1035,7 @@ export default function TasksPage() {
 
       {/* Fullscreen Image Modal */}
       {fullscreenImage && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 backdrop-blur-sm bg-black/80" onClick={() => setFullscreenImage(null)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 backdrop-blur-sm bg-black/80" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={() => setFullscreenImage(null)}>
           <div className="relative mt-8">
             {/* Image container with background */}
             <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>

@@ -56,6 +56,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
   const [googleDocDescription, setGoogleDocDescription] = React.useState('');
   const [selectedImageUrl, setSelectedImageUrl] = React.useState('');
   const [showImageModal, setShowImageModal] = React.useState(false);
+  const [fullscreenImage, setFullscreenImage] = React.useState<{url: string, name: string} | null>(null);
 
   // State for adding new vehicle
   const [newVehicleForm, setNewVehicleForm] = React.useState({
@@ -1043,8 +1044,11 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                                           width={216}
                                           height={216}
                                           className="w-full h-[216px] object-cover rounded border border-gray-600 cursor-pointer"
-                                          onClick={() => setSelectedImageUrl(imageUrl)}
+                                          onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}
                                         />
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}>
+                                          <Eye className="h-8 w-8 text-white" />
+                                        </div>
                                         <button
                                           onClick={() => {
                                             if (confirm('Remove this image?')) {
@@ -2350,6 +2354,35 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
               <div className="mt-4 text-center">
                 <p className="text-gray-400 text-sm">Click anywhere outside the image or press X to close</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/80" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={() => setFullscreenImage(null)}>
+          <div className="relative">
+            {/* Image container with background */}
+            <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={fullscreenImage.url}
+                alt={fullscreenImage.name}
+                width={1200}
+                height={800}
+                className="max-w-[90vw] max-h-[80vh] object-contain"
+                unoptimized
+                onError={(e) => {
+                  // Fallback for failed image loads
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+
+            {/* Image name overlay */}
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg">
+              <p className="text-sm font-medium truncate max-w-md">{fullscreenImage.name}</p>
             </div>
           </div>
         </div>
