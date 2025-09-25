@@ -32,8 +32,6 @@ export default function TasksPage() {
   const [commentAttachments, setCommentAttachments] = useState<{[taskId: string]: File[]}>({});
   const [mediaFileNames, setMediaFileNames] = useState<{[taskId: string]: {[index: number]: string}}>({});
   const [imageAttachments, setImageAttachments] = useState<{[taskId: string]: Array<{url: string, name: string}>}>({});
-  const [selectedImageUrl, setSelectedImageUrl] = React.useState('');
-  const [showImageModal, setShowImageModal] = React.useState(false);
   const [fullscreenImage, setFullscreenImage] = React.useState<{url: string, name: string} | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   // Form state
@@ -159,10 +157,6 @@ export default function TasksPage() {
     }
   };
 
-  const truncateDescription = (description: string) => {
-    // This function is no longer needed for line-based truncation
-    return description;
-  };
 
   const toggleDescription = (taskId: string) => {
     const newExpanded = new Set(expandedDescriptions);
@@ -294,25 +288,6 @@ export default function TasksPage() {
     }
   };
 
-  const removeAttachment = (taskId: string, index: number) => {
-    const newAttachments = [...(commentAttachments[taskId] || [])];
-    newAttachments.splice(index, 1);
-
-    // Clean up file names and reindex
-    const newFileNames = { ...mediaFileNames[taskId] };
-    delete newFileNames[index];
-
-    // Reindex remaining file names
-    const reindexedNames: {[index: number]: string} = {};
-    Object.keys(newFileNames).sort().forEach(key => {
-      const oldIndex = parseInt(key);
-      const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
-      reindexedNames[newIndex] = newFileNames[oldIndex];
-    });
-
-    setCommentAttachments({ ...commentAttachments, [taskId]: newAttachments });
-    setMediaFileNames({ ...mediaFileNames, [taskId]: reindexedNames });
-  };
 
   const handleUserSelection = (userId: string) => {
     if (selectedUsers.includes(userId)) {
@@ -641,8 +616,7 @@ export default function TasksPage() {
                                         const isVideo = displayUrl.startsWith('data:video/') || ((displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(mp4|avi|mov|webm)$/i.test(displayUrl));
 
                                         const handleViewFullImage = (url: string) => {
-                                          setSelectedImageUrl(url);
-                                          setShowImageModal(true);
+                                          setFullscreenImage({ url, name: 'Task Image' });
                                         };
 
                                         return (

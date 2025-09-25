@@ -906,7 +906,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                   <CardContent className="overflow-y-auto max-h-[120vh]">
                     <div className="space-y-3">
                       {assets.map((asset) => (
-                        <div key={asset.id} className="p-3 bg-gray-700 rounded-lg">
+                        <div key={asset.id} className="p-3 bg-gray-700 rounded-lg w-full mt-3">
                           {editingVehicleId === asset.id ? (
                             // Edit mode
                             <div className="space-y-3">
@@ -1017,7 +1017,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                               )}
 
                               {/* Vehicle Images Section */}
-                              <div className="pt-2 border-t border-gray-600">
+                              <div className="pt-4 border-t border-gray-600 min-h-[200px]">
                                 <div className="flex justify-between items-center mb-2">
                                   <span className="text-gray-400 text-sm">Images:</span>
                                   <Button
@@ -1034,15 +1034,15 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                                 </div>
 
                                 {asset.vehicleImages && asset.vehicleImages.length > 0 ? (
-                                  <div className="grid grid-cols-4 gap-2">
+                                  <div className="grid grid-cols-4 gap-3 h-full">
                                     {asset.vehicleImages.map((imageUrl, index) => (
-                                      <div key={index} className="relative group">
+                                      <div key={index} className="relative group h-full">
                                         <Image
                                           src={imageUrl}
                                           alt={`Vehicle ${index + 1}`}
-                                          width={64}
-                                          height={64}
-                                          className="w-full h-16 object-cover rounded border border-gray-600"
+                                          width={216}
+                                          height={216}
+                                          className="w-full h-[216px] object-cover rounded border border-gray-600 cursor-pointer"
                                           onClick={() => setSelectedImageUrl(imageUrl)}
                                         />
                                         <button
