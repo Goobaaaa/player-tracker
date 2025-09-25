@@ -207,8 +207,8 @@ export default function DashboardPage() {
 
       {/* Task Detail Modal */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
-          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] shadow-2xl overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex justify-start pt-8 p-4 backdrop-blur-sm bg-black/50" onClick={() => setSelectedTask(null)}>
+          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[85vh] shadow-2xl overflow-y-auto mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               {/* Header with tags */}
               <div className="flex justify-between items-start mb-6">
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                     {getStatusIcon(selectedTask.status)}
                     <h3 className="text-2xl font-bold text-white">{selectedTask.name}</h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     <Badge className={`${getStatusColor(selectedTask.status)} text-white`}>
                       {selectedTask.status}
                     </Badge>
@@ -227,6 +227,30 @@ export default function DashboardPage() {
                     <Badge className={`${getRiskColor(selectedTask.risk)} text-white`}>
                       {selectedTask.risk} risk
                     </Badge>
+                  </div>
+                  {/* Date and Status Info */}
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <FolderOpen className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">Created:</span>
+                      <span className="text-white">
+                        {new Date(selectedTask.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">Due:</span>
+                      <span className="text-white">
+                        {new Date(selectedTask.deadline).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">Status:</span>
+                      <span className={getDeadlineDisplay(selectedTask.deadline, selectedTask.status).color}>
+                        {getDeadlineDisplay(selectedTask.deadline, selectedTask.status).text}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -249,10 +273,10 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex flex-col h-full">
                 {/* Description */}
                 {selectedTask.description && (
-                  <div>
+                  <div className="mb-6">
                     <p className={`text-gray-300 ${expandedDescriptions.has(selectedTask.id) ? '' : 'line-clamp-2'}`}>
                       {selectedTask.description}
                     </p>
@@ -267,45 +291,24 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Task Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* Assigned To */}
+                <div className="text-sm mb-6">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-400">Assigned to:</span>
                     <span className="text-white">{getAssignedUserNames(selectedTask.assignedUsers)}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Due Date:</span>
-                    <span className="text-white">
-                      {new Date(selectedTask.deadline).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Status:</span>
-                    <span className={getDeadlineDisplay(selectedTask.deadline, selectedTask.status).color}>
-                      {getDeadlineDisplay(selectedTask.deadline, selectedTask.status).text}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <FolderOpen className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Created:</span>
-                    <span className="text-white">
-                      {new Date(selectedTask.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Comments Section */}
-                <div className="border-t border-gray-700 pt-6">
+                <div className="flex-1 border-t border-gray-700 pt-6 min-h-0">
                   <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Comments ({selectedTask.comments.length})
                   </h4>
 
                   {/* Existing Comments */}
-                  <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                  <div className="flex-1 space-y-3 overflow-y-auto pr-2">
                     {selectedTask.comments.length > 0 ? (
                       selectedTask.comments.map((comment) => (
                         <div key={comment.id} className="bg-gray-700 rounded-lg p-3">
