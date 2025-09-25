@@ -14,6 +14,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen } from "lucide-react";
+import Image from "next/image";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -21,10 +22,9 @@ export default function DashboardPage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [newComment, setNewComment] = useState("");
-  const [taskMediaUrl, setTaskMediaUrl] = useState("");
-  const [taskMediaName, setTaskMediaName] = useState("");
   const [showFullAuditLog, setShowFullAuditLog] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   useEffect(() => {
@@ -66,7 +66,6 @@ export default function DashboardPage() {
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);
     setSelectedTask(task);
-    setNewComment("");
   };
 
   const getStatusIcon = (status: Task["status"]) => {
@@ -126,6 +125,16 @@ export default function DashboardPage() {
     } else {
       return { text: `${daysUntil} days remaining`, color: "text-green-400" };
     }
+  };
+
+  const toggleDescription = (taskId: string) => {
+    const newExpanded = new Set(expandedDescriptions);
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+    } else {
+      newExpanded.add(taskId);
+    }
+    setExpandedDescriptions(newExpanded);
   };
 
   if (loading) {
@@ -243,7 +252,19 @@ export default function DashboardPage() {
               <div className="space-y-6">
                 {/* Description */}
                 {selectedTask.description && (
-                  <p className="text-gray-300">{selectedTask.description}</p>
+                  <div>
+                    <p className={`text-gray-300 ${expandedDescriptions.has(selectedTask.id) ? '' : 'line-clamp-2'}`}>
+                      {selectedTask.description}
+                    </p>
+                    {selectedTask.description.length > 100 && (
+                      <button
+                        onClick={() => toggleDescription(selectedTask.id)}
+                        className="text-blue-400 hover:text-blue-300 text-sm mt-1 transition-colors"
+                      >
+                        {expandedDescriptions.has(selectedTask.id) ? "Show Less" : "Show More"}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Task Details */}
@@ -276,25 +297,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Media Files */}
-                {selectedTask.mediaUrls && selectedTask.mediaUrls.length > 0 && (
-                  <div>
-                    <h4 className="text-white font-medium mb-3">Media Files</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {selectedTask.mediaUrls.map((url, index) => (
-                        <div key={index} className="bg-gray-700 rounded-lg p-3 text-center hover:bg-gray-600 transition-colors">
-                          <div className="text-2xl mb-1">
-                            {url.includes('image') ? '🖼️' : url.includes('video') ? '🎥' : '📄'}
-                          </div>
-                          <span className="text-gray-300 text-xs">
-                            {url.split('-').pop()?.substring(0, 15) || `File ${index + 1}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Comments Section */}
                 <div className="border-t border-gray-700 pt-6">
                   <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -316,75 +318,108 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <p className="text-gray-300 text-sm">{comment.text}</p>
+                          {comment.mediaUrls && comment.mediaUrls.length > 0 && (
+                            <div className="mt-2">
+                              <div className="flex items-center text-gray-400 text-xs mb-2">
+                                <span className="mr-2">📎</span>
+                                {comment.mediaUrls.length} file(s) attached
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                {comment.mediaUrls.map((url, index) => {
+                                  let displayUrl = url;
+                                  let fileName = `File ${index + 1}`;
+
+                                  // Handle named URLs (format: "name:url")
+                                  const nameIndex = url.indexOf(':');
+                                  if (nameIndex > 0) {
+                                    const name = url.substring(0, nameIndex);
+                                    const actualUrl = url.substring(nameIndex + 1);
+
+                                    // If it's a data URL or external URL, use it
+                                    if (actualUrl.startsWith('data:') || actualUrl.startsWith('http://') || actualUrl.startsWith('https://')) {
+                                      displayUrl = actualUrl;
+                                      fileName = name;
+                                    }
+                                  } else {
+                                    fileName = url.split('/').pop() || `File ${index + 1}`;
+                                  }
+
+                                  const isImage = (displayUrl.startsWith('data:image') || (displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(displayUrl)) && !displayUrl.startsWith('mock-file');
+                                  const isVideo = displayUrl.startsWith('data:video/') || ((displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(mp4|avi|mov|webm)$/i.test(displayUrl));
+
+                                  return (
+                                    <div key={index} className="relative group">
+                                      <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center hover:bg-gray-500 transition-colors cursor-pointer" onClick={() => isImage && setFullscreenImage({ url: displayUrl, name: fileName })}>
+                                        {isImage ? (
+                                          <>
+                                            <Image
+                                              src={displayUrl}
+                                              alt={fileName}
+                                              width={200}
+                                              height={200}
+                                              className="w-full h-full object-cover"
+                                              unoptimized
+                                            />
+                                            {/* Eye icon overlay */}
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <div className="bg-black bg-opacity-50 rounded-full p-2">
+                                                <Eye className="w-4 h-4 text-white" />
+                                              </div>
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-600">
+                                            <span className="text-2xl">
+                                              {isVideo ? '🎥' :
+                                               displayUrl.includes('pdf') ? '📄' : '📎'}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="mt-1 text-xs text-gray-300 text-center truncate">{fileName}</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
                       <p className="text-gray-500 text-center py-4">No comments yet</p>
                     )}
                   </div>
-
-                  {/* Add Comment Form */}
-                  <div className="border-t border-gray-600 pt-4">
-                    <textarea
-                      placeholder="Add a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="w-full p-3 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg resize-none"
-                      rows={3}
-                    />
-
-                    {/* Image URL Attachment */}
-                    <div className="mt-3">
-                      <input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        value={taskMediaUrl}
-                        onChange={(e) => setTaskMediaUrl(e.target.value)}
-                        className="w-full p-2 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg text-sm"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Image name (optional)"
-                        value={taskMediaName}
-                        onChange={(e) => setTaskMediaName(e.target.value)}
-                        className="w-full p-2 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg text-sm mt-2"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        Add image URL with optional name
-                      </p>
-                    </div>
-
-                    <div className="flex justify-end mt-3">
-                      <button
-                        onClick={() => {
-                          if (newComment.trim() || taskMediaUrl.trim()) {
-                            const mediaUrls = taskMediaUrl.trim()
-                              ? [taskMediaName.trim() ? `${taskMediaName.trim()}:${taskMediaUrl.trim()}` : taskMediaUrl.trim()]
-                              : [];
-
-                            addTaskComment(
-                              selectedTask.id,
-                              "current_user",
-                              "Current User",
-                              newComment.trim(),
-                              mediaUrls
-                            );
-
-                            loadDashboardData();
-                            setNewComment("");
-                            setTaskMediaUrl("");
-                            setTaskMediaName("");
-                          }
-                        }}
-                        disabled={!newComment.trim() && !taskMediaUrl.trim()}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:bg-gray-600"
-                      >
-                        Post Comment
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 backdrop-blur-sm bg-black/80" onClick={() => setFullscreenImage(null)}>
+          <div className="relative mt-8">
+            {/* Image container with background */}
+            <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={fullscreenImage.url}
+                alt={fullscreenImage.name}
+                width={1200}
+                height={800}
+                className="max-w-[90vw] max-h-[80vh] object-contain"
+                unoptimized
+                onError={(e) => {
+                  // Fallback for failed image loads
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+
+            {/* Image name overlay */}
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg">
+              <p className="text-sm font-medium truncate max-w-md">{fullscreenImage.name}</p>
             </div>
           </div>
         </div>
