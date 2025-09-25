@@ -15,9 +15,12 @@ export interface AuditLogEntry {
 
 interface ActivityFeedProps {
   activities: AuditLogEntry[];
+  limit?: number;
+  showFullLog?: boolean;
+  onToggleFullLog?: () => void;
 }
 
-export function ActivityFeed({ activities }: ActivityFeedProps) {
+export function ActivityFeed({ activities, limit, showFullLog, onToggleFullLog }: ActivityFeedProps) {
   const getActionIcon = (action: string) => {
     switch (action) {
       case "create": return "➕";
@@ -53,17 +56,30 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
     }
   };
 
+  const displayedActivities = showFullLog ? activities : activities.slice(0, limit || activities.length);
+  const showToggleButton = limit && activities.length > limit;
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white flex items-center">
-          <span>🔍</span>
-          <span className="ml-2">Audit Log</span>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center">
+            <span>🔍</span>
+            <span className="ml-2">Audit Log</span>
+          </CardTitle>
+          {showToggleButton && onToggleFullLog && (
+            <button
+              onClick={onToggleFullLog}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+            >
+              {showFullLog ? "Show Less" : "Show Full Log"}
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {activities.map((log) => (
+          {displayedActivities.map((log) => (
             <div key={log.id} className="flex items-start space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getActionColor(log.action)}`}>
                 <span className="text-sm">{getActionIcon(log.action)}</span>
@@ -94,7 +110,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
               </div>
             </div>
           ))}
-          {activities.length === 0 && (
+          {displayedActivities.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-400">No audit log entries yet</p>
               <p className="text-gray-500 text-sm mt-1">Actions will appear here as users interact with the system</p>

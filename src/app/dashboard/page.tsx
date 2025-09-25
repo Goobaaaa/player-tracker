@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, addTaskComment } from "@/lib/mock-data";
+import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, addTaskComment, getDaysUntilDeadline } from "@/lib/mock-data";
 import { Task, DashboardSummary } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
@@ -13,7 +13,7 @@ import { TaskList } from "@/components/task-list";
 import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen } from "lucide-react";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [newComment, setNewComment] = useState("");
   const [taskMediaUrl, setTaskMediaUrl] = useState("");
   const [taskMediaName, setTaskMediaName] = useState("");
+  const [showFullAuditLog, setShowFullAuditLog] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -109,6 +110,24 @@ export default function DashboardPage() {
     return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
   };
 
+  const getDeadlineDisplay = (deadline: string, taskStatus?: Task["status"]) => {
+    // If task is completed, show "Complete"
+    if (taskStatus === "completed") {
+      return { text: "Complete", color: "text-green-400" };
+    }
+
+    const daysUntil = getDaysUntilDeadline(deadline);
+    if (daysUntil < 0) {
+      return { text: `${Math.abs(daysUntil)} days overdue`, color: "text-red-400" };
+    } else if (daysUntil === 0) {
+      return { text: "Due today", color: "text-yellow-400" };
+    } else if (daysUntil === 1) {
+      return { text: "Due tomorrow", color: "text-yellow-400" };
+    } else {
+      return { text: `${daysUntil} days remaining`, color: "text-green-400" };
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -165,7 +184,12 @@ export default function DashboardPage() {
                 <TaskList tasks={tasks} onTaskClick={handleTaskClick} isDashboard={true} />
               </FadeInCard>
               <FadeInCard delay={5}>
-                <ActivityFeed activities={auditLog} />
+                <ActivityFeed
+                  activities={auditLog}
+                  limit={5}
+                  showFullLog={showFullAuditLog}
+                  onToggleFullLog={() => setShowFullAuditLog(!showFullAuditLog)}
+                />
               </FadeInCard>
             </div>
           </div>
@@ -174,8 +198,8 @@ export default function DashboardPage() {
 
       {/* Task Detail Modal */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 flex justify-start pt-8 p-4 backdrop-blur-sm bg-black/50">
-          <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
+          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] shadow-2xl overflow-y-auto">
             <div className="p-6">
               {/* Header with tags */}
               <div className="flex justify-between items-start mb-6">
@@ -196,12 +220,24 @@ export default function DashboardPage() {
                     </Badge>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedTask(null)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      setSelectedTask(null);
+                      router.push("/tasks");
+                    }}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>View Full Details</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedTask(null)}
+                    className="text-gray-400 hover:text-white text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -219,9 +255,23 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Deadline:</span>
+                    <span className="text-gray-400">Due Date:</span>
                     <span className="text-white">
                       {new Date(selectedTask.deadline).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400">Status:</span>
+                    <span className={getDeadlineDisplay(selectedTask.deadline, selectedTask.status).color}>
+                      {getDeadlineDisplay(selectedTask.deadline, selectedTask.status).text}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <FolderOpen className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400">Created:</span>
+                    <span className="text-white">
+                      {new Date(selectedTask.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
