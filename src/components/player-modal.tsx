@@ -633,7 +633,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center backdrop-blur-sm bg-black/20 pt-8">
       <div className="bg-gray-800 rounded-lg w-full max-w-6xl m-4 shadow-2xl">
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
