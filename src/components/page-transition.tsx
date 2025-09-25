@@ -22,9 +22,7 @@ export default function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className={`transition-opacity-smooth ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      <div className="animate-fadeIn">
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

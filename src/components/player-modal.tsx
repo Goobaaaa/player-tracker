@@ -634,852 +634,854 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center backdrop-blur-sm bg-black/20 pt-8">
-      <div className="bg-gray-800 rounded-lg w-full max-w-6xl m-4 shadow-2xl">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-16 h-16">
-                {player ? (
-                  <>
-                    <AvatarImage src={getPlayerProfilePicture(player.id) || player.avatarUrl || undefined} alt={player.name} />
+    <>
+      <div className="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center backdrop-blur-sm bg-black/20 pt-8">
+        <div className="bg-gray-800 rounded-lg w-full max-w-6xl m-4 shadow-2xl">
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="w-16 h-16">
+                  {player ? (
+                    <>
+                      <AvatarImage src={getPlayerProfilePicture(player.id) || player.avatarUrl || undefined} alt={player.name} />
+                      <AvatarFallback className="bg-blue-600 text-xl">
+                        {player.name.charAt(0)}
+                      </AvatarFallback>
+                    </>
+                  ) : (
                     <AvatarFallback className="bg-blue-600 text-xl">
-                      {player.name.charAt(0)}
+                      <Plus className="h-8 w-8" />
                     </AvatarFallback>
+                  )}
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{player ? player.name : 'New Player'}</h2>
+                  <p className="text-gray-400 text-lg">{player ? player.alias : 'Create a new player record'}</p>
+                  </div>
+              </div>
+              <div className="flex space-x-2">
+                {isEditMode && (
+                  <>
+                    <Button
+                      onClick={handleSave}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save
+                    </Button>
+                    <Button
+                      onClick={handleDeletePlayer}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
                   </>
-                ) : (
-                  <AvatarFallback className="bg-blue-600 text-xl">
-                    <Plus className="h-8 w-8" />
-                  </AvatarFallback>
                 )}
-              </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold text-white">{player ? player.name : 'New Player'}</h2>
-                <p className="text-gray-400 text-lg">{player ? player.alias : 'Create a new player record'}</p>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              {isEditMode && (
-                <>
-                  <Button
-                    onClick={handleSave}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
-                  </Button>
-                  <Button
-                    onClick={handleDeletePlayer}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
-                </>
-              )}
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
 
-          {/* Player Information Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="bg-gray-700 border-gray-600">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Full Name</p>
-                    {isEditMode ? (
-                      <Input
-                        value={editForm.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        className="bg-gray-600 border-gray-500 text-white"
-                        placeholder="Enter full name"
-                      />
-                    ) : (
-                      <p className="text-lg font-semibold text-white">{player?.name || ''}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Alias</p>
-                    {isEditMode ? (
-                      <Input
-                        value={editForm.alias}
-                        onChange={(e) => handleInputChange('alias', e.target.value)}
-                        className="bg-gray-600 border-gray-500 text-white"
-                        placeholder="Enter alias"
-                      />
-                    ) : (
-                      <p className="text-lg font-semibold text-white">{player?.alias || ''}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-700 border-gray-600">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">DNA Sequence</p>
-                    {isEditMode ? (
-                      <Input
-                        value={editForm.dna}
-                        onChange={(e) => handleInputChange('dna', e.target.value)}
-                        placeholder="Enter DNA sequence"
-                        className="bg-gray-600 border-gray-500 text-white font-mono"
-                      />
-                    ) : (
-                      <p className="text-lg font-mono text-white">{player?.dna || 'Not recorded'}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Fingerprint ID</p>
-                    {isEditMode ? (
-                      <Input
-                        value={editForm.fingerprint}
-                        onChange={(e) => handleInputChange('fingerprint', e.target.value)}
-                        placeholder="Enter fingerprint ID"
-                        className="bg-gray-600 border-gray-500 text-white font-mono"
-                      />
-                    ) : (
-                      <p className="text-lg font-mono text-white">{player?.fingerprint || 'Not recorded'}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="bg-gray-700 border-gray-600">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Phone Number</p>
-                    {isEditMode ? (
-                      <Input
-                        value={editForm.phoneNumber}
-                        onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                        placeholder="Enter phone number"
-                        className="bg-gray-600 border-gray-500 text-white"
-                      />
-                    ) : (
-                      <p className="text-lg font-semibold text-white">{player?.phoneNumber || 'Not recorded'}</p>
-                    )}
-                  </div>
-                  </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-700 border-gray-600">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Status</p>
-                    {isEditMode ? (
-                      <select
-                        value={editForm.status}
-                        onChange={(e) => handleInputChange('status', e.target.value)}
-                        className="w-full p-2 bg-gray-600 border-gray-500 text-white rounded-lg"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="MIA">MIA</option>
-                      </select>
-                    ) : (
-                      <Badge className={
-                        player?.status === 'active' ? 'bg-green-600' :
-                        player?.status === 'inactive' ? 'bg-orange-600' :
-                        player?.status === 'MIA' ? 'bg-red-600' :
-                        'bg-green-600'
-                      }>
-                        {player?.status || 'active'}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Financial Summary Cards - Only show for existing players */}
-          {player && (
+            {/* Player Information Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
               <Card className="bg-gray-700 border-gray-600">
                 <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Package className="h-5 w-5 text-blue-400" />
+                  <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-400">Total Assets</p>
-                      <p className="text-xl font-bold text-white">${calculatePlayerAssetsValue(player.id).toLocaleString()}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-700 border-gray-600">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5 text-purple-400" />
-                    <div>
-                      <p className="text-sm text-gray-400">Asset Count</p>
-                      <p className="text-xl font-bold text-white">{assets.length}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-gray-700">
-              <TabsTrigger value="overview" className="text-gray-300 data-[state=active]:bg-gray-600">
-                Overview
-              </TabsTrigger>
-              {player && (
-                <>
-                  <TabsTrigger value="assets" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    Vehicles
-                  </TabsTrigger>
-                  <TabsTrigger value="weapons" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    Weapons
-                  </TabsTrigger>
-                  <TabsTrigger value="documents" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    Documents
-                  </TabsTrigger>
-                  <TabsTrigger value="mugshots" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    Mugshots
-                  </TabsTrigger>
-                  <TabsTrigger value="media" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    Media
-                  </TabsTrigger>
-                  <TabsTrigger value="house" className="text-gray-300 data-[state=active]:bg-gray-600">
-                    House
-                  </TabsTrigger>
-                </>
-              )}
-            </TabsList>
-
-            <TabsContent value="overview">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Player Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium text-white mb-2">Notes</h3>
+                      <p className="text-sm text-gray-400 mb-1">Full Name</p>
                       {isEditMode ? (
-                        <textarea
-                          value={editForm.notes}
-                          onChange={(e) => handleInputChange('notes', e.target.value)}
-                          placeholder="Enter player notes"
-                          className="w-full p-3 bg-gray-600 border-gray-500 text-white rounded-lg resize-none h-32"
-                          rows={4}
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          className="bg-gray-600 border-gray-500 text-white"
+                          placeholder="Enter full name"
                         />
                       ) : (
-                        <p className="text-gray-400">{player?.notes || "No notes available"}</p>
+                        <p className="text-lg font-semibold text-white">{player?.name || ''}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Alias</p>
+                      {isEditMode ? (
+                        <Input
+                          value={editForm.alias}
+                          onChange={(e) => handleInputChange('alias', e.target.value)}
+                          className="bg-gray-600 border-gray-500 text-white"
+                          placeholder="Enter alias"
+                        />
+                      ) : (
+                        <p className="text-lg font-semibold text-white">{player?.alias || ''}</p>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-  
-            {player ? (
-              <>
-              <TabsContent value="assets">
-              <div className="flex justify-end mb-4">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowVehicleModal(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Vehicle
-              </Button>
+              <Card className="bg-gray-700 border-gray-600">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">DNA Sequence</p>
+                      {isEditMode ? (
+                        <Input
+                          value={editForm.dna}
+                          onChange={(e) => handleInputChange('dna', e.target.value)}
+                          placeholder="Enter DNA sequence"
+                          className="bg-gray-600 border-gray-500 text-white font-mono"
+                        />
+                      ) : (
+                        <p className="text-lg font-mono text-white">{player?.dna || 'Not recorded'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Fingerprint ID</p>
+                      {isEditMode ? (
+                        <Input
+                          value={editForm.fingerprint}
+                          onChange={(e) => handleInputChange('fingerprint', e.target.value)}
+                          placeholder="Enter fingerprint ID"
+                          className="bg-gray-600 border-gray-500 text-white font-mono"
+                        />
+                      ) : (
+                        <p className="text-lg font-mono text-white">{player?.fingerprint || 'Not recorded'}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-                <Card className="bg-gray-800 border-gray-700 h-full">
-                  <CardContent className="overflow-y-auto max-h-[120vh]">
-                    <div className="space-y-3">
-                      {assets.map((asset) => (
-                        <div key={asset.id} className="p-3 bg-gray-700 rounded-lg w-full mt-3">
-                          {editingVehicleId === asset.id ? (
-                            // Edit mode
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-start">
-                                <Input
-                                  name="vehicleName"
-                                  value={vehicleEditForm.vehicleName}
-                                  onChange={handleVehicleEditInputChange}
-                                  className="bg-gray-600 border-gray-500 text-white font-semibold"
-                                  placeholder="Vehicle Name"
-                                />
-                                <div className="flex space-x-2">
-                                  <Button size="sm" onClick={handleVehicleSave} className="bg-green-600 hover:bg-green-700">
-                                    Save
-                                  </Button>
-                                  <Button size="sm" onClick={() => setEditingVehicleId(null)} variant="outline" className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500">
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <Input
-                                  name="vehicleReg"
-                                  value={vehicleEditForm.vehicleReg}
-                                  onChange={handleVehicleEditInputChange}
-                                  className="bg-gray-600 border-gray-500 text-white"
-                                  placeholder="Registration"
-                                />
-                                <Input
-                                  name="vehicleVin"
-                                  value={vehicleEditForm.vehicleVin}
-                                  onChange={handleVehicleEditInputChange}
-                                  className="bg-gray-600 border-gray-500 text-white"
-                                  placeholder="VIN"
-                                />
-                                <Input
-                                  name="vehicleColour"
-                                  value={vehicleEditForm.vehicleColour}
-                                  onChange={handleVehicleEditInputChange}
-                                  className="bg-gray-600 border-gray-500 text-white"
-                                  placeholder="Colour"
-                                />
-                                <Input
-                                  name="vehicleValue"
-                                  value={vehicleEditForm.vehicleValue}
-                                  onChange={handleVehicleEditInputChange}
-                                  className="bg-gray-600 border-gray-500 text-white"
-                                  placeholder="Value"
-                                  type="number"
-                                />
-                              </div>
-                              <Input
-                                name="vehicleLocation"
-                                value={vehicleEditForm.vehicleLocation}
-                                onChange={handleVehicleEditInputChange}
-                                className="bg-gray-600 border-gray-500 text-white text-sm"
-                                placeholder="Location"
-                              />
-                              <Input
-                                name="notes"
-                                value={vehicleEditForm.notes}
-                                onChange={handleVehicleEditInputChange}
-                                className="bg-gray-600 border-gray-500 text-white text-sm"
-                                placeholder="Notes"
-                              />
-                              <Button size="sm" onClick={() => handleVehicleDelete(editingVehicleId)} variant="destructive" className="w-full bg-red-600 hover:bg-red-700">
-                                Delete Vehicle
-                              </Button>
-                            </div>
-                          ) : (
-                            // View mode
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-start">
-                                <h3 className="font-semibold text-white">{asset.vehicleName}</h3>
-                                <div className="flex space-x-2">
-                                  <Button size="sm" onClick={() => handleVehicleEdit(asset)} variant="outline" className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 h-7 w-7 p-0">
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <span className="text-gray-400">Reg:</span>
-                                  <span className="text-white ml-1">{asset.vehicleReg}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400">VIN:</span>
-                                  <span className="text-white ml-1">{asset.vehicleVin}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400">Colour:</span>
-                                  <span className="text-white ml-1">{asset.vehicleColour}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400">Value:</span>
-                                  <span className="text-white ml-1">${asset.vehicleValue.toLocaleString()}</span>
-                                </div>
-                              </div>
-                              <div className="text-sm">
-                                <span className="text-gray-400">Location:</span>
-                                <span className="text-white ml-1">{asset.vehicleLocation}</span>
-                              </div>
-                              {asset.notes && (
-                                <div className="text-sm">
-                                  <span className="text-gray-400">Notes:</span>
-                                  <span className="text-gray-300 ml-1">{asset.notes}</span>
-                                </div>
-                              )}
 
-                              {/* Vehicle Images Section */}
-                              <div className="pt-4 border-t border-gray-600 min-h-[200px]">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-gray-400 text-sm">Images:</span>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedVehicleId(asset.id);
-                                      setShowVehicleImageModal(true);
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 h-6 px-2 text-xs"
-                                  >
-                                    <Upload className="h-3 w-3 mr-1" />
-                                    Add Image
-                                  </Button>
-                                </div>
-
-                                {asset.vehicleImages && asset.vehicleImages.length > 0 ? (
-                                  <div className="grid grid-cols-4 gap-3 h-full">
-                                    {asset.vehicleImages.map((imageUrl, index) => (
-                                      <div key={index} className="relative group h-full">
-                                        <Image
-                                          src={imageUrl}
-                                          alt={`Vehicle ${index + 1}`}
-                                          width={216}
-                                          height={216}
-                                          className="w-full h-[216px] object-cover rounded border border-gray-600 cursor-pointer"
-                                          onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}
-                                        />
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}>
-                                          <Eye className="h-8 w-8 text-white" />
-                                        </div>
-                                        <button
-                                          onClick={() => {
-                                            if (confirm('Remove this image?')) {
-                                              removeVehicleImage(asset.id, index);
-                                              // Update local state
-                                              const updatedAssets = assets.map(a =>
-                                                a.id === asset.id
-                                                  ? { ...a, vehicleImages: a.vehicleImages?.filter((_, i) => i !== index) }
-                                                  : a
-                                              );
-                                              setAssets(updatedAssets);
-                                            }
-                                          }}
-                                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500 text-xs">No images uploaded</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Card className="bg-gray-700 border-gray-600">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Phone Number</p>
+                      {isEditMode ? (
+                        <Input
+                          value={editForm.phoneNumber}
+                          onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                          placeholder="Enter phone number"
+                          className="bg-gray-600 border-gray-500 text-white"
+                        />
+                      ) : (
+                        <p className="text-lg font-semibold text-white">{player?.phoneNumber || 'Not recorded'}</p>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="weapons">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">Weapons</CardTitle>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowWeaponModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Weapon
-                      </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {weapons.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Shield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-gray-400">No weapons registered for this player</p>
-                        <p className="text-gray-500 text-sm mt-2">Add weapons to track player&apos;s armaments</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {weapons.map((weapon) => (
-                          <div key={weapon.id} className="p-3 bg-gray-700 rounded-lg">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <h3 className="text-white font-medium">{weapon.gunName}</h3>
-                                  <Badge className={
-                                    weapon.status === 'seized'
-                                      ? 'bg-red-600 text-white'
-                                      : 'bg-yellow-600 text-white'
-                                  }>
-                                    {weapon.status === 'seized' ? 'Seized' : 'Not Seized'}
-                                  </Badge>
-                                </div>
-                                <div className="mt-1 space-y-1">
-                                  <div className="text-sm">
-                                    <span className="text-gray-400">Serial:</span>
-                                    <span className="text-white ml-1">{weapon.serialNumber}</span>
-                                  </div>
-                                  <div className="text-sm">
-                                    <span className="text-gray-400">Ballistics:</span>
-                                    <span className="text-white ml-1">{weapon.ballisticsReference}</span>
-                                  </div>
-                                  {weapon.notes && (
-                                    <div className="text-sm">
-                                      <span className="text-gray-400">Notes:</span>
-                                      <span className="text-gray-300 ml-1">{weapon.notes}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleWeaponEdit(weapon)}
-                                  className="border-gray-600 text-gray-300 hover:bg-gray-600"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleWeaponDelete(weapon.id)}
-                                  className="border-red-600 text-red-400 hover:bg-red-600/20"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                </CardContent>
+              </Card>
 
-              <TabsContent value="documents">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">Documents</CardTitle>
-                      <div className="flex space-x-2">
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowDocumentModal(true)}>
-                          <Upload className="mr-2 h-4 w-4" />
-                          Upload
-                        </Button>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowGoogleDocModal(true)}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Link Google Doc
-                        </Button>
-                      </div>
+              <Card className="bg-gray-700 border-gray-600">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Status</p>
+                      {isEditMode ? (
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => handleInputChange('status', e.target.value)}
+                          className="w-full p-2 bg-gray-600 border-gray-500 text-white rounded-lg"
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                          <option value="MIA">MIA</option>
+                        </select>
+                      ) : (
+                        <Badge className={
+                          player?.status === 'active' ? 'bg-green-600' :
+                          player?.status === 'inactive' ? 'bg-orange-600' :
+                          player?.status === 'MIA' ? 'bg-red-600' :
+                          'bg-green-600'
+                        }>
+                          {player?.status || 'active'}
+                        </Badge>
+                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {documents.length === 0 ? (
-                      <div className="text-center py-12">
-                        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-gray-400">No documents attached to this player</p>
-                        <p className="text-gray-500 text-sm mt-2">Upload files or link Google Docs to track player-related documents</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {documents.map((document) => (
-                          <div key={document.id} className="p-3 bg-gray-700 rounded-lg">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-white">{document.filename}</h3>
-                                {document.originalFilename && document.originalFilename !== document.filename && (
-                                  <p className="text-xs text-gray-500 mt-1">Original: {document.originalFilename}</p>
-                                )}
-                                {document.description && (
-                                  <p className="text-sm text-gray-400 mt-1">{document.description}</p>
-                                )}
-                                <div className="flex items-center space-x-2 mt-2">
-                                  <span className={`px-2 py-1 rounded text-xs ${
-                                    document.isGoogleDoc
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-blue-600 text-white'
-                                  }`}>
-                                    {document.isGoogleDoc ? 'Google Doc' : 'Uploaded'}
-                                  </span>
-                                  <span className="text-xs text-gray-400">
-                                    {new Date(document.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex space-x-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => window.open(document.url, '_blank')}
-                                  className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 h-7 w-7 p-0"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDeleteDocument(document.id)}
-                                  className="bg-red-600 hover:bg-red-700 border-red-600 text-white h-7 w-7 p-0"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-              <TabsContent value="mugshots">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">Mugshots</CardTitle>
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => setShowUrlModal(true)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Add Mugshot
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {mugshots.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-gray-400">No mugshots available for this player</p>
-                        <p className="text-gray-500 text-sm mt-2">Upload images to create a mugshot gallery for this player</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {mugshots.map((mugshot) => (
-                          <div key={mugshot.id} className="relative group">
-                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
-                              <Image
-                                src={mugshot.url}
-                                alt={mugshot.filename}
-                                width={200}
-                                height={200}
-                                className="w-full h-full object-cover cursor-pointer"
-                                onClick={() => handleViewFullImage(mugshot.url)}
-                                onError={(e) => {
-                                  const container = e.currentTarget.parentElement;
-                                  if (container) {
-                                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
-                                  }
-                                }}
-                              />
-                              <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mugshot.url)}>
-                                <Eye className="h-8 w-8 text-white" />
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <p className="text-sm text-gray-400 truncate">{mugshot.displayName || mugshot.filename}</p>
-                              <div className="flex items-center space-x-2">
-                                {mugshot.isProfilePicture && (
-                                  <Badge className="bg-blue-600 text-xs">
-                                    <Star className="mr-1 h-3 w-3" />
-                                    Profile
-                                  </Badge>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDeleteMugshot(mugshot.id)}
-                                  className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                            {!mugshot.isProfilePicture && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleSetProfilePicture(mugshot.id)}
-                                className="w-full mt-2 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 text-xs"
-                              >
-                                <Star className="mr-1 h-3 w-3" />
-                                Set as Profile
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {/* Financial Summary Cards - Only show for existing players */}
+            {player && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-              <TabsContent value="media">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">Media</CardTitle>
-                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowMediaUrlModal(true)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Add Media
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {media.length === 0 ? (
-                      <div className="text-center py-12">
-                        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-gray-400">No media available for this player</p>
-                        <p className="text-gray-500 text-sm mt-2">Upload media files to create a media gallery for this player</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {media.map((mediaItem) => (
-                          <div key={mediaItem.id} className="relative group">
-                            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
-                              {mediaItem.filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                <>
-                                  <Image
-                                    src={mediaItem.url}
-                                    alt={mediaItem.filename}
-                                    width={200}
-                                    height={200}
-                                    className="w-full h-full object-cover cursor-pointer"
-                                    onClick={() => handleViewFullImage(mediaItem.url)}
-                                    onError={(e) => {
-                                      const container = e.currentTarget.parentElement;
-                                      if (container) {
-                                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
-                                      }
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mediaItem.url)}>
-                                    <Eye className="h-8 w-8 text-white" />
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <FileText className="h-8 w-8 text-gray-400" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <p className="text-sm text-gray-400 truncate">{mediaItem.displayName || mediaItem.filename}</p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteMedia(mediaItem.id)}
-                                className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="house">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">House Information</CardTitle>
-                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowHouseMediaModal(true)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Add House Media
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
+                <Card className="bg-gray-700 border-gray-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-5 w-5 text-blue-400" />
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Address
-                        </label>
-                        <div className="flex space-x-2">
-                          <Input
-                            value={editForm.houseAddress}
-                            onChange={(e) => handleInputChange('houseAddress', e.target.value)}
-                            placeholder="Enter house address"
-                            className="flex-1 bg-gray-600 border-gray-500 text-white"
+                        <p className="text-sm text-gray-400">Total Assets</p>
+                        <p className="text-xl font-bold text-white">${calculatePlayerAssetsValue(player.id).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gray-700 border-gray-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <p className="text-sm text-gray-400">Asset Count</p>
+                        <p className="text-xl font-bold text-white">{assets.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="bg-gray-700">
+                <TabsTrigger value="overview" className="text-gray-300 data-[state=active]:bg-gray-600">
+                  Overview
+                </TabsTrigger>
+                {player && (
+                  <>
+                    <TabsTrigger value="assets" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      Vehicles
+                    </TabsTrigger>
+                    <TabsTrigger value="weapons" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      Weapons
+                    </TabsTrigger>
+                    <TabsTrigger value="documents" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      Documents
+                    </TabsTrigger>
+                    <TabsTrigger value="mugshots" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      Mugshots
+                    </TabsTrigger>
+                    <TabsTrigger value="media" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      Media
+                    </TabsTrigger>
+                    <TabsTrigger value="house" className="text-gray-300 data-[state=active]:bg-gray-600">
+                      House
+                    </TabsTrigger>
+                  </>
+                )}
+              </TabsList>
+
+              <TabsContent value="overview">
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">Player Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-medium text-white mb-2">Notes</h3>
+                        {isEditMode ? (
+                          <textarea
+                            value={editForm.notes}
+                            onChange={(e) => handleInputChange('notes', e.target.value)}
+                            placeholder="Enter player notes"
+                            className="w-full p-3 bg-gray-600 border-gray-500 text-white rounded-lg resize-none h-32"
+                            rows={4}
                           />
-                          <Button
-                            size="sm"
-                            onClick={handleSaveHouseAddress}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            Save
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-4">
-                          House Media Gallery
-                        </label>
-                        {houseMedia.length === 0 ? (
-                          <div className="text-center py-8 border-2 border-dashed border-gray-600 rounded-lg">
-                            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                            <p className="text-gray-400">No house media uploaded</p>
-                            <p className="text-gray-500 text-sm mt-1">Click &quot;Add House Media&quot; to upload house pictures</p>
-                          </div>
                         ) : (
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {houseMedia.map((houseMediaItem) => (
-                              <div key={houseMediaItem.id} className="relative group">
-                                <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
-                                  <Image
-                                    src={houseMediaItem.url}
-                                    alt={houseMediaItem.filename}
-                                    width={200}
-                                    height={200}
-                                    className="w-full h-full object-cover cursor-pointer"
-                                    onClick={() => handleViewFullImage(houseMediaItem.url)}
-                                    onError={(e) => {
-                                      const container = e.currentTarget.parentElement;
-                                      if (container) {
-                                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
-                                      }
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(houseMediaItem.url)}>
-                                    <Eye className="h-8 w-8 text-white" />
-                                  </div>
-                                </div>
-                                <div className="mt-2 flex items-center justify-between">
-                                  <p className="text-sm text-gray-400 truncate">{houseMediaItem.displayName || houseMediaItem.filename}</p>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleDeleteHouseMedia(houseMediaItem.id)}
-                                    className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-gray-400">{player?.notes || "No notes available"}</p>
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
-              </>
-            ) : null}
-          </Tabs>
+
+    
+              {player ? (
+                <>
+                <TabsContent value="assets">
+                <div className="flex justify-end mb-4">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowVehicleModal(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Vehicle
+                </Button>
+              </div>
+                  <Card className="bg-gray-800 border-gray-700 h-full">
+                    <CardContent className="overflow-y-auto max-h-[120vh]">
+                      <div className="space-y-3">
+                        {assets.map((asset) => (
+                          <div key={asset.id} className="p-3 bg-gray-700 rounded-lg w-full mt-3">
+                            {editingVehicleId === asset.id ? (
+                              // Edit mode
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-start">
+                                  <Input
+                                    name="vehicleName"
+                                    value={vehicleEditForm.vehicleName}
+                                    onChange={handleVehicleEditInputChange}
+                                    className="bg-gray-600 border-gray-500 text-white font-semibold"
+                                    placeholder="Vehicle Name"
+                                  />
+                                  <div className="flex space-x-2">
+                                    <Button size="sm" onClick={handleVehicleSave} className="bg-green-600 hover:bg-green-700">
+                                      Save
+                                    </Button>
+                                    <Button size="sm" onClick={() => setEditingVehicleId(null)} variant="outline" className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500">
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <Input
+                                    name="vehicleReg"
+                                    value={vehicleEditForm.vehicleReg}
+                                    onChange={handleVehicleEditInputChange}
+                                    className="bg-gray-600 border-gray-500 text-white"
+                                    placeholder="Registration"
+                                  />
+                                  <Input
+                                    name="vehicleVin"
+                                    value={vehicleEditForm.vehicleVin}
+                                    onChange={handleVehicleEditInputChange}
+                                    className="bg-gray-600 border-gray-500 text-white"
+                                    placeholder="VIN"
+                                  />
+                                  <Input
+                                    name="vehicleColour"
+                                    value={vehicleEditForm.vehicleColour}
+                                    onChange={handleVehicleEditInputChange}
+                                    className="bg-gray-600 border-gray-500 text-white"
+                                    placeholder="Colour"
+                                  />
+                                  <Input
+                                    name="vehicleValue"
+                                    value={vehicleEditForm.vehicleValue}
+                                    onChange={handleVehicleEditInputChange}
+                                    className="bg-gray-600 border-gray-500 text-white"
+                                    placeholder="Value"
+                                    type="number"
+                                  />
+                                </div>
+                                <Input
+                                  name="vehicleLocation"
+                                  value={vehicleEditForm.vehicleLocation}
+                                  onChange={handleVehicleEditInputChange}
+                                  className="bg-gray-600 border-gray-500 text-white text-sm"
+                                  placeholder="Location"
+                                />
+                                <Input
+                                  name="notes"
+                                  value={vehicleEditForm.notes}
+                                  onChange={handleVehicleEditInputChange}
+                                  className="bg-gray-600 border-gray-500 text-white text-sm"
+                                  placeholder="Notes"
+                                />
+                                <Button size="sm" onClick={() => handleVehicleDelete(editingVehicleId)} variant="destructive" className="w-full bg-red-600 hover:bg-red-700">
+                                  Delete Vehicle
+                                </Button>
+                              </div>
+                            ) : (
+                              // View mode
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <h3 className="font-semibold text-white">{asset.vehicleName}</h3>
+                                  <div className="flex space-x-2">
+                                    <Button size="sm" onClick={() => handleVehicleEdit(asset)} variant="outline" className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 h-7 w-7 p-0">
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-400">Reg:</span>
+                                    <span className="text-white ml-1">{asset.vehicleReg}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">VIN:</span>
+                                    <span className="text-white ml-1">{asset.vehicleVin}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Colour:</span>
+                                    <span className="text-white ml-1">{asset.vehicleColour}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Value:</span>
+                                    <span className="text-white ml-1">${asset.vehicleValue.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                                <div className="text-sm">
+                                  <span className="text-gray-400">Location:</span>
+                                  <span className="text-white ml-1">{asset.vehicleLocation}</span>
+                                </div>
+                                {asset.notes && (
+                                  <div className="text-sm">
+                                    <span className="text-gray-400">Notes:</span>
+                                    <span className="text-gray-300 ml-1">{asset.notes}</span>
+                                  </div>
+                                )}
+
+                                {/* Vehicle Images Section */}
+                                <div className="pt-4 border-t border-gray-600 min-h-[200px]">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-gray-400 text-sm">Images:</span>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedVehicleId(asset.id);
+                                        setShowVehicleImageModal(true);
+                                      }}
+                                      className="bg-blue-600 hover:bg-blue-700 h-6 px-2 text-xs"
+                                    >
+                                      <Upload className="h-3 w-3 mr-1" />
+                                      Add Image
+                                    </Button>
+                                  </div>
+
+                                  {asset.vehicleImages && asset.vehicleImages.length > 0 ? (
+                                    <div className="grid grid-cols-4 gap-3 h-full">
+                                      {asset.vehicleImages.map((imageUrl, index) => (
+                                        <div key={index} className="relative group h-full">
+                                          <Image
+                                            src={imageUrl}
+                                            alt={`Vehicle ${index + 1}`}
+                                            width={216}
+                                            height={216}
+                                            className="w-full h-[216px] object-cover rounded border border-gray-600 cursor-pointer"
+                                            onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}
+                                          />
+                                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setFullscreenImage({ url: imageUrl, name: `Vehicle ${index + 1}` })}>
+                                            <Eye className="h-8 w-8 text-white" />
+                                          </div>
+                                          <button
+                                            onClick={() => {
+                                              if (confirm('Remove this image?')) {
+                                                removeVehicleImage(asset.id, index);
+                                                // Update local state
+                                                const updatedAssets = assets.map(a =>
+                                                  a.id === asset.id
+                                                    ? { ...a, vehicleImages: a.vehicleImages?.filter((_, i) => i !== index) }
+                                                    : a
+                                                );
+                                                setAssets(updatedAssets);
+                                              }
+                                            }}
+                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-500 text-xs">No images uploaded</p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="weapons">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-white">Weapons</CardTitle>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowWeaponModal(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Weapon
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {weapons.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Shield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                          <p className="text-gray-400">No weapons registered for this player</p>
+                          <p className="text-gray-500 text-sm mt-2">Add weapons to track player's armaments</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {weapons.map((weapon) => (
+                            <div key={weapon.id} className="p-3 bg-gray-700 rounded-lg">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="text-white font-medium">{weapon.gunName}</h3>
+                                    <Badge className={
+                                      weapon.status === 'seized'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-yellow-600 text-white'
+                                    }>
+                                      {weapon.status === 'seized' ? 'Seized' : 'Not Seized'}
+                                    </Badge>
+                                  </div>
+                                  <div className="mt-1 space-y-1">
+                                    <div className="text-sm">
+                                      <span className="text-gray-400">Serial:</span>
+                                      <span className="text-white ml-1">{weapon.serialNumber}</span>
+                                    </div>
+                                    <div className="text-sm">
+                                      <span className="text-gray-400">Ballistics:</span>
+                                      <span className="text-white ml-1">{weapon.ballisticsReference}</span>
+                                    </div>
+                                    {weapon.notes && (
+                                      <div className="text-sm">
+                                        <span className="text-gray-400">Notes:</span>
+                                        <span className="text-gray-300 ml-1">{weapon.notes}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleWeaponEdit(weapon)}
+                                    className="border-gray-600 text-gray-300 hover:bg-gray-600"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleWeaponDelete(weapon.id)}
+                                    className="border-red-600 text-red-400 hover:bg-red-600/20"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="documents">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-white">Documents</CardTitle>
+                        <div className="flex space-x-2">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowDocumentModal(true)}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload
+                          </Button>
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowGoogleDocModal(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Link Google Doc
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {documents.length === 0 ? (
+                        <div className="text-center py-12">
+                          <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                          <p className="text-gray-400">No documents attached to this player</p>
+                          <p className="text-gray-500 text-sm mt-2">Upload files or link Google Docs to track player-related documents</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {documents.map((document) => (
+                            <div key={document.id} className="p-3 bg-gray-700 rounded-lg">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-white">{document.filename}</h3>
+                                  {document.originalFilename && document.originalFilename !== document.filename && (
+                                    <p className="text-xs text-gray-500 mt-1">Original: {document.originalFilename}</p>
+                                  )}
+                                  {document.description && (
+                                    <p className="text-sm text-gray-400 mt-1">{document.description}</p>
+                                  )}
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <span className={`px-2 py-1 rounded text-xs ${
+                                      document.isGoogleDoc
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-blue-600 text-white'
+                                    }`}>
+                                      {document.isGoogleDoc ? 'Google Doc' : 'Uploaded'}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      {new Date(document.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => window.open(document.url, '_blank')}
+                                    className="bg-gray-600 border-gray-500 text-gray-300 hover:bg-gray-500 h-7 w-7 p-0"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteDocument(document.id)}
+                                    className="bg-red-600 hover:bg-red-700 border-red-600 text-white h-7 w-7 p-0"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="mugshots">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-white">Mugshots</CardTitle>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => setShowUrlModal(true)}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Add Mugshot
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {mugshots.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                          <p className="text-gray-400">No mugshots available for this player</p>
+                          <p className="text-gray-500 text-sm mt-2">Upload images to create a mugshot gallery for this player</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {mugshots.map((mugshot) => (
+                            <div key={mugshot.id} className="relative group">
+                              <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
+                                <Image
+                                  src={mugshot.url}
+                                  alt={mugshot.filename}
+                                  width={200}
+                                  height={200}
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => handleViewFullImage(mugshot.url)}
+                                  onError={(e) => {
+                                    const container = e.currentTarget.parentElement;
+                                    if (container) {
+                                      container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                    }
+                                  }}
+                                />
+                                <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mugshot.url)}>
+                                  <Eye className="h-8 w-8 text-white" />
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center justify-between">
+                                <p className="text-sm text-gray-400 truncate">{mugshot.displayName || mugshot.filename}</p>
+                                <div className="flex items-center space-x-2">
+                                  {mugshot.isProfilePicture && (
+                                    <Badge className="bg-blue-600 text-xs">
+                                      <Star className="mr-1 h-3 w-3" />
+                                      Profile
+                                    </Badge>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteMugshot(mugshot.id)}
+                                    className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                              {!mugshot.isProfilePicture && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSetProfilePicture(mugshot.id)}
+                                  className="w-full mt-2 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 text-xs"
+                                >
+                                  <Star className="mr-1 h-3 w-3" />
+                                  Set as Profile
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="media">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-white">Media</CardTitle>
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowMediaUrlModal(true)}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Add Media
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {media.length === 0 ? (
+                        <div className="text-center py-12">
+                          <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                          <p className="text-gray-400">No media available for this player</p>
+                          <p className="text-gray-500 text-sm mt-2">Upload media files to create a media gallery for this player</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {media.map((mediaItem) => (
+                            <div key={mediaItem.id} className="relative group">
+                              <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
+                                {mediaItem.filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                  <>
+                                    <Image
+                                      src={mediaItem.url}
+                                      alt={mediaItem.filename}
+                                      width={200}
+                                      height={200}
+                                      className="w-full h-full object-cover cursor-pointer"
+                                      onClick={() => handleViewFullImage(mediaItem.url)}
+                                      onError={(e) => {
+                                        const container = e.currentTarget.parentElement;
+                                        if (container) {
+                                          container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                        }
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(mediaItem.url)}>
+                                      <Eye className="h-8 w-8 text-white" />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <FileText className="h-8 w-8 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center justify-between">
+                                <p className="text-sm text-gray-400 truncate">{mediaItem.displayName || mediaItem.filename}</p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteMedia(mediaItem.id)}
+                                  className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="house">
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-white">House Information</CardTitle>
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowHouseMediaModal(true)}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Add House Media
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Address
+                          </label>
+                          <div className="flex space-x-2">
+                            <Input
+                              value={editForm.houseAddress}
+                              onChange={(e) => handleInputChange('houseAddress', e.target.value)}
+                              placeholder="Enter house address"
+                              className="flex-1 bg-gray-600 border-gray-500 text-white"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={handleSaveHouseAddress}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-4">
+                            House Media Gallery
+                          </label>
+                          {houseMedia.length === 0 ? (
+                            <div className="text-center py-8 border-2 border-dashed border-gray-600 rounded-lg">
+                              <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                              <p className="text-gray-400">No house media uploaded</p>
+                              <p className="text-gray-500 text-sm mt-1">Click &quot;Add House Media&quot; to upload house pictures</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                              {houseMedia.map((houseMediaItem) => (
+                                <div key={houseMediaItem.id} className="relative group">
+                                  <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative">
+                                    <Image
+                                      src={houseMediaItem.url}
+                                      alt={houseMediaItem.filename}
+                                      width={200}
+                                      height={200}
+                                      className="w-full h-full object-cover cursor-pointer"
+                                      onClick={() => handleViewFullImage(houseMediaItem.url)}
+                                      onError={(e) => {
+                                        const container = e.currentTarget.parentElement;
+                                        if (container) {
+                                          container.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-600"><svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                        }
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => handleViewFullImage(houseMediaItem.url)}>
+                                      <Eye className="h-8 w-8 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="mt-2 flex items-center justify-between">
+                                    <p className="text-sm text-gray-400 truncate">{houseMediaItem.displayName || houseMediaItem.filename}</p>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteHouseMedia(houseMediaItem.id)}
+                                      className="bg-red-600 hover:bg-red-700 border-red-600 text-white p-1 h-6 w-6"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                </>
+              ) : null}
+            </Tabs>
+          </div>
         </div>
       </div>
 
       {/* URL Input Modal - Only for existing players */}
       {player && showUrlModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1547,7 +1549,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Media URL Input Modal - Only for existing players */}
       {player && showMediaUrlModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1615,7 +1617,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Add Vehicle Modal - Only for existing players */}
       {player && showVehicleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1744,7 +1746,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Vehicle Image Upload Modal */}
       {player && showVehicleImageModal && selectedVehicleId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1812,7 +1814,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Add Weapon Modal - Only for existing players */}
       {player && showWeaponModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -1916,7 +1918,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Edit Weapon Modal */}
       {editingWeaponId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -2020,7 +2022,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* House Image Upload Modal - Only for existing players */}
       {player && showHouseUrlModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -2073,7 +2075,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* House Image View Modal - Only for existing players */}
       {player && showHouseImageModal && editForm.houseImageUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="relative max-w-4xl max-h-[90vh] w-full m-4">
             <Button
               variant="outline"
@@ -2099,7 +2101,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* House Media Upload Modal - Only for existing players */}
       {player && showHouseMediaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -2167,7 +2169,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Document Upload Modal - Only for existing players */}
       {player && showDocumentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -2256,7 +2258,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Google Doc Link Modal - Only for existing players */}
       {player && showGoogleDocModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-gray-800 rounded-lg w-full max-w-md m-4 shadow-2xl">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -2330,7 +2332,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Full Size Image View Modal */}
       {showImageModal && selectedImageUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20" onClick={() => setShowImageModal(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/20" onClick={() => setShowImageModal(false)}>
           <div className="relative max-w-6xl max-h-[90vh] w-full m-4" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="outline"
@@ -2361,7 +2363,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
       {/* Fullscreen Image Modal */}
       {fullscreenImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/80" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={() => setFullscreenImage(null)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/80" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={() => setFullscreenImage(null)}>
           <div className="relative">
             {/* Image container with background */}
             <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -2387,6 +2389,6 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
