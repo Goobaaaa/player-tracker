@@ -634,7 +634,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-      <div className="bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div className="bg-gray-800 rounded-lg w-full max-w-6xl m-4 shadow-2xl">
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center space-x-4">
@@ -896,17 +896,14 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
             {player ? (
               <>
               <TabsContent value="assets">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-white">Vehicles</CardTitle>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowVehicleModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Vehicle
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
+              <div className="flex justify-end mb-4">
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowVehicleModal(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Vehicle
+              </Button>
+            </div>
+                <Card className="bg-gray-800 border-gray-700 h-full">
+                  <CardContent className="overflow-y-auto max-h-[120vh]">
                     <div className="space-y-3">
                       {assets.map((asset) => (
                         <div key={asset.id} className="p-3 bg-gray-700 rounded-lg">
@@ -1789,16 +1786,8 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                     onClick={() => {
                       if (vehicleImageUrl.trim()) {
                         addVehicleImage(selectedVehicleId, vehicleImageUrl.trim());
-                        // Update local state
-                        const updatedAssets = assets.map(asset =>
-                          asset.id === selectedVehicleId
-                            ? {
-                                ...asset,
-                                vehicleImages: [...(asset.vehicleImages || []), vehicleImageUrl.trim()]
-                              }
-                            : asset
-                        );
-                        setAssets(updatedAssets);
+                        // Refresh assets from mockAssets to get the updated data
+                        setAssets([...mockAssets.filter(asset => asset.playerId === player?.id)]);
                         setShowVehicleImageModal(false);
                         setSelectedVehicleId(null);
                         setVehicleImageUrl('');
