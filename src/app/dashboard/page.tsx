@@ -197,7 +197,7 @@ export default function DashboardPage() {
                   activities={auditLog}
                   limit={5}
                   showFullLog={showFullAuditLog}
-                  onToggleFullLog={() => setShowFullAuditLog(!showFullAuditLog)}
+                  onToggleFullLog={() => router.push("/audit-log")}
                 />
               </FadeInCard>
             </div>

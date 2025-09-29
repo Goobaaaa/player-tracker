@@ -13,6 +13,7 @@ const navigation = [
   { name: "Documents", href: "/documents", icon: "📄" },
   { name: "Tasks", href: "/tasks", icon: "✅" },
   { name: "Incidents", href: "/incidents", icon: "🚨" },
+  { name: "Audit Log", href: "/audit-log", icon: "📋" },
   { name: "OCR Text Finder", href: "/ocr-text-finder", icon: "🔍" },
   { name: "Settings", href: "/settings", icon: "⚙️" },
 ];
