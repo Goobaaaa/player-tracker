@@ -22,7 +22,7 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCommentsTask, setShowCommentsTask] = useState<string | null>(null);
@@ -51,6 +51,7 @@ export default function TasksPage() {
       return;
     }
 
+    setIsAuthenticated(true);
     loadTasks();
   }, [router]);
 
@@ -91,14 +92,10 @@ export default function TasksPage() {
 
   const loadTasks = async () => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
       updateTaskOverdueStatus(); // Update overdue status
       setTasks(getAllTasks());
     } catch (error) {
       console.error("Error loading tasks:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -384,10 +381,73 @@ export default function TasksPage() {
     return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
   };
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="w-full">
+              <div className="flex justify-between items-center mb-6">
+                <div className="h-8 bg-gray-700 rounded w-24"></div>
+                <div className="h-10 bg-gray-700 rounded w-40"></div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <div className="h-10 bg-gray-700 rounded w-full"></div>
+                </div>
+                <div className="h-10 bg-gray-700 rounded w-48"></div>
+                <div className="h-10 bg-gray-700 rounded w-48"></div>
+              </div>
+              <div className="space-y-6">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="bg-gray-800 border-gray-700 rounded-lg p-6 animate-pulse">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start space-x-3 flex-1">
+                        <div className="w-5 h-5 bg-gray-700 rounded mt-1"></div>
+                        <div className="flex-1">
+                          <div className="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                            <div className="h-4 bg-gray-700 rounded w-32"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-700 rounded w-full"></div>
+                            <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end space-y-3">
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          <div className="w-16 h-6 bg-gray-700 rounded"></div>
+                          <div className="w-20 h-6 bg-gray-700 rounded"></div>
+                          <div className="w-16 h-6 bg-gray-700 rounded"></div>
+                        </div>
+                        <div className="text-sm space-y-1 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                            <div className="h-3 bg-gray-700 rounded w-24"></div>
+                          </div>
+                          <div className="flex items-center justify-end space-x-2">
+                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                            <div className="h-3 bg-gray-700 rounded w-20"></div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                          <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                          <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                          <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

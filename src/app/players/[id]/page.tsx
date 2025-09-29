@@ -18,7 +18,7 @@ export default function PlayerDetailPage() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const params = useParams();
   const router = useRouter();
   const playerId = params.id as string;
@@ -32,29 +32,124 @@ export default function PlayerDetailPage() {
       }
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         const foundPlayer = mockPlayers.find(p => p.id === playerId);
         if (foundPlayer) {
           setPlayer(foundPlayer);
           setAssets(getPlayerAssets(playerId));
           setTransactions(getPlayerTransactions(playerId));
         }
+        setIsAuthenticated(true);
       } catch (error) {
         console.error("Error loading player data:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadPage();
   }, [router, playerId]);
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="mb-6">
+                <div className="h-10 bg-gray-700 rounded w-32 mb-4"></div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gray-700 rounded-full"></div>
+                    <div>
+                      <div className="h-8 bg-gray-700 rounded w-48 mb-2"></div>
+                      <div className="h-6 bg-gray-700 rounded w-32 mb-2"></div>
+                      <div className="w-24 h-6 bg-gray-700 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 bg-gray-600 rounded"></div>
+                      <div>
+                        <div className="h-3 bg-gray-600 rounded w-20 mb-1"></div>
+                        <div className="h-5 bg-gray-600 rounded w-24"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 bg-gray-600 rounded"></div>
+                      <div>
+                        <div className="h-3 bg-gray-600 rounded w-24 mb-1"></div>
+                        <div className="h-5 bg-gray-600 rounded w-28"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 bg-gray-600 rounded"></div>
+                      <div>
+                        <div className="h-3 bg-gray-600 rounded w-20 mb-1"></div>
+                        <div className="h-5 bg-gray-600 rounded w-16"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex space-x-2 mb-6">
+                <div className="h-10 bg-gray-700 rounded w-24"></div>
+                <div className="h-10 bg-gray-700 rounded w-32"></div>
+                <div className="h-10 bg-gray-700 rounded w-28"></div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <div className="h-6 bg-gray-700 rounded w-40 mb-4"></div>
+                <div className="space-y-4">
+                  <div>
+                    <div className="h-5 bg-gray-700 rounded w-32 mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded w-full"></div>
+                  </div>
+                  <div>
+                    <div className="h-5 bg-gray-700 rounded w-20 mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded w-32"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="h-6 bg-gray-700 rounded w-32 mb-4"></div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-700 rounded-lg">
+                      <div className="h-4 bg-gray-600 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-600 rounded w-1/2 mb-2"></div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="h-3 bg-gray-600 rounded w-16"></div>
+                        <div className="h-3 bg-gray-600 rounded w-20"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="h-6 bg-gray-700 rounded w-40 mb-4"></div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-700 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="h-4 bg-gray-600 rounded w-32"></div>
+                        <div className="w-16 h-6 bg-gray-600 rounded"></div>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="h-3 bg-gray-600 rounded w-24"></div>
+                        <div className="h-4 bg-gray-600 rounded w-20"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

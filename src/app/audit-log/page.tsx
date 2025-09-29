@@ -25,7 +25,7 @@ const entityTypes = ['suspect', 'task', 'document', 'asset', 'media', 'comment',
 export default function AuditLogPage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [filteredLog, setFilteredLog] = useState<AuditLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedEntityType, setSelectedEntityType] = useState<string>("all");
@@ -38,6 +38,7 @@ export default function AuditLogPage() {
         router.push("/login");
         return;
       }
+      setIsAuthenticated(true);
       loadAuditLogData();
     };
     checkAuth();
@@ -54,14 +55,11 @@ export default function AuditLogPage() {
 
   const loadAuditLogData = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
       const currentLog = getCurrentAuditLog();
       setAuditLog(currentLog);
       setFilteredLog(currentLog);
     } catch (error) {
       console.error("Error loading audit log data:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -157,10 +155,68 @@ export default function AuditLogPage() {
     applyFilters(auditLog, selectedAction, selectedUser, value);
   };
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="animate-pulse">
+                <div className="flex items-center justify-between mb-6">
+                <div className="h-8 bg-gray-700 rounded w-32"></div>
+                <div className="h-10 bg-gray-700 rounded w-32"></div>
+              </div>
+              <div className="bg-gray-800 border-gray-700 rounded-lg mb-6">
+                <div className="p-6">
+                  <div className="h-6 bg-gray-700 rounded w-40 mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="h-4 bg-gray-700 rounded w-24 mb-2"></div>
+                      <div className="h-10 bg-gray-700 rounded w-full"></div>
+                    </div>
+                    <div>
+                      <div className="h-4 bg-gray-700 rounded w-16 mb-2"></div>
+                      <div className="h-10 bg-gray-700 rounded w-full"></div>
+                    </div>
+                    <div>
+                      <div className="h-4 bg-gray-700 rounded w-32 mb-2"></div>
+                      <div className="h-10 bg-gray-700 rounded w-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="h-4 bg-gray-700 rounded w-48"></div>
+                <div className="h-10 bg-gray-700 rounded w-24"></div>
+              </div>
+              <div className="bg-gray-800 border-gray-700 rounded-lg">
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-start space-x-3 p-3 bg-gray-700 rounded-lg">
+                        <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="h-4 bg-gray-600 rounded w-64"></div>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-16 h-5 bg-gray-600 rounded"></div>
+                              <div className="w-12 h-5 bg-gray-600 rounded"></div>
+                            </div>
+                          </div>
+                          <div className="h-3 bg-gray-600 rounded w-48 mb-1"></div>
+                          <div className="h-3 bg-gray-600 rounded w-32"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

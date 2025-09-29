@@ -1,21 +1,69 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Bell, Settings, User } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 
 export function Header() {
+  const [ukTime, setUkTime] = useState("");
+  const [usTime, setUsTime] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+
+      // UK GMT (UTC+0 or UTC+1 during BST)
+      const ukTimeStr = now.toLocaleTimeString('en-GB', {
+        timeZone: 'Europe/London',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      // US EST (UTC-5 or UTC-4 during EDT)
+      const usTimeStr = now.toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      setUkTime(ukTimeStr);
+      setUsTime(usTimeStr);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <header className="bg-gray-800 border-b border-gray-700">
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="text-white text-lg font-semibold flex items-center">
-          <Image src="/media/usmsbadge.png" alt="USMS Badge" width={32} height={32} className="w-8 h-8 mr-2" />
-          USMS Dashboard
+        <div className="flex items-center space-x-6">
+          <div className="text-white text-lg font-semibold flex items-center">
+            <Image src="/media/usmsbadge.png" alt="USMS Badge" width={32} height={32} className="w-8 h-8 mr-2" />
+            USMS Dashboard
+          </div>
+          <SearchBar />
         </div>
 
         <div className="flex items-center space-x-4">
-          <SearchBar />
+          <div className="flex items-center space-x-3 bg-gray-700 px-3 py-1 rounded-lg">
+            <div className="text-center">
+              <div className="text-xs text-gray-400">UK GMT</div>
+              <div className="text-sm font-mono text-white">{ukTime}</div>
+            </div>
+            <div className="text-gray-500">|</div>
+            <div className="text-center">
+              <div className="text-xs text-gray-400">US EST</div>
+              <div className="text-sm font-mono text-white">{usTime}</div>
+            </div>
+          </div>
           <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
             <Bell className="h-5 w-5" />
           </Button>

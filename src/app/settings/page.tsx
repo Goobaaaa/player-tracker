@@ -14,7 +14,7 @@ import { Settings, User, Shield, Database, Palette, Upload } from "lucide-react"
 import Image from "next/image";
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {
@@ -24,17 +24,91 @@ export default function SettingsPage() {
       return;
     }
 
-    setLoading(false);
+    setIsAuthenticated(true);
   }, [router]);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-6">
+                <div className="h-8 bg-gray-700 rounded w-32 mb-2"></div>
+                <div className="h-4 bg-gray-700 rounded w-64"></div>
+              </div>
+              <div className="space-y-6">
+                <div className="flex space-x-2 mb-6">
+                  <div className="h-10 bg-gray-700 rounded w-24"></div>
+                  <div className="h-10 bg-gray-700 rounded w-20"></div>
+                  <div className="h-10 bg-gray-700 rounded w-24"></div>
+                  <div className="h-10 bg-gray-700 rounded w-28"></div>
+                </div>
+                <div className="bg-gray-800 border-gray-700 rounded-lg p-6">
+                  <div className="h-6 bg-gray-700 rounded w-40 mb-6"></div>
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="h-5 bg-gray-700 rounded w-40 mb-2"></div>
+                        <div className="h-10 bg-gray-700 rounded w-full"></div>
+                      </div>
+                      <div>
+                        <div className="h-5 bg-gray-700 rounded w-20 mb-2"></div>
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gray-700 rounded"></div>
+                          <div className="h-10 bg-gray-700 rounded w-32"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="h-5 bg-gray-700 rounded w-16 mb-2"></div>
+                        <div className="flex items-center space-x-4">
+                          <div className="h-10 bg-gray-700 rounded w-40"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-800 border-gray-700 rounded-lg p-6">
+                  <div className="h-6 bg-gray-700 rounded w-48 mb-6"></div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <div className="h-5 bg-gray-700 rounded w-32"></div>
+                      <div className="h-10 bg-gray-700 rounded w-24"></div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                          <div>
+                            <div className="h-4 bg-gray-600 rounded w-24 mb-1"></div>
+                            <div className="h-3 bg-gray-600 rounded w-40"></div>
+                          </div>
+                        </div>
+                        <div className="w-16 h-6 bg-gray-600 rounded"></div>
+                      </div>
+                      <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                          <div>
+                            <div className="h-4 bg-gray-600 rounded w-28 mb-1"></div>
+                            <div className="h-3 bg-gray-600 rounded w-40"></div>
+                          </div>
+                        </div>
+                        <div className="w-16 h-6 bg-gray-600 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

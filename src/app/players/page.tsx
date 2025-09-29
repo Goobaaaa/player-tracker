@@ -19,7 +19,7 @@ export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -33,6 +33,7 @@ export default function PlayersPage() {
       return;
     }
 
+    setIsAuthenticated(true);
     loadPlayers();
   }, [router]);
 
@@ -54,15 +55,10 @@ export default function PlayersPage() {
 
   const loadPlayers = async () => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       setPlayers(mockPlayers);
       setFilteredPlayers(mockPlayers);
     } catch (error) {
       console.error("Error loading players:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -104,10 +100,53 @@ export default function PlayersPage() {
     setIsModalOpen(true);
   };
 
-  if (loading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div className="h-8 bg-gray-700 rounded w-32"></div>
+                <div className="h-10 bg-gray-700 rounded w-40"></div>
+              </div>
+              <div className="mb-6">
+                <div className="relative max-w-md">
+                  <div className="h-10 bg-gray-700 rounded w-full"></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-gray-800 border-gray-700 rounded-lg p-6 animate-pulse">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-700 rounded-full"></div>
+                        <div>
+                          <div className="h-5 bg-gray-700 rounded w-32 mb-1"></div>
+                          <div className="h-4 bg-gray-700 rounded w-24"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-gray-400 mb-4">
+                      <div className="h-4 bg-gray-700 rounded w-16"></div>
+                      <div className="h-4 bg-gray-700 rounded w-16"></div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <div className="h-8 bg-gray-700 rounded flex-1"></div>
+                      <div className="h-8 bg-gray-700 rounded w-8"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

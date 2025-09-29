@@ -26,13 +26,22 @@ function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'player' | 'task' | 'document'>('all');
 
   useEffect(() => {
-    if (!query) {
+    const checkAuth = async () => {
+      // In a real app, this would check authentication
+      // For now, we'll just set isAuthenticated to true
+      setIsAuthenticated(true);
+    };
+
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!query || !isAuthenticated) {
       setSearchResults([]);
-      setLoading(false);
       return;
     }
 
@@ -100,13 +109,10 @@ function SearchResults() {
       // Sort by relevance score
       results.sort((a, b) => b.relevanceScore - a.relevanceScore);
       setSearchResults(results);
-      setLoading(false);
     };
 
-    // Simulate search delay
-    const timer = setTimeout(performSearch, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
+    performSearch();
+  }, [query, isAuthenticated]);
 
   const filteredResults = filterType === 'all'
     ? searchResults
@@ -129,6 +135,66 @@ function SearchResults() {
       default: return 'bg-gray-600';
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-6">
+                <div className="h-8 bg-gray-700 rounded w-48 mb-2"></div>
+                <div className="h-4 bg-gray-700 rounded w-64"></div>
+              </div>
+              <div className="mb-6">
+                <div className="relative max-w-md">
+                  <div className="h-10 bg-gray-700 rounded w-full"></div>
+                </div>
+              </div>
+              <div className="mb-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                  <div className="h-3 bg-gray-700 rounded w-24"></div>
+                  <div className="flex space-x-2">
+                    <div className="h-8 bg-gray-700 rounded w-12"></div>
+                    <div className="h-8 bg-gray-700 rounded w-16"></div>
+                    <div className="h-8 bg-gray-700 rounded w-12"></div>
+                    <div className="h-8 bg-gray-700 rounded w-20"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-4">
+                <div className="h-4 bg-gray-700 rounded w-48"></div>
+              </div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="bg-gray-800 border-gray-700 rounded-lg p-4">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className="h-5 bg-gray-700 rounded w-32"></div>
+                          <div className="w-16 h-6 bg-gray-700 rounded"></div>
+                        </div>
+                        <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
+                        <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="h-3 bg-gray-700 rounded w-24"></div>
+                          <div className="h-3 bg-gray-700 rounded w-20"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 flex">
@@ -185,19 +251,15 @@ function SearchResults() {
             {/* Results Summary */}
             <div className="mb-4">
               <p className="text-gray-400">
-                {loading
-                  ? 'Searching...'
-                  : `Found ${filteredResults.length} result${filteredResults.length !== 1 ? 's' : ''}`
+                {isAuthenticated && query
+                  ? `Found ${filteredResults.length} result${filteredResults.length !== 1 ? 's' : ''}`
+                  : 'Enter a search term to find results'
                 }
               </p>
             </div>
 
             {/* Search Results */}
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400">Searching...</p>
-              </div>
-            ) : filteredResults.length === 0 ? (
+            {filteredResults.length === 0 ? (
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-8 text-center">
                   <p className="text-gray-400 mb-2">No results found</p>
@@ -250,11 +312,7 @@ function SearchResults() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    }>
+    <Suspense fallback={null}>
       <SearchResults />
     </Suspense>
   );
