@@ -1099,7 +1099,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
                         <div className="text-center py-12">
                           <Shield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                           <p className="text-gray-400">No weapons registered for this player</p>
-                          <p className="text-gray-500 text-sm mt-2">Add weapons to track player's armaments</p>
+                          <p className="text-gray-500 text-sm mt-2">Add weapons to track player&apos;s armaments</p>
                         </div>
                       ) : (
                         <div className="space-y-3">

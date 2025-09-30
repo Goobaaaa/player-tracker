@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Bell, Settings, User } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
+import { useAppSettings } from "@/contexts/app-settings-context";
 
 export function Header() {
   const [ukTime, setUkTime] = useState("");
   const [usTime, setUsTime] = useState("");
+  const { appName, appLogo } = useAppSettings();
 
   useEffect(() => {
     const updateTime = () => {
@@ -46,8 +48,8 @@ export function Header() {
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-6">
           <div className="text-white text-lg font-semibold flex items-center">
-            <Image src="/media/usmsbadge.png" alt="USMS Badge" width={32} height={32} className="w-8 h-8 mr-2" />
-            USMS Dashboard
+            <Image src={appLogo} alt="App Logo" width={32} height={32} className="w-8 h-8 mr-2" />
+            {appName}
           </div>
           <SearchBar />
         </div>

@@ -10,11 +10,48 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, User, Shield, Database, Palette, Upload } from "lucide-react";
+import { Settings, User, Shield, Database, Palette, Upload, X, Save, RotateCcw } from "lucide-react";
 import Image from "next/image";
+import { useAppSettings } from "@/contexts/app-settings-context";
 
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [inputAppName, setInputAppName] = useState("");
+  const { appName, setAppName, appLogo, setAppLogo, resetToDefaults, handleLogoUpload } = useAppSettings();
+
+  // Initialize input with current app name
+  useEffect(() => {
+    if (appName) {
+      setInputAppName(appName);
+    }
+  }, [appName]);
+  const [theme, setTheme] = useState("dark");
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [users, setUsers] = useState([
+    {
+      id: "1",
+      displayName: "Admin User",
+      username: "admin@usmsdashboard.com",
+      role: "Admin",
+      avatar: "A"
+    },
+    {
+      id: "2",
+      displayName: "User Account",
+      username: "user@usmsdashboard.com",
+      role: "User",
+      avatar: "U"
+    }
+  ]);
+  const [newUser, setNewUser] = useState({
+    displayName: "",
+    username: "",
+    password: "",
+    role: "User",
+    permissions: ["read"]
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {
@@ -154,25 +191,94 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to reset all application settings to defaults?')) {
+                              resetToDefaults();
+                              alert('Settings have been reset to defaults.');
+                            }
+                          }}
+                          variant="outline"
+                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-red-600/20 hover:text-red-400 hover:border-red-600"
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Reset to Defaults
+                        </Button>
+                      </div>
                       <div>
                         <label className="text-sm font-medium text-gray-300 mb-2 block">
                           Application Name
                         </label>
-                        <Input
-                          defaultValue="USMS Dashboard"
-                          className="bg-gray-700 border-gray-600 text-white"
-                        />
+                        <div className="flex space-x-2">
+                          <Input
+                            value={inputAppName}
+                            onChange={(e) => setInputAppName(e.target.value)}
+                            className="bg-gray-700 border-gray-600 text-white"
+                          />
+                          <Button
+                            onClick={() => {
+                              setAppName(inputAppName);
+                              alert(`Application name updated to: ${inputAppName}`);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Update
+                          </Button>
+                        </div>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-300 mb-2 block">
                           Logo
                         </label>
                         <div className="flex items-center space-x-4">
-                          <Image src="/media/usmsbadge.png" alt="USMS Badge" width={48} height={48} className="w-12 h-12" />
-                          <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Logo
-                          </Button>
+                          <Image src={appLogo} alt="App Logo" width={48} height={48} className="w-12 h-12" />
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="file"
+                              id="logo-upload"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setIsUploadingLogo(true);
+                                  try {
+                                    const logoUrl = await handleLogoUpload(file);
+                                    setAppLogo(logoUrl);
+                                    setLogoFile(file);
+                                    alert(`Logo uploaded: ${file.name}`);
+                                  } catch (error) {
+                                    alert('Failed to upload logo. Please try again.');
+                                    console.error('Logo upload error:', error);
+                                  } finally {
+                                    setIsUploadingLogo(false);
+                                  }
+                                }
+                              }}
+                            />
+                            <Button
+                              onClick={() => document.getElementById('logo-upload')?.click()}
+                              variant="outline"
+                              className="bg-gray-700 border-gray-600 text-gray-300"
+                              disabled={isUploadingLogo}
+                            >
+                              {isUploadingLogo ? (
+                                <>
+                                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white"></div>
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="mr-2 h-4 w-4" />
+                                  Upload Logo
+                                </>
+                              )}
+                            </Button>
+                            {logoFile && (
+                              <Badge className="bg-green-600">{logoFile.name}</Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div>
@@ -180,10 +286,35 @@ export default function SettingsPage() {
                           Theme
                         </label>
                         <div className="flex items-center space-x-4">
-                          <Button variant="outline" className="bg-gray-700 border-gray-600 text-white">
-                            <Palette className="mr-2 h-4 w-4" />
-                            Dark (Default)
-                          </Button>
+                          <div className="flex bg-gray-700 rounded-lg p-1">
+                            <button
+                              onClick={() => setTheme("light")}
+                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                theme === "light" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
+                              }`}
+                            >
+                              Light
+                            </button>
+                            <button
+                              onClick={() => setTheme("dark")}
+                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                theme === "dark" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
+                              }`}
+                            >
+                              Dark
+                            </button>
+                            <button
+                              onClick={() => setTheme("colourblind")}
+                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                theme === "colourblind" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
+                              }`}
+                            >
+                              Colourblind
+                            </button>
+                          </div>
+                          <Badge className={theme === "dark" ? "bg-blue-600" : theme === "light" ? "bg-yellow-600" : "bg-purple-600"}>
+                            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                          </Badge>
                         </div>
                       </div>
                     </div>
@@ -200,37 +331,30 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <h3 className="text-lg font-medium text-white">Current Users</h3>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button onClick={() => setShowAddUserModal(true)} className="bg-blue-600 hover:bg-blue-700">
                           Add User
                         </Button>
                       </div>
 
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm">A</span>
+                        {users.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                user.role === "Admin" ? "bg-purple-600" : "bg-green-600"
+                              }`}>
+                                <span className="text-white text-sm">{user.avatar}</span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{user.displayName}</p>
+                                <p className="text-gray-400 text-sm">{user.username}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-white font-medium">Admin User</p>
-                              <p className="text-gray-400 text-sm">admin@usmsdashboard.com</p>
-                            </div>
+                            <Badge className={user.role === "Admin" ? "bg-purple-600" : "bg-green-600"}>
+                              {user.role}
+                            </Badge>
                           </div>
-                          <Badge className="bg-purple-600">Admin</Badge>
-                        </div>
-
-                        <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm">U</span>
-                            </div>
-                            <div>
-                              <p className="text-white font-medium">User Account</p>
-                              <p className="text-gray-400 text-sm">user@usmsdashboard.com</p>
-                            </div>
-                          </div>
-                          <Badge className="bg-green-600">User</Badge>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   </CardContent>
@@ -272,14 +396,6 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-300 mb-2 block">
-                          Two-Factor Authentication
-                        </label>
-                        <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
-                          Enable 2FA
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -306,7 +422,7 @@ export default function SettingsPage() {
                           Backup & Restore
                         </label>
                         <div className="flex space-x-2">
-                          <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
+                          <Button onClick={() => alert('Backup initiated successfully!')} className="bg-green-600 hover:bg-green-700">
                             Backup Now
                           </Button>
                           <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
@@ -318,9 +434,14 @@ export default function SettingsPage() {
                         <label className="text-sm font-medium text-gray-300 mb-2 block">
                           Data Export
                         </label>
-                        <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
-                          Export All Data
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button onClick={() => alert('Exporting data as PDF...')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
+                            Export PDF
+                          </Button>
+                          <Button onClick={() => alert('Exporting data as CSV...')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
+                            Export CSV
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -330,6 +451,187 @@ export default function SettingsPage() {
           </div>
         </main>
       </div>
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">Add New User</h3>
+              <Button
+                onClick={() => setShowAddUserModal(false)}
+                variant="ghost"
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Display Name
+                </label>
+                <Input
+                  value={newUser.displayName}
+                  onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter display name"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Username
+                </label>
+                <Input
+                  value={newUser.username}
+                  onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter username"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Password
+                </label>
+                <Input
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter password"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Role
+                </label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                  className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2"
+                >
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Moderator">Moderator</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Permissions
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={newUser.permissions.includes('read')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewUser({...newUser, permissions: [...newUser.permissions, 'read']});
+                        } else {
+                          setNewUser({...newUser, permissions: newUser.permissions.filter(p => p !== 'read')});
+                        }
+                      }}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-gray-300">Read Access</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={newUser.permissions.includes('write')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewUser({...newUser, permissions: [...newUser.permissions, 'write']});
+                        } else {
+                          setNewUser({...newUser, permissions: newUser.permissions.filter(p => p !== 'write')});
+                        }
+                      }}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-gray-300">Write Access</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={newUser.permissions.includes('admin')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewUser({...newUser, permissions: [...newUser.permissions, 'admin']});
+                        } else {
+                          setNewUser({...newUser, permissions: newUser.permissions.filter(p => p !== 'admin')});
+                        }
+                      }}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-gray-300">Admin Access</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Profile Picture
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      alert(`Profile picture selected: ${file.name}`);
+                    }
+                  }}
+                  className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                onClick={() => setShowAddUserModal(false)}
+                variant="outline"
+                className="bg-gray-700 border-gray-600 text-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (newUser.displayName && newUser.username && newUser.password) {
+                    const userToAdd = {
+                      id: Date.now().toString(),
+                      displayName: newUser.displayName,
+                      username: newUser.username,
+                      role: newUser.role,
+                      avatar: newUser.displayName.charAt(0).toUpperCase()
+                    };
+                    setUsers([...users, userToAdd]);
+                    setNewUser({
+                      displayName: "",
+                      username: "",
+                      password: "",
+                      role: "User",
+                      permissions: ["read"]
+                    });
+                    setShowAddUserModal(false);
+                    alert(`User ${newUser.displayName} added successfully!`);
+                  } else {
+                    alert('Please fill in all required fields');
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

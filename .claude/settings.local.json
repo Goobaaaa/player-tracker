@@ -31,7 +31,9 @@
       "Bash(node:*)",
       "Bash(git restore:*)",
       "Bash(tskill:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(next start:*)",
+      "Bash(npx next:*)"
     ],
     "deny": [],
     "ask": []

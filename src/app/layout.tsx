@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import PageTransition from "@/components/page-transition";
+import { AppSettingsProvider } from "@/contexts/app-settings-context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,9 +24,11 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased bg-gray-900 text-white`}>
         <Providers>
-          <PageTransition>
-            {children}
-          </PageTransition>
+          <AppSettingsProvider>
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </AppSettingsProvider>
         </Providers>
       </body>
     </html>
