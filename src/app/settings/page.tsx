@@ -13,11 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, User, Shield, Database, Palette, Upload, X, Save, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import { useAppSettings } from "@/contexts/app-settings-context";
+import { useNotification } from "@/components/notification-container";
 
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputAppName, setInputAppName] = useState("");
   const { appName, setAppName, appLogo, setAppLogo, resetToDefaults, handleLogoUpload } = useAppSettings();
+  const { showSuccess, showError, showInfo, confirm } = useNotification();
 
   // Initialize input with current app name
   useEffect(() => {
@@ -194,10 +196,13 @@ export default function SettingsPage() {
                       <div className="flex justify-end">
                         <Button
                           onClick={() => {
-                            if (confirm('Are you sure you want to reset all application settings to defaults?')) {
-                              resetToDefaults();
-                              alert('Settings have been reset to defaults.');
-                            }
+                            confirm(
+                              'Are you sure you want to reset all application settings to defaults?',
+                              () => {
+                                resetToDefaults();
+                                showSuccess('Settings have been reset to defaults.');
+                              }
+                            );
                           }}
                           variant="outline"
                           className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-red-600/20 hover:text-red-400 hover:border-red-600"
@@ -219,7 +224,7 @@ export default function SettingsPage() {
                           <Button
                             onClick={() => {
                               setAppName(inputAppName);
-                              alert(`Application name updated to: ${inputAppName}`);
+                              showSuccess(`Application name updated to: ${inputAppName}`);
                             }}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
@@ -247,9 +252,9 @@ export default function SettingsPage() {
                                     const logoUrl = await handleLogoUpload(file);
                                     setAppLogo(logoUrl);
                                     setLogoFile(file);
-                                    alert(`Logo uploaded: ${file.name}`);
+                                    showSuccess(`Logo uploaded: ${file.name}`);
                                   } catch (error) {
-                                    alert('Failed to upload logo. Please try again.');
+                                    showError('Failed to upload logo. Please try again.');
                                     console.error('Logo upload error:', error);
                                   } finally {
                                     setIsUploadingLogo(false);
@@ -422,7 +427,7 @@ export default function SettingsPage() {
                           Backup & Restore
                         </label>
                         <div className="flex space-x-2">
-                          <Button onClick={() => alert('Backup initiated successfully!')} className="bg-green-600 hover:bg-green-700">
+                          <Button onClick={() => showSuccess('Backup initiated successfully!')} className="bg-green-600 hover:bg-green-700">
                             Backup Now
                           </Button>
                           <Button variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
@@ -435,10 +440,10 @@ export default function SettingsPage() {
                           Data Export
                         </label>
                         <div className="flex space-x-2">
-                          <Button onClick={() => alert('Exporting data as PDF...')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
+                          <Button onClick={() => showInfo('Exporting data as PDF...', 'Your data export will begin shortly.')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
                             Export PDF
                           </Button>
-                          <Button onClick={() => alert('Exporting data as CSV...')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
+                          <Button onClick={() => showInfo('Exporting data as CSV...', 'Your data export will begin shortly.')} variant="outline" className="bg-gray-700 border-gray-600 text-gray-300">
                             Export CSV
                           </Button>
                         </div>
@@ -583,7 +588,7 @@ export default function SettingsPage() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      alert(`Profile picture selected: ${file.name}`);
+                      showInfo(`Profile picture selected: ${file.name}`);
                     }
                   }}
                   className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2"
@@ -618,9 +623,9 @@ export default function SettingsPage() {
                       permissions: ["read"]
                     });
                     setShowAddUserModal(false);
-                    alert(`User ${newUser.displayName} added successfully!`);
+                    showSuccess(`User ${newUser.displayName} added successfully!`);
                   } else {
-                    alert('Please fill in all required fields');
+                    showError('Please fill in all required fields');
                   }
                 }}
                 className="bg-blue-600 hover:bg-blue-700"

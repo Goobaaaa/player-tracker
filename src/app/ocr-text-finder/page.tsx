@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, Search, Download, Eye, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { createWorker } from 'tesseract.js';
 import Image from "next/image";
+import { useNotification } from "@/components/notification-container";
 
 interface OCRResult {
   id: string;
@@ -25,6 +26,7 @@ interface OCRResult {
 }
 
 export default function OCRTextFinderPage() {
+  const { showError } = useNotification();
   const [results, setResults] = useState<OCRResult[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -68,7 +70,7 @@ export default function OCRTextFinderPage() {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     } else {
-      alert('Please select a valid image file');
+      showError('Please select a valid image file');
     }
   };
 
@@ -86,7 +88,7 @@ export default function OCRTextFinderPage() {
       }
     } catch (error) {
       console.error('OCR processing failed:', error);
-      alert('Failed to process image. Please try again.');
+      showError('Failed to process image. Please try again.');
     } finally {
       setIsProcessing(false);
     }

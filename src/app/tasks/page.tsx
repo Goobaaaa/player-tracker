@@ -15,6 +15,7 @@ import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit,
 import { Task } from "@/lib/database";
 import FadeInCard from "@/components/fade-in-card";
 import Image from "next/image";
+import { useNotification } from "@/components/notification-container";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -43,6 +44,7 @@ export default function TasksPage() {
   const [taskMediaFiles, setTaskMediaFiles] = useState<File[]>([]);
   const [taskMediaUrls, setTaskMediaUrls] = useState<string[]>([]);
   const router = useRouter();
+  const { showSuccess, showError, confirm } = useNotification();
 
   const checkAuth = useCallback(async () => {
     const { data: { session }, error } = await mockGetSession();
@@ -199,10 +201,13 @@ export default function TasksPage() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      deleteTask(taskId);
-      loadTasks(); // Reload tasks from data store to reflect deletion
-    }
+    confirm(
+      'Are you sure you want to delete this task?',
+      () => {
+        deleteTask(taskId);
+        loadTasks(); // Reload tasks from data store to reflect deletion
+      }
+    );
   };
 
   const handleAddComment = async (taskId: string) => {
@@ -295,27 +300,33 @@ export default function TasksPage() {
   };
 
   const handleDeleteAttachment = (taskId: string, commentId: string, attachmentIndex: number) => {
-    if (confirm('Are you sure you want to delete this attachment?')) {
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        const comment = task.comments.find(c => c.id === commentId);
-        if (comment && comment.mediaUrls) {
-          comment.mediaUrls.splice(attachmentIndex, 1);
-          updateTask(taskId, { comments: task.comments });
-          loadTasks();
+    confirm(
+      'Are you sure you want to delete this attachment?',
+      () => {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+          const comment = task.comments.find(c => c.id === commentId);
+          if (comment && comment.mediaUrls) {
+            comment.mediaUrls.splice(attachmentIndex, 1);
+            updateTask(taskId, { comments: task.comments });
+            loadTasks();
+          }
         }
       }
-    }
+    );
   };
 
   const handleDeleteComment = (taskId: string, commentId: string) => {
-    if (confirm('Are you sure you want to delete this comment?')) {
-      // Use the data store function to delete the comment
-      if (deleteTaskComment(taskId, commentId)) {
-        // Reload tasks to get the updated state from the data store
-        loadTasks();
+    confirm(
+      'Are you sure you want to delete this comment?',
+      () => {
+        // Use the data store function to delete the comment
+        if (deleteTaskComment(taskId, commentId)) {
+          // Reload tasks to get the updated state from the data store
+          loadTasks();
+        }
       }
-    }
+    );
   };
 
   
@@ -341,9 +352,9 @@ export default function TasksPage() {
 
         if (success) {
           setEditingTask(null);
-          alert("Task updated successfully!");
+          showSuccess("Task updated successfully!");
         } else {
-          alert("Failed to update task.");
+          showError("Failed to update task.");
         }
       } else {
         // Create new task
@@ -359,7 +370,7 @@ export default function TasksPage() {
         );
 
         if (newTask) {
-          alert("Task created successfully!");
+          showSuccess("Task created successfully!");
         }
       }
 
@@ -373,7 +384,7 @@ export default function TasksPage() {
       setTaskDeadline("");
       setSelectedUsers([]);
     } else {
-      alert("Please fill in all required fields and assign at least one user.");
+      showError("Please fill in all required fields and assign at least one user.");
     }
   };
 

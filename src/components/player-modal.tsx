@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit, Trash2, ExternalLink, Shield } from "lucide-react";
+import { useNotification } from "@/components/notification-container";
 
 interface PlayerModalProps {
   player: Player | null;
@@ -24,6 +25,7 @@ interface PlayerModalProps {
 }
 
 export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, onPlayerDeleted, isEditMode = false }: PlayerModalProps) {
+  const { showSuccess, showError } = useNotification();
   const [assets, setAssets] = React.useState<Asset[]>([]);
     const [mugshots, setMugshots] = React.useState<Mugshot[]>([]);
   const [media, setMedia] = React.useState<Media[]>([]);
@@ -601,7 +603,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       // Update existing player
       updatePlayer(player.id, editForm as Partial<Player>);
       console.log('Player data updated successfully:', editForm);
-      alert('Player information saved successfully!');
+      showSuccess('Player information saved successfully!');
     } else {
       // Create new player
       const newPlayer = addPlayer({
@@ -617,7 +619,7 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       });
 
       console.log('New player created successfully:', newPlayer);
-      alert('New player created successfully!');
+      showSuccess('New player created successfully!');
 
       // Notify parent component
       if (onPlayerSaved) {

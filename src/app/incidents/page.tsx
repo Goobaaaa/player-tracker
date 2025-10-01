@@ -8,6 +8,7 @@ import { Incident } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
+import { useNotification } from "@/components/notification-container";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ export default function IncidentsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [incidentToView, setIncidentToView] = useState<Incident | null>(null);
   const router = useRouter();
+  const { confirm } = useNotification();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -99,14 +101,17 @@ export default function IncidentsPage() {
   };
 
   const handleDeleteIncident = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this incident?")) {
-      try {
-        deleteIncident(id);
-        setIncidents(getAllIncidents());
-      } catch (error) {
-        console.error("Error deleting incident:", error);
+    confirm(
+      "Are you sure you want to delete this incident?",
+      () => {
+        try {
+          deleteIncident(id);
+          setIncidents(getAllIncidents());
+        } catch (error) {
+          console.error("Error deleting incident:", error);
+        }
       }
-    }
+    );
   };
 
   const handleViewIncident = (incident: Incident) => {

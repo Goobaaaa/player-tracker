@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, ExternalLink, Plus, X, Trash2 } from "lucide-react";
 import FadeInCard from "@/components/fade-in-card";
 import { Document } from "@/lib/database";
+import { useNotification } from "@/components/notification-container";
 
 // Mock documents data - made mutable for adding new documents
 const mockDocuments: Document[] = [];
@@ -27,6 +28,7 @@ export default function DocumentsPage() {
   const [googleDocName, setGoogleDocName] = useState('');
   const [googleDocDescription, setGoogleDocDescription] = useState('');
   const router = useRouter();
+  const { showSuccess, showError } = useNotification();
 
   const checkAuth = useCallback(async () => {
     const { data: { session }, error } = await mockGetSession();
@@ -75,7 +77,7 @@ export default function DocumentsPage() {
       if (allowedTypes.includes(file.type)) {
         setUploadFile(file);
       } else {
-        alert('Please select a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
+        showError('Please select a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
       }
     }
   };
@@ -102,7 +104,7 @@ export default function DocumentsPage() {
       setUploadFile(null);
       setUploadFileName('');
       setUploadDescription('');
-      alert('Document uploaded successfully!');
+      showSuccess('Document uploaded successfully!');
     }
   };
 
@@ -112,7 +114,7 @@ export default function DocumentsPage() {
       if (index !== -1) {
         mockDocuments.splice(index, 1);
         setDocuments([...mockDocuments]);
-        alert('Document deleted successfully!');
+        showSuccess('Document deleted successfully!');
       }
     }
   };
@@ -123,7 +125,7 @@ export default function DocumentsPage() {
       const isValidGoogleDocUrl = googleDocUrl.includes('docs.google.com/document');
 
       if (!isValidGoogleDocUrl) {
-        alert('Please enter a valid Google Docs URL');
+        showError('Please enter a valid Google Docs URL');
         return;
       }
 
@@ -143,9 +145,9 @@ export default function DocumentsPage() {
       setGoogleDocUrl('');
       setGoogleDocName('');
       setGoogleDocDescription('');
-      alert('Google Doc linked successfully!');
+      showSuccess('Google Doc linked successfully!');
     } else {
-      alert('Please fill in both URL and document name');
+      showError('Please fill in both URL and document name');
     }
   };
 

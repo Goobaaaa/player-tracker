@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import PageTransition from "@/components/page-transition";
 import { AppSettingsProvider } from "@/contexts/app-settings-context";
+import { NotificationProvider } from "@/components/notification-container";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,11 +25,13 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased bg-gray-900 text-white`}>
         <Providers>
-          <AppSettingsProvider>
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </AppSettingsProvider>
+          <NotificationProvider>
+            <AppSettingsProvider>
+              <PageTransition>
+                {children}
+              </PageTransition>
+            </AppSettingsProvider>
+          </NotificationProvider>
         </Providers>
       </body>
     </html>
