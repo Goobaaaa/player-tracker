@@ -82,8 +82,17 @@ export default function TasksPage() {
       filtered = filtered.filter(task => task.priority === priorityFilter);
     }
 
-    // Sort tasks by due date (closest due dates first)
+    // Sort tasks: completed tasks go to bottom, active tasks sorted by due date
     filtered.sort((a, b) => {
+      // If one task is completed and the other is not, completed task goes last
+      if (a.status === 'completed' && b.status !== 'completed') {
+        return 1;
+      }
+      if (a.status !== 'completed' && b.status === 'completed') {
+        return -1;
+      }
+
+      // If both tasks have the same completion status, sort by due date
       const dateA = new Date(a.deadline);
       const dateB = new Date(b.deadline);
       return dateA.getTime() - dateB.getTime();
