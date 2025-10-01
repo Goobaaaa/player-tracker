@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { Sidebar } from "@/components/sidebar";
@@ -8,9 +8,8 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Download, Eye, Trash2, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, Search, Download, Eye, Trash2, AlertCircle, Loader2, Link, X } from "lucide-react";
 import { createWorker } from 'tesseract.js';
 import Image from "next/image";
 import { useNotification } from "@/components/notification-container";
@@ -23,21 +22,44 @@ interface OCRResult {
   fileSize: number;
   processingTime: number;
   confidence: number;
+  source: 'file' | 'url';
+  imageUrl?: string;
 }
 
 export default function OCRTextFinderPage() {
-  const { showError } = useNotification();
+  const { showError, showSuccess } = useNotification();
   const [results, setResults] = useState<OCRResult[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Validate file
+  const validateFile = (file: File): boolean => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!allowedTypes.includes(file.type)) {
+      showError('Invalid file type. Please upload an image file (JPEG, PNG, GIF, WebP, or BMP).');
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      showError('File size too large. Please upload an image smaller than 10MB.');
+      return false;
+    }
+
+    return true;
+  };
+
   // Real OCR processing function using Tesseract.js
-  const processOCR = async (file: File): Promise<OCRResult> => {
+  const processOCR = async (file: File, fileName?: string, source: 'file' | 'url' = 'file', sourceUrl?: string): Promise<OCRResult> => {
     const startTime = Date.now();
 
     try {
@@ -51,12 +73,14 @@ export default function OCRTextFinderPage() {
 
       return {
         id: Date.now().toString(),
-        fileName: file.name,
+        fileName: fileName || file.name,
         extractedText: text.trim() || "No text could be extracted from this image.",
         uploadDate: new Date().toISOString(),
         fileSize: file.size,
         processingTime,
-        confidence: Math.round(confidence)
+        confidence: Math.round(confidence),
+        source,
+        imageUrl: sourceUrl
       };
     } catch (error) {
       console.error('OCR processing failed:', error);
@@ -64,13 +88,131 @@ export default function OCRTextFinderPage() {
     }
   };
 
+  // Process image from URL using server-side API
+  const processImageFromUrl = async (url: string): Promise<OCRResult> => {
+    try {
+      // Use our server-side API to fetch the image
+      const apiResponse = await fetch('/api/fetch-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl: url }),
+      });
+
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        throw new Error(errorData.error || 'Failed to fetch image via API');
+      }
+
+      const { dataUrl, contentType, size } = await apiResponse.json();
+
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'url-image', { type: contentType });
+
+      if (!validateFile(file)) {
+        throw new Error('Invalid image from URL');
+      }
+
+      const fileName = `url-image-${Date.now()}.${contentType.split('/')[1]}`;
+      return await processOCR(file, fileName, 'url', url);
+    } catch (error) {
+      console.error('API fetch failed:', error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to process image from URL. Please check the URL and try again.'
+      );
+    }
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (file) {
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setImageUrl("");
+      }
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+
+    if (imageFile) {
+      if (validateFile(imageFile)) {
+        setSelectedFile(imageFile);
+        setPreviewUrl(URL.createObjectURL(imageFile));
+        setImageUrl("");
+        showSuccess(`Image "${imageFile.name}" uploaded successfully`);
+      }
     } else {
-      showError('Please select a valid image file');
+      showError('Please drop a valid image file');
+    }
+  }, [showError, showSuccess]);
+
+  // URL input handler
+  const handleUrlSubmit = async () => {
+    if (!imageUrl.trim()) {
+      showError('Please enter an image URL');
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      const url = new URL(imageUrl);
+      if (!url.protocol.startsWith('http')) {
+        showError('Please enter a valid HTTP or HTTPS URL');
+        return;
+      }
+    } catch {
+      showError('Please enter a valid URL (e.g., https://example.com/image.jpg)');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const result = await processImageFromUrl(imageUrl);
+      setResults(prev => [result, ...prev]);
+      setImageUrl("");
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      showSuccess('Text extracted successfully from URL image');
+    } catch (error) {
+      console.error('URL OCR processing failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process image from URL';
+
+      if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
+        showError(`${errorMessage}\n\nTry uploading the image directly if the URL doesn't work.`);
+      } else {
+        showError(errorMessage);
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -83,14 +225,26 @@ export default function OCRTextFinderPage() {
       setResults(prev => [result, ...prev]);
       setSelectedFile(null);
       setPreviewUrl(null);
+      setImageUrl("");
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      showSuccess('Text extracted successfully from uploaded image');
     } catch (error) {
       console.error('OCR processing failed:', error);
       showError('Failed to process image. Please try again.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setImageUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -247,7 +401,18 @@ export default function OCRTextFinderPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                  {/* File Upload Area */}
+                  <div
+                    ref={dropZoneRef}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      isDragging
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -257,12 +422,55 @@ export default function OCRTextFinderPage() {
                       id="file-upload"
                     />
                     <label htmlFor="file-upload" className="cursor-pointer">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-400 mb-2">Click to upload or drag and drop</p>
-                      <p className="text-gray-500 text-sm">PNG, JPG, GIF up to 10MB</p>
+                      <Upload className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-blue-400' : 'text-gray-400'}`} />
+                      <p className={`${isDragging ? 'text-blue-400' : 'text-gray-400'} mb-2`}>
+                        {isDragging ? 'Drop your image here' : 'Click to upload or drag and drop'}
+                      </p>
+                      <p className="text-gray-500 text-sm">PNG, JPG, GIF, WebP, BMP up to 10MB</p>
                     </label>
                   </div>
 
+                  {/* URL Input Section */}
+                  <div className="space-y-2">
+                    <label className="text-white font-medium flex items-center">
+                      <Link className="mr-2 h-4 w-4" />
+                      Or paste image URL:
+                    </label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="url"
+                        placeholder="https://example.com/image.jpg"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="bg-gray-700 border-gray-600 text-white flex-1"
+                        disabled={isProcessing}
+                      />
+                      <Button
+                        onClick={handleUrlSubmit}
+                        disabled={isProcessing || !imageUrl.trim()}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isProcessing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-gray-500 text-xs">
+                        Supports direct image URLs (JPG, PNG, GIF, WebP, BMP)
+                      </p>
+                      <p className="text-gray-500 text-xs flex items-start">
+                        <AlertCircle className="mr-1 h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span>
+                          Uses server-side fetching to bypass CORS restrictions for most images.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Preview Section */}
                   {previewUrl && (
                     <div className="space-y-2">
                       <h3 className="text-white font-medium">Preview:</h3>
@@ -275,19 +483,16 @@ export default function OCRTextFinderPage() {
                           className="w-full h-48 object-cover rounded-lg"
                         />
                         <button
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setPreviewUrl(null);
-                            if (fileInputRef.current) fileInputRef.current.value = '';
-                          }}
+                          onClick={clearSelection}
                           className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                   )}
 
+                  {/* Process Button */}
                   {selectedFile && (
                     <Button
                       onClick={handleProcessFile}
@@ -353,6 +558,12 @@ export default function OCRTextFinderPage() {
                             <h3 className="text-white font-medium flex items-center">
                               <FileText className="mr-2 h-4 w-4" />
                               {result.fileName}
+                              {result.source === 'url' && (
+                                <Badge className="ml-2 bg-green-600 text-white text-xs">
+                                  <Link className="mr-1 h-3 w-3" />
+                                  URL
+                                </Badge>
+                              )}
                             </h3>
                             <div className="flex items-center space-x-4 mt-1 text-sm text-gray-400">
                               <span>{formatFileSize(result.fileSize)}</span>
@@ -363,6 +574,19 @@ export default function OCRTextFinderPage() {
                                 {result.confidence}% confidence
                               </Badge>
                             </div>
+                            {result.source === 'url' && result.imageUrl && (
+                              <div className="mt-2">
+                                <a
+                                  href={result.imageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center"
+                                >
+                                  <Link className="mr-1 h-3 w-3" />
+                                  Source URL
+                                </a>
+                              </div>
+                            )}
                           </div>
                           <div className="flex space-x-2">
                             <Button

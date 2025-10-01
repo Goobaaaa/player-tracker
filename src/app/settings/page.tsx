@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, User, Shield, Database, Palette, Upload, X, Save, RotateCcw } from "lucide-react";
+import { Settings, User, Shield, Database, Palette, Upload, X, Save } from "lucide-react";
 import Image from "next/image";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useNotification } from "@/components/notification-container";
@@ -18,7 +18,7 @@ import { useNotification } from "@/components/notification-container";
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputAppName, setInputAppName] = useState("");
-  const { appName, setAppName, appLogo, setAppLogo, resetToDefaults, handleLogoUpload } = useAppSettings();
+  const { appName, setAppName, appLogo, setAppLogo, theme, setTheme, sessionTimeout, setSessionTimeout, resetToDefaults, handleLogoUpload } = useAppSettings();
   const { showSuccess, showError, showInfo, confirm } = useNotification();
 
   // Initialize input with current app name
@@ -27,7 +27,6 @@ export default function SettingsPage() {
       setInputAppName(appName);
     }
   }, [appName]);
-  const [theme, setTheme] = useState("dark");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [users, setUsers] = useState([
     {
@@ -193,24 +192,6 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
-                      <div className="flex justify-end">
-                        <Button
-                          onClick={() => {
-                            confirm(
-                              'Are you sure you want to reset all application settings to defaults?',
-                              () => {
-                                resetToDefaults();
-                                showSuccess('Settings have been reset to defaults.');
-                              }
-                            );
-                          }}
-                          variant="outline"
-                          className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-red-600/20 hover:text-red-400 hover:border-red-600"
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Reset to Defaults
-                        </Button>
-                      </div>
                       <div>
                         <label className="text-sm font-medium text-gray-300 mb-2 block">
                           Application Name
@@ -308,16 +289,8 @@ export default function SettingsPage() {
                             >
                               Dark
                             </button>
-                            <button
-                              onClick={() => setTheme("colourblind")}
-                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                theme === "colourblind" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
-                              }`}
-                            >
-                              Colourblind
-                            </button>
                           </div>
-                          <Badge className={theme === "dark" ? "bg-blue-600" : theme === "light" ? "bg-yellow-600" : "bg-purple-600"}>
+                          <Badge className={theme === "dark" ? "bg-blue-600" : "bg-yellow-600"}>
                             {theme.charAt(0).toUpperCase() + theme.slice(1)}
                           </Badge>
                         </div>
@@ -377,10 +350,23 @@ export default function SettingsPage() {
                         <label className="text-sm font-medium text-gray-300 mb-2 block">
                           Session Timeout
                         </label>
-                        <Input
-                          defaultValue="24 hours"
-                          className="bg-gray-700 border-gray-600 text-white"
-                        />
+                        <select
+                          value={sessionTimeout}
+                          onChange={(e) => {
+                            const newTimeout = parseInt(e.target.value, 10);
+                            setSessionTimeout(newTimeout);
+                            showSuccess(`Session timeout updated to ${newTimeout} minutes`);
+                          }}
+                          className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value={15}>15 minutes</option>
+                          <option value={30}>30 minutes</option>
+                          <option value={45}>45 minutes</option>
+                          <option value={60}>60 minutes</option>
+                        </select>
+                        <p className="text-xs text-gray-400 mt-1">
+                          User will be automatically logged out after {sessionTimeout} minutes of inactivity
+                        </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-300 mb-2 block">

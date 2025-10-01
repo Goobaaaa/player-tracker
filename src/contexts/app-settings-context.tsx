@@ -1,12 +1,17 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { validateAndCleanLocalStorage } from "@/lib/localStorage-cleanup";
 
 interface AppSettings {
   appName: string;
   setAppName: (name: string) => void;
   appLogo: string;
   setAppLogo: (logo: string) => void;
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+  sessionTimeout: number; // in minutes
+  setSessionTimeout: (timeout: number) => void;
   resetToDefaults: () => void;
   handleLogoUpload: (file: File) => Promise<string>;
 }
@@ -16,60 +21,45 @@ const AppSettingsContext = createContext<AppSettings | undefined>(undefined);
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [appName, setAppName] = useState("USMS Dashboard");
   const [appLogo, setAppLogo] = useState("/media/usmsbadge.png");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [sessionTimeout, setSessionTimeout] = useState(30); // default 30 minutes
 
   // Load settings from localStorage on mount - simplified to avoid SSR issues
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Clear all localStorage data to avoid corruption issues
       try {
-        const savedAppName = localStorage.getItem('usms-app-name');
-        const savedAppLogo = localStorage.getItem('usms-app-logo');
-
-        if (savedAppName) {
-          setAppName(savedAppName);
-        }
-
-        if (savedAppLogo) {
-          setAppLogo(savedAppLogo);
-        }
+        localStorage.removeItem('usms-app-name');
+        localStorage.removeItem('usms-app-logo');
+        localStorage.removeItem('usms-theme');
+        localStorage.removeItem('usms-session-timeout');
+        localStorage.removeItem('usms-session');
+        console.log('Cleared localStorage to avoid corruption issues');
       } catch (error) {
-        console.error('Failed to load settings from localStorage:', error);
+        console.error('Error clearing localStorage:', error);
       }
     }
   }, []);
 
-  // Save appName to localStorage when it changes
+  // Apply theme to document root
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('usms-app-name', appName);
-      } catch (error) {
-        console.error('Failed to save app name to localStorage:', error);
+      const root = document.documentElement;
+      if (theme === 'light') {
+        root.classList.add('light-theme');
+        root.classList.remove('dark-theme');
+      } else {
+        root.classList.add('dark-theme');
+        root.classList.remove('light-theme');
       }
     }
-  }, [appName]);
-
-  // Save appLogo to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('usms-app-logo', appLogo);
-      } catch (error) {
-        console.error('Failed to save app logo to localStorage:', error);
-      }
-    }
-  }, [appLogo]);
+  }, [theme]);
 
   const resetToDefaults = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem('usms-app-name');
-        localStorage.removeItem('usms-app-logo');
-        setAppName("USMS Dashboard");
-        setAppLogo("/media/usmsbadge.png");
-      } catch (error) {
-        console.error('Failed to reset settings to defaults:', error);
-      }
-    }
+    setAppName("USMS Dashboard");
+    setAppLogo("/media/usmsbadge.png");
+    setTheme("dark");
+    setSessionTimeout(30);
   };
 
   // Helper function to convert file to base64
@@ -97,7 +87,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AppSettingsContext.Provider value={{ appName, setAppName, appLogo, setAppLogo, resetToDefaults, handleLogoUpload }}>
+    <AppSettingsContext.Provider value={{ appName, setAppName, appLogo, setAppLogo, theme, setTheme, sessionTimeout, setSessionTimeout, resetToDefaults, handleLogoUpload }}>
       {children}
     </AppSettingsContext.Provider>
   );

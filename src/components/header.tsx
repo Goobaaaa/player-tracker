@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Bell, Settings, User } from "lucide-react";
@@ -11,6 +12,11 @@ export function Header() {
   const [ukTime, setUkTime] = useState("");
   const [usTime, setUsTime] = useState("");
   const { appName, appLogo } = useAppSettings();
+  const router = useRouter();
+
+  const handleSettingsClick = () => {
+    router.push("/settings");
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -70,7 +76,13 @@ export function Header() {
             <Bell className="h-5 w-5" />
           </Button>
 
-          <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-300 hover:text-white"
+            onClick={handleSettingsClick}
+            title="Settings"
+          >
             <Settings className="h-5 w-5" />
           </Button>
 

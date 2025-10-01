@@ -104,11 +104,11 @@ export function TaskList({ tasks, onTaskClick, isDashboard = false }: TaskListPr
                 onClick={() => onTaskClick?.(task)}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-2 flex-1">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
                     {getStatusIcon(task.status)}
-                    <h3 className="font-medium text-white text-sm">{task.name}</h3>
+                    <h3 className="font-medium text-white text-sm truncate">{task.name}</h3>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
                     <Badge className={`${getPriorityColor(task.priority)} text-xs`}>
                       {task.priority}
                     </Badge>

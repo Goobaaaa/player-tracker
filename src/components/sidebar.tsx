@@ -15,7 +15,6 @@ const navigation = [
   { name: "Incidents", href: "/incidents", icon: "🚨" },
   { name: "Audit Log", href: "/audit-log", icon: "📋" },
   { name: "OCR Text Finder", href: "/ocr-text-finder", icon: "🔍" },
-  { name: "Settings", href: "/settings", icon: "⚙️" },
 ];
 
 export function Sidebar() {
