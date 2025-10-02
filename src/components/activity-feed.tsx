@@ -6,7 +6,7 @@ export interface AuditLogEntry {
   userId: string;
   username: string;
   action: 'create' | 'update' | 'delete' | 'add' | 'comment';
-  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident';
+  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident' | 'template' | 'permission';
   entityName: string;
   entityId: string;
   details?: string;

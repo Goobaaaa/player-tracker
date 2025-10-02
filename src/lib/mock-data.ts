@@ -1,4 +1,4 @@
-import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment, Incident, Weapon } from './database';
+import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment, Incident, Weapon, Template, TemplatePermission } from './database';
 import { AuditLogEntry } from '../components/activity-feed';
 
 // Mock players data - made mutable for editing
@@ -9,6 +9,44 @@ export const mockAssets: Asset[] = [];
 
 // Mock weapons data
 export const mockWeapons: Weapon[] = [];
+
+// Mock templates data
+export const mockTemplates: Template[] = [
+  {
+    id: 'template-1',
+    name: 'Sample Investigation Template',
+    logoUrl: '/USMSBadge.png',
+    createdBy: '1',
+    createdAt: new Date().toISOString(),
+    isActive: true,
+    description: 'A sample template for investigation tracking'
+  }
+];
+
+// Mock template permissions data
+export const mockTemplatePermissions: TemplatePermission[] = [
+  {
+    id: 'perm-1',
+    templateId: 'template-1',
+    userId: '1',
+    assignedBy: '1',
+    assignedAt: new Date().toISOString()
+  },
+  {
+    id: 'perm-2',
+    templateId: 'template-1',
+    userId: '2',
+    assignedBy: '1',
+    assignedAt: new Date().toISOString()
+  },
+  {
+    id: 'perm-3',
+    templateId: 'template-1',
+    userId: '3',
+    assignedBy: '1',
+    assignedAt: new Date().toISOString()
+  }
+];
 
 // Function to add an asset to a player
 export const addAsset = (
@@ -298,7 +336,7 @@ export const mockAuditLog: AuditLogEntry[] = loadFromStorage(STORAGE_KEYS.auditL
 // Audit log management functions
 export const addAuditLogEntry = (
   action: 'create' | 'update' | 'delete' | 'add' | 'comment',
-  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident',
+  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident' | 'template' | 'permission',
   entityName: string,
   entityId: string,
   details: string,
@@ -1117,12 +1155,184 @@ export const deleteIncident = (id: string): boolean => {
 
 // Mock users for task assignment
 export const mockUsers = [
-  { id: '1', name: 'Admin User', username: 'admin' },
-  { id: '2', name: 'John Doe', username: 'johndoe' },
-  { id: '3', name: 'Jane Smith', username: 'janesmith' },
-  { id: '4', name: 'Mike Johnson', username: 'mikej' },
-  { id: '5', name: 'Sarah Wilson', username: 'swilson' }
+  { id: '1', name: 'Admin User', username: 'admin', role: 'admin', email: 'admin@playertracker.com' },
+  { id: '2', name: 'John Doe', username: 'johndoe', role: 'marshall', email: 'john.doe@usms.gov' },
+  { id: '3', name: 'Jane Smith', username: 'janesmith', role: 'marshall', email: 'jane.smith@usms.gov' },
+  { id: '4', name: 'Mike Johnson', username: 'mikej', role: 'marshall', email: 'mike.johnson@usms.gov' },
+  { id: '5', name: 'Sarah Wilson', username: 'swilson', role: 'marshall', email: 'sarah.wilson@usms.gov' }
 ];
+
+// Template-related functions
+export const createTemplate = (name: string, logoUrl?: string, description?: string, createdBy = '1'): Template => {
+  const newTemplate: Template = {
+    id: `template-${Date.now()}`,
+    name,
+    logoUrl,
+    createdBy,
+    createdAt: new Date().toISOString(),
+    isActive: true,
+    description
+  };
+
+  mockTemplates.push(newTemplate);
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'create',
+    'template',
+    name,
+    newTemplate.id,
+    `Created template "${name}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return newTemplate;
+};
+
+export const getAllTemplates = (): Template[] => {
+  return mockTemplates.filter(template => template.isActive);
+};
+
+export const getTemplateById = (id: string): Template | undefined => {
+  return mockTemplates.find(template => template.id === id && template.isActive);
+};
+
+export const updateTemplate = (id: string, updates: Partial<Template>): boolean => {
+  const index = mockTemplates.findIndex(template => template.id === id);
+  if (index === -1) return false;
+
+  mockTemplates[index] = { ...mockTemplates[index], ...updates };
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  const template = mockTemplates[index];
+  addAuditLogEntry(
+    'update',
+    'template',
+    template.name,
+    template.id,
+    `Updated template "${template.name}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return true;
+};
+
+export const deleteTemplate = (id: string): boolean => {
+  const index = mockTemplates.findIndex(template => template.id === id);
+  if (index === -1) return false;
+
+  const deletedTemplate = mockTemplates[index];
+  mockTemplates[index].isActive = false;
+
+  // Remove all permissions for this template
+  mockTemplatePermissions.filter(perm => perm.templateId !== id);
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  addAuditLogEntry(
+    'delete',
+    'template',
+    deletedTemplate.name,
+    deletedTemplate.id,
+    `Deleted template "${deletedTemplate.name}"`,
+    currentUser.id,
+    currentUser.username
+  );
+
+  return true;
+};
+
+export const getUserTemplates = (userId: string): Template[] => {
+  const userPermissionIds = mockTemplatePermissions
+    .filter(perm => perm.userId === userId)
+    .map(perm => perm.templateId);
+
+  return mockTemplates.filter(template =>
+    template.isActive && userPermissionIds.includes(template.id)
+  );
+};
+
+export const assignTemplatePermission = (templateId: string, userId: string, assignedBy: string): TemplatePermission | null => {
+  // Check if permission already exists
+  const existingPermission = mockTemplatePermissions.find(
+    perm => perm.templateId === templateId && perm.userId === userId
+  );
+
+  if (existingPermission) return null;
+
+  const newPermission: TemplatePermission = {
+    id: `perm-${Date.now()}`,
+    templateId,
+    userId,
+    assignedBy,
+    assignedAt: new Date().toISOString()
+  };
+
+  mockTemplatePermissions.push(newPermission);
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  const template = getTemplateById(templateId);
+  const user = mockUsers.find(u => u.id === userId);
+
+  if (template && user) {
+    addAuditLogEntry(
+      'create',
+      'permission',
+      `${template.name} - ${user.name}`,
+      newPermission.id,
+      `Assigned "${user.name}" access to template "${template.name}"`,
+      currentUser.id,
+      currentUser.username
+    );
+  }
+
+  return newPermission;
+};
+
+export const removeTemplatePermission = (templateId: string, userId: string): boolean => {
+  const index = mockTemplatePermissions.findIndex(
+    perm => perm.templateId === templateId && perm.userId === userId
+  );
+
+  if (index === -1) return false;
+
+  const removedPermission = mockTemplatePermissions[index];
+  mockTemplatePermissions.splice(index, 1);
+
+  // Add audit log entry
+  const currentUser = getCurrentUser();
+  const template = getTemplateById(templateId);
+  const user = mockUsers.find(u => u.id === userId);
+
+  if (template && user) {
+    addAuditLogEntry(
+      'delete',
+      'permission',
+      `${template.name} - ${user.name}`,
+      removedPermission.id,
+      `Removed "${user.name}" access from template "${template.name}"`,
+      currentUser.id,
+      currentUser.username
+    );
+  }
+
+  return true;
+};
+
+export const hasTemplateAccess = (templateId: string, userId: string): boolean => {
+  // Admins have access to all templates
+  const user = mockUsers.find(u => u.id === userId);
+  if (user && user.role === 'admin') return true;
+
+  return mockTemplatePermissions.some(
+    perm => perm.templateId === templateId && perm.userId === userId
+  );
+};
 
 // Initialize sample data if none exists
 export const initializeSampleData = () => {

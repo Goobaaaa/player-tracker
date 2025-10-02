@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'admin' | 'user'
+  role: 'admin' | 'marshall'
   avatarUrl?: string
   createdAt: string
 }
@@ -139,6 +139,24 @@ export interface Weapon {
   status: 'seized' | 'not_seized'
   notes?: string
   createdAt: string
+}
+
+export interface Template {
+  id: string
+  name: string
+  logoUrl?: string
+  createdBy: string
+  createdAt: string
+  isActive: boolean
+  description?: string
+}
+
+export interface TemplatePermission {
+  id: string
+  templateId: string
+  userId: string
+  assignedBy: string
+  assignedAt: string
 }
 
 export interface DashboardSummary {

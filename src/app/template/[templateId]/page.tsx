@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, addTaskComment, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
-import { Task, DashboardSummary } from "@/lib/database";
+import { getTemplateById, hasTemplateAccess, getUserTemplates } from "@/lib/mock-data";
+import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, updateDashboardSummary, getCurrentAuditLog, initializeSampleData } from "@/lib/mock-data";
+import { Task, DashboardSummary, Template } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -13,10 +14,10 @@ import { TaskList } from "@/components/task-list";
 import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen, ArrowLeft, Shield } from "lucide-react";
 import Image from "next/image";
 
-export default function DashboardPage() {
+export default function TemplatePage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
@@ -25,7 +26,10 @@ export default function DashboardPage() {
   const [showFullAuditLog, setShowFullAuditLog] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
+  const [template, setTemplate] = useState<Template | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const router = useRouter();
+  const params = useParams();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,23 +39,32 @@ export default function DashboardPage() {
         return;
       }
 
-      // Check if there's a template parameter and verify access
-      const urlParams = new URLSearchParams(window.location.search);
-      const templateId = urlParams.get('template');
-
-      if (templateId) {
-        const hasAccess = hasTemplateAccess(templateId, user.id);
-        if (!hasAccess) {
-          router.push("/access-denied");
-          return;
-        }
+      const templateId = params.templateId as string;
+      if (!templateId) {
+        router.push("/homepage");
+        return;
       }
 
+      // Check if user has access to this template
+      const hasAccess = hasTemplateAccess(templateId, user.id);
+      if (!hasAccess) {
+        setAccessDenied(true);
+        return;
+      }
+
+      // Load template data
+      const templateData = getTemplateById(templateId);
+      if (!templateData) {
+        router.push("/homepage");
+        return;
+      }
+
+      setTemplate(templateData);
       setIsAuthenticated(true);
       loadDashboardData();
     };
     checkAuth();
-  }, [router]);
+  }, [router, params.templateId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -77,6 +90,10 @@ export default function DashboardPage() {
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);
     setSelectedTask(task);
+  };
+
+  const handleBackToHomepage = () => {
+    router.push("/homepage");
   };
 
   const getStatusIcon = (status: Task["status"]) => {
@@ -116,17 +133,12 @@ export default function DashboardPage() {
     }
   };
 
-  const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
-  };
-
   const getDeadlineDisplay = (deadline: string, taskStatus?: Task["status"]) => {
-    // If task is completed, show "Complete"
     if (taskStatus === "completed") {
       return { text: "Complete", color: "text-green-400" };
     }
 
-    const daysUntil = getDaysUntilDeadline(deadline);
+    const daysUntil = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     if (daysUntil < 0) {
       return { text: `${Math.abs(daysUntil)} days overdue`, color: "text-red-400" };
     } else if (daysUntil === 0) {
@@ -148,63 +160,23 @@ export default function DashboardPage() {
     setExpandedDescriptions(newExpanded);
   };
 
+  if (accessDenied) {
+    router.push("/access-denied");
+    return null;
+  }
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <main className="flex-1 p-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-700 rounded mb-6 w-48"></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-gray-800 rounded-lg p-6">
-                      <div className="h-6 bg-gray-700 rounded mb-2 w-32"></div>
-                      <div className="h-8 bg-gray-700 rounded w-24"></div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <div className="h-6 bg-gray-700 rounded mb-4 w-24"></div>
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-gray-700 rounded p-4">
-                          <div className="h-4 bg-gray-600 rounded mb-2 w-3/4"></div>
-                          <div className="h-4 bg-gray-600 rounded w-1/2"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <div className="h-6 bg-gray-700 rounded mb-4 w-32"></div>
-                    <div className="space-y-3">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gray-700 rounded-full"></div>
-                          <div className="flex-1">
-                            <div className="h-4 bg-gray-600 rounded mb-1 w-3/4"></div>
-                            <div className="h-3 bg-gray-600 rounded w-1/2"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
 
-  if (!summary) {
+  if (!template) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Error loading dashboard</div>
+        <div className="text-white">Template not found</div>
       </div>
     );
   }
@@ -218,27 +190,60 @@ export default function DashboardPage() {
 
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold text-white mb-6 animate-slideIn">Dashboard</h1>
+            {/* Template Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleBackToHomepage}
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  <span>Back to Homepage</span>
+                </button>
+                <div className="h-8 w-px bg-gray-700"></div>
+                <div className="flex items-center space-x-3">
+                  {template.logoUrl && (
+                    <Image
+                      src={template.logoUrl}
+                      alt={template.name}
+                      width={40}
+                      height={40}
+                      className="rounded"
+                    />
+                  )}
+                  <div>
+                    <h1 className="text-3xl font-bold text-white">{template.name}</h1>
+                    {template.description && (
+                      <p className="text-gray-400 text-sm">{template.description}</p>
+                    )}
+                  </div>
+                  <Badge className="bg-green-600 text-white flex items-center space-x-1">
+                    <Shield className="h-3 w-3" />
+                    <span>Template</span>
+                  </Badge>
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <FadeInCard delay={1}>
                 <SummaryCard
                   title="Total Suspects"
-                  value={summary.totalPlayers}
+                  value={summary?.totalPlayers || 0}
                   icon="👥"
                 />
               </FadeInCard>
               <FadeInCard delay={2}>
                 <SummaryCard
                   title="Total Assets Value"
-                  value={`$${summary.totalAssetsValue.toLocaleString()}`}
+                  value={`$${(summary?.totalAssetsValue || 0).toLocaleString()}`}
                   icon="💎"
                 />
               </FadeInCard>
               <FadeInCard delay={3}>
                 <SummaryCard
                   title="Total Officers"
-                  value={mockUsers.length}
+                  value={5}
                   icon="👮"
                 />
               </FadeInCard>
@@ -261,12 +266,11 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Task Detail Modal */}
+      {/* Task Detail Modal - Reusing from dashboard */}
       {selectedTask && (
         <div className="fixed inset-0 z-50 flex justify-start pt-8 p-4 backdrop-blur-sm bg-black/50" onClick={() => setSelectedTask(null)}>
           <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[85vh] shadow-2xl overflow-y-auto mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
-              {/* Header with tags */}
               <div className="flex justify-between items-start mb-6">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-3">
@@ -284,7 +288,6 @@ export default function DashboardPage() {
                       {selectedTask.risk} risk
                     </Badge>
                   </div>
-                  {/* Date and Status Info */}
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center space-x-2">
                       <FolderOpen className="h-4 w-4 text-gray-400" />
@@ -330,7 +333,6 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-col h-full">
-                {/* Description */}
                 {selectedTask.description && (
                   <div className="mb-6">
                     <p className={`text-gray-300 ${expandedDescriptions.has(selectedTask.id) ? '' : 'line-clamp-2'}`}>
@@ -347,23 +349,12 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Assigned To */}
-                <div className="text-sm mb-6">
-                  <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Assigned to:</span>
-                    <span className="text-white">{getAssignedUserNames(selectedTask.assignedUsers)}</span>
-                  </div>
-                </div>
-
-                {/* Comments Section */}
                 <div className="flex-1 border-t border-gray-700 pt-6 min-h-0">
                   <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Comments ({selectedTask.comments.length})
                   </h4>
 
-                  {/* Existing Comments */}
                   <div className="flex-1 space-y-3 overflow-y-auto pr-2">
                     {selectedTask.comments.length > 0 ? (
                       selectedTask.comments.map((comment) => (
@@ -377,71 +368,6 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <p className="text-gray-300 text-sm">{comment.text}</p>
-                          {comment.mediaUrls && comment.mediaUrls.length > 0 && (
-                            <div className="mt-2">
-                              <div className="flex items-center text-gray-400 text-xs mb-2">
-                                <span className="mr-2">📎</span>
-                                {comment.mediaUrls.length} file(s) attached
-                              </div>
-                              <div className="grid grid-cols-4 gap-2">
-                                {comment.mediaUrls.map((url, index) => {
-                                  let displayUrl = url;
-                                  let fileName = `File ${index + 1}`;
-
-                                  // Handle named URLs (format: "name:url")
-                                  const nameIndex = url.indexOf(':');
-                                  if (nameIndex > 0) {
-                                    const name = url.substring(0, nameIndex);
-                                    const actualUrl = url.substring(nameIndex + 1);
-
-                                    // If it's a data URL or external URL, use it
-                                    if (actualUrl.startsWith('data:') || actualUrl.startsWith('http://') || actualUrl.startsWith('https://')) {
-                                      displayUrl = actualUrl;
-                                      fileName = name;
-                                    }
-                                  } else {
-                                    fileName = url.split('/').pop() || `File ${index + 1}`;
-                                  }
-
-                                  const isImage = (displayUrl.startsWith('data:image') || (displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(displayUrl)) && !displayUrl.startsWith('mock-file');
-                                  const isVideo = displayUrl.startsWith('data:video/') || ((displayUrl.startsWith('http://') || displayUrl.startsWith('https://')) && /\.(mp4|avi|mov|webm)$/i.test(displayUrl));
-
-                                  return (
-                                    <div key={index} className="relative group">
-                                      <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center hover:bg-gray-500 transition-colors cursor-pointer" onClick={() => isImage && setFullscreenImage({ url: displayUrl, name: fileName })}>
-                                        {isImage ? (
-                                          <>
-                                            <Image
-                                              src={displayUrl}
-                                              alt={fileName}
-                                              width={200}
-                                              height={200}
-                                              className="w-full h-full object-cover"
-                                              unoptimized
-                                            />
-                                            {/* Eye icon overlay */}
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                              <div className="bg-black bg-opacity-50 rounded-full p-2">
-                                                <Eye className="w-4 h-4 text-white" />
-                                              </div>
-                                            </div>
-                                          </>
-                                        ) : (
-                                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-600">
-                                            <span className="text-2xl">
-                                              {isVideo ? '🎥' :
-                                               displayUrl.includes('pdf') ? '📄' : '📎'}
-                                            </span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div className="mt-1 text-xs text-gray-300 text-center truncate">{fileName}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       ))
                     ) : (
@@ -450,35 +376,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fullscreen Image Modal */}
-      {fullscreenImage && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 backdrop-blur-sm bg-black/80" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={() => setFullscreenImage(null)}>
-          <div className="relative mt-8">
-            {/* Image container with background */}
-            <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
-              <Image
-                src={fullscreenImage.url}
-                alt={fullscreenImage.name}
-                width={1200}
-                height={800}
-                className="max-w-[90vw] max-h-[80vh] object-contain"
-                unoptimized
-                onError={(e) => {
-                  // Fallback for failed image loads
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            </div>
-
-            {/* Image name overlay */}
-            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg">
-              <p className="text-sm font-medium truncate max-w-md">{fullscreenImage.name}</p>
             </div>
           </div>
         </div>
