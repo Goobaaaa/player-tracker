@@ -3,10 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockPlayers, getPlayerProfilePicture, getPlayerAssets } from "@/lib/mock-data";
+import { getPlayerProfilePicture, getPlayerAssets } from "@/lib/mock-data";
+import { getTemplatePlayers, createTemplatePlayer } from "@/lib/template-aware-data";
 import { Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
+import { useTemplate } from "@/contexts/template-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +27,7 @@ export default function PlayersPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   
     const router = useRouter();
+  const { currentTemplate, isTemplateMode } = useTemplate();
 
   const checkAuth = useCallback(async () => {
     const { data: { session }, error } = await mockGetSession();
@@ -55,8 +58,18 @@ export default function PlayersPage() {
 
   const loadPlayers = async () => {
     try {
-      setPlayers(mockPlayers);
-      setFilteredPlayers(mockPlayers);
+      let playersData: Player[];
+
+      if (isTemplateMode && currentTemplate) {
+        // Load template-specific players
+        playersData = getTemplatePlayers(currentTemplate.id);
+      } else {
+        // Load all players (for non-template mode)
+        playersData = []; // This would be from global data if needed
+      }
+
+      setPlayers(playersData);
+      setFilteredPlayers(playersData);
     } catch (error) {
       console.error("Error loading players:", error);
     }
@@ -81,9 +94,8 @@ export default function PlayersPage() {
   };
 
   const handlePlayerSaved = () => {
-    // The new player is already added to mockPlayers by addPlayer function
-    // Reload players from mockPlayers to get the updated list without duplicates
-    setPlayers([...mockPlayers]);
+    // Reload players to get the updated list
+    loadPlayers();
     setIsModalOpen(false);
     setSelectedPlayer(null);
     setIsEditMode(false);

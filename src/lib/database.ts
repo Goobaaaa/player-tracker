@@ -178,6 +178,7 @@ export interface Vehicle {
   description: string
   imageUrl: string
   details: string
+  status?: 'available' | 'unavailable' | 'maintenance'
   createdAt: string
   createdBy: string
 }

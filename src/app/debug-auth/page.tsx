@@ -5,7 +5,7 @@ import { mockGetSession, isSessionActive, getSessionTimeout } from "@/lib/mock-a
 
 export default function DebugAuthPage() {
   const [authStatus, setAuthStatus] = useState<string>("Checking...");
-  const [sessionData, setSessionData] = useState<any>(null);
+  const [sessionData, setSessionData] = useState<{session?: Record<string, unknown>, user?: Record<string, unknown>} | null>(null);
   const [localStorageData, setLocalStorageData] = useState<string>("");
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [sessionActive, setSessionActive] = useState<boolean>(false);

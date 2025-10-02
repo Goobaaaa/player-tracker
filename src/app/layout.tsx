@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import PageTransition from "@/components/page-transition";
 import { AppSettingsProvider } from "@/contexts/app-settings-context";
 import { SessionProvider } from "@/contexts/session-context";
+import { TemplateProvider } from "@/contexts/template-context";
 import { NotificationProvider } from "@/components/notification-container";
 
 const inter = Inter({
@@ -28,11 +29,13 @@ export default function RootLayout({
         <Providers>
           <NotificationProvider>
             <AppSettingsProvider>
-              {/* <SessionProvider> */}
-                <PageTransition>
-                  {children}
-                </PageTransition>
-              {/* </SessionProvider> */}
+              <TemplateProvider>
+                {/* <SessionProvider> */}
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                {/* </SessionProvider> */}
+              </TemplateProvider>
             </AppSettingsProvider>
           </NotificationProvider>
         </Providers>

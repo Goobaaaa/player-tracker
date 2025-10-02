@@ -6,6 +6,7 @@ import { mockSignOut } from "@/lib/mock-auth";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useTemplate } from "@/contexts/template-context";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: "📊" },
@@ -21,6 +22,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { isTemplateMode, navigateWithinTemplate } = useTemplate();
 
   const handleLogout = async () => {
     await mockSignOut();
@@ -64,7 +66,11 @@ export function Sidebar() {
                 <button
                   key={item.name}
                   onClick={() => {
-                    router.push(item.href);
+                    if (isTemplateMode) {
+                      navigateWithinTemplate(item.href);
+                    } else {
+                      router.push(item.href);
+                    }
                     setIsOpen(false);
                   }}
                   className={cn(

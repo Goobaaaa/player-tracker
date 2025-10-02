@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cdn.dribbble.com' },
       { protocol: 'https', hostname: 'images.pexels.com' },
       { protocol: 'https', hostname: 'www.canva.com' },
+      { protocol: 'https', hostname: 'media.discordapp.net' },
     ],
     domains: [
       'images.unsplash.com',
@@ -49,6 +50,7 @@ const nextConfig: NextConfig = {
       'cdn.dribbble.com',
       'images.pexels.com',
       'www.canva.com',
+      'media.discordapp.net',
     ],
   },
 };

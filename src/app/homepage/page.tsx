@@ -4,19 +4,18 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { getAllTemplates, getUserTemplates, createTemplate, assignTemplatePermission, hasTemplateAccess } from "@/lib/mock-data";
+import { createNewTemplate } from "@/lib/template-aware-data";
 import { Template } from "@/lib/database";
 import Image from "next/image";
-import { Plus, Users, Settings, LogOut, Home, Shield, Car, MessageSquare, Camera, Quote, Gift, Calendar, Edit } from "lucide-react";
-import { TemplateManagement } from "@/components/template-management";
+import { Plus, Users, Settings, LogOut, Home, Shield, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
+// TemplateManagement removed - using only blank template creation
 import { UserManagement } from "@/components/user-management";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | undefined>();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const router = useRouter();
 
@@ -46,19 +45,30 @@ export default function HomePage() {
     }
   };
 
-  const handleCreateTemplate = () => {
-    setEditingTemplate(undefined);
-    setShowCreateTemplate(true);
-  };
+  // Removed old template creation - now using handleCreateBlankTemplate only
 
-  const handleEditTemplate = (template: Template) => {
-    setEditingTemplate(template);
-    setShowCreateTemplate(true);
-  };
+  const handleCreateBlankTemplate = () => {
+    if (!user) return;
 
-  const handleTemplateSave = (template: Template) => {
+    const newTemplate = createNewTemplate({
+      name: `Blank Investigation ${Date.now()}`,
+      logoUrl: '/media/usmsbadge.png',
+      createdBy: user.id,
+      isActive: true,
+      description: 'A completely blank investigation template - start fresh'
+    });
+
+    // Assign permission to current user
+    assignTemplatePermission(newTemplate.id, user.id, user.id);
+
+    // Reload templates
     loadTemplates();
+
+    // Navigate to the new template
+    router.push(`/template/${newTemplate.id}`);
   };
+
+  // Removed old template editing functions - now using only blank template creation
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
@@ -121,11 +131,11 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-white mb-4">Admin Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={() => setShowCreateTemplate(true)}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                  onClick={handleCreateBlankTemplate}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
-                  <span>Create Template</span>
+                  <span>Create New Template</span>
                 </button>
                 <button
                   onClick={() => setShowUserManagement(true)}
@@ -236,17 +246,7 @@ export default function HomePage() {
                           <p className="text-gray-400 text-sm">{template.description}</p>
                         )}
                       </div>
-                      {user?.role === 'admin' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTemplate(template);
-                          }}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-opacity"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                      )}
+                      {/* Edit button removed - templates are now created as blank only */}
                     </div>
                   ))}
                 </div>
@@ -262,14 +262,7 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* Template Management Modal */}
-      {showCreateTemplate && (
-        <TemplateManagement
-          template={editingTemplate}
-          onClose={() => setShowCreateTemplate(false)}
-          onSave={handleTemplateSave}
-        />
-      )}
+      {/* Template Management Modal removed - now using only blank template creation */}
 
       {/* User Management Modal */}
       {showUserManagement && (

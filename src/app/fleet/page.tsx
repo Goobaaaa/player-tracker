@@ -79,7 +79,9 @@ export default function FleetPage() {
         description: formData.description.trim(),
         imageUrl: formData.imageUrl.trim(),
         details: formData.details.trim(),
-        status: "available"
+        status: "available",
+        createdAt: new Date().toISOString(),
+        createdBy: "current-user" // TODO: Get actual user from auth
       };
       mockVehicles.push(newVehicle);
     }

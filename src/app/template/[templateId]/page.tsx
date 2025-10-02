@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getTemplateById, hasTemplateAccess, getUserTemplates } from "@/lib/mock-data";
+import { getTemplateById, hasTemplateAccess, initializeBlankTemplate, getTemplateDashboardSummary, getTemplateTasks } from "@/lib/template-aware-data";
 import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, updateDashboardSummary, getCurrentAuditLog, initializeSampleData } from "@/lib/mock-data";
 import { Task, DashboardSummary, Template } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
@@ -14,8 +14,9 @@ import { TaskList } from "@/components/task-list";
 import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen, ArrowLeft, Shield } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen, Shield } from "lucide-react";
 import Image from "next/image";
+import { useTemplate } from "@/contexts/template-context";
 
 export default function TemplatePage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -30,6 +31,7 @@ export default function TemplatePage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const router = useRouter();
   const params = useParams();
+  const { setCurrentTemplate } = useTemplate();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -60,11 +62,23 @@ export default function TemplatePage() {
       }
 
       setTemplate(templateData);
+      setCurrentTemplate(templateData); // Set template in context
+
+      // Initialize blank template data if this is a new template
+      initializeBlankTemplate(templateId);
+
+      // Add template parameter to URL for persistence
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('template', templateId);
+        window.history.replaceState({}, '', url.toString());
+      }
+
       setIsAuthenticated(true);
       loadDashboardData();
     };
     checkAuth();
-  }, [router, params.templateId]);
+  }, [router, params.templateId, setCurrentTemplate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -76,11 +90,16 @@ export default function TemplatePage() {
 
   const loadDashboardData = async () => {
     try {
-      updateTaskOverdueStatus();
-      initializeSampleData();
-      updateDashboardSummary();
-      setSummary(mockDashboardSummary);
-      setTasks(getAllTasks());
+      const templateId = params.templateId as string;
+
+      // Load template-specific data
+      const templateSummary = getTemplateDashboardSummary(templateId);
+      const templateTasks = getTemplateTasks(templateId);
+
+      setSummary(templateSummary);
+      setTasks(templateTasks);
+
+      // For now, use global audit log (this could be made template-specific later)
       setAuditLog(getCurrentAuditLog());
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -92,9 +111,7 @@ export default function TemplatePage() {
     setSelectedTask(task);
   };
 
-  const handleBackToHomepage = () => {
-    router.push("/homepage");
-  };
+  // handleBackToHomepage is now handled by the header component
 
   const getStatusIcon = (status: Task["status"]) => {
     switch (status) {
@@ -193,14 +210,6 @@ export default function TemplatePage() {
             {/* Template Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={handleBackToHomepage}
-                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                  <span>Back to Homepage</span>
-                </button>
-                <div className="h-8 w-px bg-gray-700"></div>
                 <div className="flex items-center space-x-3">
                   {template.logoUrl && (
                     <Image

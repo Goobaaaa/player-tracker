@@ -46,7 +46,7 @@ export default function MarshallsPage() {
       description: member.description,
       bloodType: member.bloodType,
       favouriteHobby: member.favouriteHobby,
-      portraitUrl: member.portraitUrl
+      portraitUrl: member.portraitUrl || ''
     });
     setShowEditModal(true);
   };
@@ -148,7 +148,7 @@ export default function MarshallsPage() {
                   {/* Portrait */}
                   <div className="aspect-square bg-gray-700 relative">
                     <Image
-                      src={member.portraitUrl}
+                      src={member.portraitUrl || '/placeholder-avatar.png'}
                       alt={member.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-200"
@@ -219,7 +219,7 @@ export default function MarshallsPage() {
                     {/* Portrait */}
                     <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
                       <Image
-                        src={selectedMember.portraitUrl}
+                        src={selectedMember.portraitUrl || '/placeholder-avatar.png'}
                         alt={selectedMember.name}
                         width={400}
                         height={400}

@@ -5,6 +5,7 @@ import React from "react";
 import Image from "next/image";
 import { Player, Asset, Mugshot, Media, HouseMedia, Document, Weapon } from "@/lib/database";
 import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, getPlayerWeapons, mockWeapons, addVehicleImage, removeVehicleImage } from "@/lib/mock-data";
+import { createTemplatePlayer, getTemplateAssets, getTemplateDocuments, getTemplateWeapons } from "@/lib/template-aware-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X, Package, FileText, Plus, Save, Camera, Upload, Star, Eye, Edit, Trash2, ExternalLink, Shield } from "lucide-react";
 import { useNotification } from "@/components/notification-container";
+import { useTemplate } from "@/contexts/template-context";
 
 interface PlayerModalProps {
   player: Player | null;
@@ -26,6 +28,7 @@ interface PlayerModalProps {
 
 export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, onPlayerDeleted, isEditMode = false }: PlayerModalProps) {
   const { showSuccess, showError } = useNotification();
+  const { currentTemplate, isTemplateMode } = useTemplate();
   const [assets, setAssets] = React.useState<Asset[]>([]);
     const [mugshots, setMugshots] = React.useState<Mugshot[]>([]);
   const [media, setMedia] = React.useState<Media[]>([]);
@@ -606,24 +609,46 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
       showSuccess('Player information saved successfully!');
     } else {
       // Create new player
-      const newPlayer = addPlayer({
-        name: editForm.name,
-        alias: editForm.alias,
-        dna: editForm.dna,
-        fingerprint: editForm.fingerprint,
-        phoneNumber: editForm.phoneNumber,
-        notes: editForm.notes,
-        status: editForm.status as 'active' | 'inactive' | 'MIA',
-        houseAddress: editForm.houseAddress,
-        avatarUrl: undefined
-      });
+      let newPlayer;
 
-      console.log('New player created successfully:', newPlayer);
-      showSuccess('New player created successfully!');
+      if (isTemplateMode && currentTemplate) {
+        // Create template-specific player
+        newPlayer = createTemplatePlayer(currentTemplate.id, {
+          name: editForm.name,
+          alias: editForm.alias,
+          dna: editForm.dna,
+          fingerprint: editForm.fingerprint,
+          phoneNumber: editForm.phoneNumber,
+          notes: editForm.notes,
+          status: editForm.status as 'active' | 'inactive' | 'MIA',
+          houseAddress: editForm.houseAddress,
+          avatarUrl: undefined
+        });
+      } else {
+        // Fall back to global player creation (shouldn't happen in template mode)
+        newPlayer = addPlayer({
+          name: editForm.name,
+          alias: editForm.alias,
+          dna: editForm.dna,
+          fingerprint: editForm.fingerprint,
+          phoneNumber: editForm.phoneNumber,
+          notes: editForm.notes,
+          status: editForm.status as 'active' | 'inactive' | 'MIA',
+          houseAddress: editForm.houseAddress,
+          avatarUrl: undefined
+        });
+      }
 
-      // Notify parent component
-      if (onPlayerSaved) {
-        onPlayerSaved(newPlayer);
+      if (newPlayer) {
+        console.log('New player created successfully:', newPlayer);
+        showSuccess('New player created successfully!');
+
+        // Notify parent component
+        if (onPlayerSaved) {
+          onPlayerSaved(newPlayer);
+        }
+      } else {
+        showError('Failed to create player. Please try again.');
       }
     }
 

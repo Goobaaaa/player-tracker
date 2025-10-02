@@ -15,6 +15,7 @@ import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen } from "lucide-react";
 import Image from "next/image";
+import { useTemplate } from "@/contexts/template-context";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const { currentTemplate, isTemplateMode } = useTemplate();
 
   useEffect(() => {
     const checkAuth = async () => {

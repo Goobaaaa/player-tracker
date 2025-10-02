@@ -60,6 +60,17 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
+  // Ensure dark mode is applied on initial load for new users
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('usms-theme');
+      if (!savedTheme) {
+        // No saved theme, set to dark for new users
+        setTheme('dark');
+      }
+    }
+  }, []);
+
   // Save settings to localStorage when they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
