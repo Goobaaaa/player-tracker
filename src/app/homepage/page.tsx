@@ -72,14 +72,14 @@ export default function HomePage() {
   };
 
   const navItems = [
-    { icon: Home, label: "Homepage", active: true },
-    { icon: Users, label: "Marshalls" },
-    { icon: Car, label: "Fleet" },
-    { icon: MessageSquare, label: "Marshall Chatroom" },
-    { icon: Camera, label: "Marshall Media" },
-    { icon: Quote, label: "Quote Wall" },
-    { icon: Gift, label: "Commendation Jar" },
-    { icon: Calendar, label: "Upcoming Events" },
+    { icon: Home, label: "Homepage", active: true, href: "/homepage" },
+    { icon: Users, label: "Marshalls", href: "/marshalls" },
+    { icon: Car, label: "Fleet", href: "/fleet" },
+    { icon: MessageSquare, label: "Marshall Chatroom", href: "/marshall-chatroom" },
+    { icon: Camera, label: "Marshall Media", href: "/marshall-media" },
+    { icon: Quote, label: "Quote Wall", href: "/quote-wall" },
+    { icon: Gift, label: "Commendation Jar", href: "/commendation-jar" },
+    { icon: Calendar, label: "Upcoming Events", href: "/upcoming-events" },
   ];
 
   if (!isAuthenticated) {
@@ -98,9 +98,10 @@ export default function HomePage() {
           <h2 className="text-xl font-bold text-white mb-6">Navigation</h2>
           <nav className="space-y-2">
             {navItems.map((item, index) => (
-              <button
+              <a
                 key={index}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                href={item.href}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors block ${
                   item.active
                     ? "bg-blue-600 text-white"
                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -108,7 +109,7 @@ export default function HomePage() {
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.label}</span>
-              </button>
+              </a>
             ))}
           </nav>
 

@@ -159,6 +159,81 @@ export interface TemplatePermission {
   assignedAt: string
 }
 
+export interface StaffMember {
+  id: string
+  name: string
+  callsign: string
+  tagLine: string
+  description: string
+  bloodType: string
+  favouriteHobby: string
+  portraitUrl?: string
+  createdAt: string
+  createdBy: string
+}
+
+export interface Vehicle {
+  id: string
+  name: string
+  description: string
+  imageUrl: string
+  details: string
+  createdAt: string
+  createdBy: string
+}
+
+export interface ChatMessage {
+  id: string
+  authorId: string
+  authorName: string
+  content: string
+  createdAt: string
+  editedAt?: string
+  reactions: { [emoji: string]: string[] } // emoji -> array of user IDs
+  mediaUrls?: string[]
+}
+
+export interface MediaItem {
+  id: string
+  url: string
+  description: string
+  uploaderId: string
+  uploaderName: string
+  createdAt: string
+}
+
+export interface Quote {
+  id: string
+  quoteText: string
+  whoSaidIt: string
+  whenSaid: string
+  whySaid: string
+  submittedBy: string
+  submittedByName: string
+  createdAt: string
+}
+
+export interface Commendation {
+  id: string
+  recipientName: string
+  shortReason: string
+  fullExplanation: string
+  issuedBy: string
+  issuedByName: string
+  imageUrl: string
+  issuedAt: string
+}
+
+export interface Event {
+  id: string
+  title: string
+  description: string
+  dateTime: string
+  createdBy: string
+  createdByName: string
+  createdAt: string
+}
+
 export interface DashboardSummary {
   totalPlayers: number
   totalAssetsValue: number

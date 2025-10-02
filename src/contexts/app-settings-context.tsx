@@ -27,16 +27,21 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   // Load settings from localStorage on mount - simplified to avoid SSR issues
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Clear all localStorage data to avoid corruption issues
       try {
-        localStorage.removeItem('usms-app-name');
-        localStorage.removeItem('usms-app-logo');
-        localStorage.removeItem('usms-theme');
-        localStorage.removeItem('usms-session-timeout');
-        localStorage.removeItem('usms-session');
-        console.log('Cleared localStorage to avoid corruption issues');
+        // Load settings from localStorage without clearing session data
+        const savedAppName = localStorage.getItem('usms-app-name');
+        const savedAppLogo = localStorage.getItem('usms-app-logo');
+        const savedTheme = localStorage.getItem('usms-theme');
+        const savedTimeout = localStorage.getItem('usms-session-timeout');
+
+        if (savedAppName) setAppName(savedAppName);
+        if (savedAppLogo) setAppLogo(savedAppLogo);
+        if (savedTheme === 'light' || savedTheme === 'dark') setTheme(savedTheme);
+        if (savedTimeout) setSessionTimeout(parseInt(savedTimeout));
+
+        console.log('Loaded settings from localStorage');
       } catch (error) {
-        console.error('Error clearing localStorage:', error);
+        console.error('Error loading settings from localStorage:', error);
       }
     }
   }, []);
@@ -54,6 +59,47 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [theme]);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('usms-app-name', appName);
+      } catch (error) {
+        console.error('Error saving app name:', error);
+      }
+    }
+  }, [appName]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('usms-app-logo', appLogo);
+      } catch (error) {
+        console.error('Error saving app logo:', error);
+      }
+    }
+  }, [appLogo]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('usms-theme', theme);
+      } catch (error) {
+        console.error('Error saving theme:', error);
+      }
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('usms-session-timeout', String(sessionTimeout));
+      } catch (error) {
+        console.error('Error saving session timeout:', error);
+      }
+    }
+  }, [sessionTimeout]);
 
   const resetToDefaults = () => {
     setAppName("USMS Dashboard");

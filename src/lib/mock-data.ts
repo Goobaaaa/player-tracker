@@ -1,4 +1,4 @@
-import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment, Incident, Weapon, Template, TemplatePermission } from './database';
+import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment, Incident, Weapon, Template, TemplatePermission, StaffMember, Vehicle, ChatMessage, MediaItem, Quote, Commendation, Event } from './database';
 import { AuditLogEntry } from '../components/activity-feed';
 
 // Mock players data - made mutable for editing
@@ -45,6 +45,208 @@ export const mockTemplatePermissions: TemplatePermission[] = [
     userId: '3',
     assignedBy: '1',
     assignedAt: new Date().toISOString()
+  }
+];
+
+// Mock staff members data
+export const mockStaffMembers: StaffMember[] = [
+  {
+    id: 'staff-1',
+    name: 'John Smith',
+    callsign: 'Eagle-1',
+    tagLine: 'Always ready, always there',
+    description: 'Veteran Marshall with 15 years of service. Specializes in tactical operations and training.',
+    bloodType: 'O+',
+    favouriteHobby: 'Rock climbing',
+    portraitUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'staff-2',
+    name: 'Sarah Johnson',
+    callsign: 'Phoenix-2',
+    tagLine: 'Rising to every challenge',
+    description: 'Expert in investigation and forensic analysis. Known for attention to detail.',
+    bloodType: 'A-',
+    favouriteHobby: 'Photography',
+    portraitUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=200&h=200&fit=crop&crop=face',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'staff-3',
+    name: 'Mike Wilson',
+    callsign: 'Shadow-3',
+    tagLine: 'Silent but effective',
+    description: 'Specializes in undercover operations and surveillance. Master of stealth tactics.',
+    bloodType: 'B+',
+    favouriteHobby: 'Chess',
+    portraitUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'staff-4',
+    name: 'Emily Davis',
+    callsign: 'Viper-4',
+    tagLine: 'Strike with precision',
+    description: 'Expert marksman and tactical medic. Combines medical knowledge with combat skills.',
+    bloodType: 'AB+',
+    favouriteHobby: 'Martial arts',
+    portraitUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  }
+];
+
+// Mock vehicles data
+export const mockVehicles: Vehicle[] = [
+  {
+    id: 'vehicle-1',
+    name: 'Interceptor Mk IV',
+    description: 'High-speed pursuit vehicle',
+    imageUrl: 'https://images.unsplash.com/photo-1542362567-b07e54358753?w=400&h=300&fit=crop',
+    details: 'Modified 2024 Dodge Charger with V8 engine, heavy-duty suspension, and advanced communication systems. Top speed: 180 mph. Features: run-flat tires, ballistic glass, prisoner compartment.',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'vehicle-2',
+    name: 'Mobile Command Center',
+    description: 'Tactical operations vehicle',
+    imageUrl: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+    details: 'Converted 2023 Ford F-550 with full command center. Features: satellite communications, drone deployment system, mobile interrogation room, advanced surveillance equipment.',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'vehicle-3',
+    name: 'Tactical Response Unit',
+    description: 'SWAT support vehicle',
+    imageUrl: 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400&h=300&fit=crop',
+    details: 'Armored 2024 Lenco BearCat. Capacity: 10 fully equipped officers. Features: ballistic protection, gas gun deployment, thermal imaging, breach tools.',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  },
+  {
+    id: 'vehicle-4',
+    name: 'Surveillance Van',
+    description: 'Covert operations vehicle',
+    imageUrl: 'https://images.unsplash.com/photo-1579621194208-cc5b4b3b1f5c?w=400&h=300&fit=crop',
+    details: 'Modified 2023 Mercedes Sprinter with advanced surveillance equipment. Features: multiple camera systems, audio surveillance, GPS tracking, undercover lighting.',
+    createdAt: new Date().toISOString(),
+    createdBy: '1'
+  }
+];
+
+// Mock chat messages data
+export const mockChatMessages: ChatMessage[] = [
+  {
+    id: 'chat-1',
+    authorId: '1',
+    authorName: 'Admin User',
+    content: 'Welcome to the USMS Chatroom! Please keep conversations professional.',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    reactions: { '👍': ['2', '3'] }
+  },
+  {
+    id: 'chat-2',
+    authorId: '2',
+    authorName: 'John Doe',
+    content: 'Great job on the operation yesterday team! Everyone performed excellently.',
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+    reactions: { '🎉': ['1'], '💪': ['3'] }
+  }
+];
+
+// Mock media items data
+export const mockMediaItems: MediaItem[] = [
+  {
+    id: 'media-1',
+    url: 'https://images.unsplash.com/photo-1551854346-d4bab8948649?w=400&h=300&fit=crop',
+    description: 'Team training exercise at the range',
+    uploaderId: '1',
+    uploaderName: 'Admin User',
+    createdAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'media-2',
+    url: 'https://images.unsplash.com/photo-1519389950473-82ba3a57a8a0?w=400&h=300&fit=crop',
+    description: 'New tactical gear deployment',
+    uploaderId: '2',
+    uploaderName: 'John Doe',
+    createdAt: new Date(Date.now() - 43200000).toISOString()
+  }
+];
+
+// Mock quotes data
+export const mockQuotes: Quote[] = [
+  {
+    id: 'quote-1',
+    quoteText: 'The only easy day was yesterday.',
+    whoSaidIt: 'Navy SEAL saying',
+    whenSaid: 'During training',
+    whySaid: 'To emphasize the importance of continuous improvement',
+    submittedBy: '1',
+    submittedByName: 'Admin User',
+    createdAt: new Date(Date.now() - 172800000).toISOString()
+  },
+  {
+    id: 'quote-2',
+    quoteText: 'Courage is not the absence of fear, but the triumph over it.',
+    whoSaidIt: 'Nelson Mandela',
+    whenSaid: 'Inaugural speech',
+    whySaid: 'To inspire courage in the face of adversity',
+    submittedBy: '2',
+    submittedByName: 'John Doe',
+    createdAt: new Date(Date.now() - 259200000).toISOString()
+  }
+];
+
+// Mock commendations data
+export const mockCommendations: Commendation[] = [
+  {
+    id: 'commend-1',
+    recipientName: 'Sarah Johnson',
+    shortReason: 'Exceptional bravery during hostage rescue',
+    fullExplanation: 'Officer Johnson demonstrated exceptional courage and tactical skill during the hostage rescue operation on Main Street. Despite immediate danger, she maintained composure and successfully negotiated the peaceful release of all hostages while apprehending the suspect without injury.',
+    issuedBy: '1',
+    issuedByName: 'Admin User',
+    imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop',
+    issuedAt: new Date(Date.now() - 604800000).toISOString()
+  },
+  {
+    id: 'commend-2',
+    recipientName: 'Mike Wilson',
+    shortReason: 'Outstanding investigative work',
+    fullExplanation: 'Detective Wilson\'s meticulous investigation led to the breakthrough in the smuggling case that had stumped the department for months. His attention to detail and innovative thinking uncovered crucial evidence that led to multiple arrests.',
+    issuedBy: '1',
+    issuedByName: 'Admin User',
+    imageUrl: 'https://images.unsplash.com/photo-1554908988-4e52b76294bd?w=100&h=100&fit=crop',
+    issuedAt: new Date(Date.now() - 1209600000).toISOString()
+  }
+];
+
+// Mock events data
+export const mockEvents: Event[] = [
+  {
+    id: 'event-1',
+    title: 'Quarterly Training Exercise',
+    description: 'Mandatory tactical training and team building exercises',
+    dateTime: new Date(Date.now() + 604800000).toISOString(),
+    createdBy: '1',
+    createdByName: 'Admin User',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'event-2',
+    title: 'Department Awards Ceremony',
+    description: 'Annual recognition of outstanding service and achievements',
+    dateTime: new Date(Date.now() + 1209600000).toISOString(),
+    createdBy: '1',
+    createdByName: 'Admin User',
+    createdAt: new Date().toISOString()
   }
 ];
 
