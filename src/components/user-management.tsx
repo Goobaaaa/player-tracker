@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   mockUsers,
+  mockStaffMembers,
   getAllTemplates,
   assignTemplatePermission,
   removeTemplatePermission,
@@ -22,17 +23,25 @@ interface UserManagementProps {
 interface NewUser {
   name: string;
   email: string;
-  role: 'admin' | 'marshall';
+  callsign: string;
+  tagLine: string;
+  description: string;
+  bloodType: string;
+  favouriteHobby: string;
 }
 
 export function UserManagement({ onClose }: UserManagementProps) {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState(mockStaffMembers);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [newUser, setNewUser] = useState<NewUser>({
     name: "",
     email: "",
-    role: "marshall"
+    callsign: "",
+    tagLine: "",
+    description: "",
+    bloodType: "",
+    favouriteHobby: ""
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -41,19 +50,33 @@ export function UserManagement({ onClose }: UserManagementProps) {
     setTemplates(getAllTemplates());
   }, []);
 
+  // Update templates and user access whenever templates change
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTemplates(getAllTemplates());
+    }, 1000); // Check every second for template changes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCreateUser = () => {
     if (!newUser.name.trim() || !newUser.email.trim()) return;
 
     const user = {
       id: `user-${Date.now()}`,
       name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      username: newUser.email.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      callsign: newUser.callsign || newUser.name,
+      tagLine: newUser.tagLine || "USMS Staff",
+      description: newUser.description || "United States Marshall Service Staff Member",
+      bloodType: newUser.bloodType || "O+",
+      favouriteHobby: newUser.favouriteHobby || "Serving Justice",
+      portraitUrl: "",
+      createdAt: new Date().toISOString(),
+      createdBy: "admin"
     };
 
     setUsers([...users, user]);
-    setNewUser({ name: "", email: "", role: "marshall" });
+    setNewUser({ name: "", email: "", callsign: "", tagLine: "", description: "", bloodType: "", favouriteHobby: "" });
     setShowCreateUser(false);
   };
 
@@ -73,6 +96,12 @@ export function UserManagement({ onClose }: UserManagementProps) {
     removeTemplatePermission(templateId, userId);
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const getUsersWithAccess = (templateId: string) => {
     return users.filter(user => hasTemplateAccess(templateId, user.id));
   };
@@ -82,7 +111,10 @@ export function UserManagement({ onClose }: UserManagementProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-gray-800 rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-white">User Management</h3>
@@ -109,7 +141,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
 
           {showCreateUser && (
             <div className="bg-gray-700 rounded-lg p-4 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   type="text"
                   placeholder="Name"
@@ -124,14 +156,41 @@ export function UserManagement({ onClose }: UserManagementProps) {
                   onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                   className="bg-gray-600 border-gray-500 text-white"
                 />
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as 'admin' | 'marshall'})}
-                  className="bg-gray-600 border-gray-500 text-white px-3 py-2 rounded"
-                >
-                  <option value="marshall">Marshall</option>
-                  <option value="admin">Admin</option>
-                </select>
+                <Input
+                  type="text"
+                  placeholder="Callsign"
+                  value={newUser.callsign}
+                  onChange={(e) => setNewUser({...newUser, callsign: e.target.value})}
+                  className="bg-gray-600 border-gray-500 text-white"
+                />
+                <Input
+                  type="text"
+                  placeholder="Tag Line"
+                  value={newUser.tagLine}
+                  onChange={(e) => setNewUser({...newUser, tagLine: e.target.value})}
+                  className="bg-gray-600 border-gray-500 text-white"
+                />
+                <Input
+                  type="text"
+                  placeholder="Description"
+                  value={newUser.description}
+                  onChange={(e) => setNewUser({...newUser, description: e.target.value})}
+                  className="bg-gray-600 border-gray-500 text-white md:col-span-2"
+                />
+                <Input
+                  type="text"
+                  placeholder="Blood Type"
+                  value={newUser.bloodType}
+                  onChange={(e) => setNewUser({...newUser, bloodType: e.target.value})}
+                  className="bg-gray-600 border-gray-500 text-white"
+                />
+                <Input
+                  type="text"
+                  placeholder="Favourite Hobby"
+                  value={newUser.favouriteHobby}
+                  onChange={(e) => setNewUser({...newUser, favouriteHobby: e.target.value})}
+                  className="bg-gray-600 border-gray-500 text-white"
+                />
                 <Button
                   onClick={handleCreateUser}
                   disabled={!newUser.name.trim() || !newUser.email.trim()}
@@ -159,11 +218,11 @@ export function UserManagement({ onClose }: UserManagementProps) {
                   </div>
                   <div>
                     <p className="text-white font-medium">{user.name}</p>
-                    <p className="text-gray-400 text-sm">{user.email}</p>
+                    <p className="text-gray-400 text-sm">{user.callsign}</p>
                   </div>
-                  <Badge className={`${user.role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'} text-white`}>
+                  <Badge className="bg-blue-600 text-white">
                     <Shield className="h-3 w-3 mr-1" />
-                    {user.role}
+                    {user.callsign}
                   </Badge>
                 </div>
               </div>
@@ -197,7 +256,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
                 className="bg-gray-600 border-gray-500 text-white px-3 py-2 rounded"
               >
                 <option value="">Select User</option>
-                {users.filter(u => u.role !== 'admin').map((user) => (
+                {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.name}
                   </option>
@@ -245,7 +304,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
                               className="flex items-center justify-between bg-gray-600 rounded px-2 py-1"
                             >
                               <span className="text-white text-sm">{user.name}</span>
-                              {user.role !== 'admin' && (
+                              {true && (
                                 <button
                                   onClick={() => handleRemovePermission(template.id, user.id)}
                                   className="text-red-400 hover:text-red-300"

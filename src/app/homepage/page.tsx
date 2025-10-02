@@ -8,14 +8,15 @@ import { createNewTemplate } from "@/lib/template-aware-data";
 import { Template } from "@/lib/database";
 import Image from "next/image";
 import { Plus, Users, Settings, LogOut, Home, Shield, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
-// TemplateManagement removed - using only blank template creation
 import { UserManagement } from "@/components/user-management";
+import { CreateTemplateModal } from "@/components/create-template-modal";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const router = useRouter();
 
@@ -45,30 +46,17 @@ export default function HomePage() {
     }
   };
 
-  // Removed old template creation - now using handleCreateBlankTemplate only
+  const handleCreateTemplate = () => {
+    setShowCreateTemplateModal(true);
+  };
 
-  const handleCreateBlankTemplate = () => {
-    if (!user) return;
-
-    const newTemplate = createNewTemplate({
-      name: `Blank Investigation ${Date.now()}`,
-      logoUrl: '/media/usmsbadge.png',
-      createdBy: user.id,
-      isActive: true,
-      description: 'A completely blank investigation template - start fresh'
-    });
-
-    // Assign permission to current user
-    assignTemplatePermission(newTemplate.id, user.id, user.id);
-
-    // Reload templates
+  const handleTemplateCreated = (template: Template) => {
+    // Reload templates to show the new one
     loadTemplates();
 
     // Navigate to the new template
-    router.push(`/template/${newTemplate.id}`);
+    router.push(`/template/${template.id}`);
   };
-
-  // Removed old template editing functions - now using only blank template creation
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
@@ -131,11 +119,11 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-white mb-4">Admin Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={handleCreateBlankTemplate}
+                  onClick={handleCreateTemplate}
                   className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                 >
                   <Plus className="h-5 w-5" />
-                  <span>Create New Template</span>
+                  <span>Create Template</span>
                 </button>
                 <button
                   onClick={() => setShowUserManagement(true)}
@@ -246,8 +234,7 @@ export default function HomePage() {
                           <p className="text-gray-400 text-sm">{template.description}</p>
                         )}
                       </div>
-                      {/* Edit button removed - templates are now created as blank only */}
-                    </div>
+                      </div>
                   ))}
                 </div>
               </div>
@@ -262,11 +249,21 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* Template Management Modal removed - now using only blank template creation */}
-
+      
       {/* User Management Modal */}
       {showUserManagement && (
         <UserManagement onClose={() => setShowUserManagement(false)} />
+      )}
+
+      {/* Create Template Modal */}
+      {user && (
+        <CreateTemplateModal
+          isOpen={showCreateTemplateModal}
+          onClose={() => setShowCreateTemplateModal(false)}
+          onTemplateCreated={handleTemplateCreated}
+          currentUserId={user.id}
+          isAdmin={user.role === 'admin'}
+        />
       )}
     </div>
   );
