@@ -20,7 +20,7 @@ const AppSettingsContext = createContext<AppSettings | undefined>(undefined);
 
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [appName, setAppName] = useState("USMS Dashboard");
-  const [appLogo, setAppLogo] = useState("/media/usmsbadge.png");
+  const [appLogo, setAppLogo] = useState("/USMSBadge.png");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [sessionTimeout, setSessionTimeout] = useState(30); // default 30 minutes
 
@@ -114,7 +114,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
 
   const resetToDefaults = () => {
     setAppName("USMS Dashboard");
-    setAppLogo("/media/usmsbadge.png");
+    setAppLogo("/USMSBadge.png");
     setTheme("dark");
     setSessionTimeout(30);
   };
