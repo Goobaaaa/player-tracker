@@ -162,7 +162,9 @@ export interface TemplatePermission {
 export interface StaffMember {
   id: string
   name: string
-  callsign: string
+  username: string
+  password: string
+  role: 'admin' | 'marshall'
   tagLine: string
   description: string
   bloodType: string

@@ -207,7 +207,7 @@ export function CreateTemplateModal({
                     />
                     <div className="flex-1">
                       <p className="text-white font-medium">{user.name}</p>
-                      <p className="text-gray-400 text-sm">{user.callsign}</p>
+                      <p className="text-gray-400 text-sm">{user.role}</p>
                     </div>
                     {user.id === currentUserId && (
                       <span className="text-xs text-blue-400 font-medium">You</span>

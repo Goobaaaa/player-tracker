@@ -53,7 +53,9 @@ export const mockStaffMembers: StaffMember[] = [
   {
     id: 'staff-1',
     name: 'John Smith',
-    callsign: 'Eagle-1',
+    username: 'jsmith',
+    password: 'admin123',
+    role: 'admin',
     tagLine: 'Always ready, always there',
     description: 'Veteran Marshall with 15 years of service. Specializes in tactical operations and training.',
     bloodType: 'O+',
@@ -65,7 +67,9 @@ export const mockStaffMembers: StaffMember[] = [
   {
     id: 'staff-2',
     name: 'Sarah Johnson',
-    callsign: 'Phoenix-2',
+    username: 'sjohnson',
+    password: 'marshall123',
+    role: 'marshall',
     tagLine: 'Rising to every challenge',
     description: 'Expert in investigation and forensic analysis. Known for attention to detail.',
     bloodType: 'A-',
@@ -77,7 +81,9 @@ export const mockStaffMembers: StaffMember[] = [
   {
     id: 'staff-3',
     name: 'Mike Wilson',
-    callsign: 'Shadow-3',
+    username: 'mwilson',
+    password: 'marshall123',
+    role: 'marshall',
     tagLine: 'Silent but effective',
     description: 'Specializes in undercover operations and surveillance. Master of stealth tactics.',
     bloodType: 'B+',
@@ -89,7 +95,9 @@ export const mockStaffMembers: StaffMember[] = [
   {
     id: 'staff-4',
     name: 'Emily Davis',
-    callsign: 'Viper-4',
+    username: 'edavis',
+    password: 'marshall123',
+    role: 'marshall',
     tagLine: 'Strike with precision',
     description: 'Expert marksman and tactical medic. Combines medical knowledge with combat skills.',
     bloodType: 'AB+',
@@ -1623,4 +1631,22 @@ export const initializeSampleData = () => {
     // Update dashboard summary
     updateDashboardSummary();
   }
+};
+
+// User management functions
+export const updateUser = (userId: string, updates: Partial<StaffMember>): boolean => {
+  const userIndex = mockStaffMembers.findIndex(user => user.id === userId);
+  if (userIndex !== -1) {
+    mockStaffMembers[userIndex] = { ...mockStaffMembers[userIndex], ...updates };
+    return true;
+  }
+  return false;
+};
+
+export const updateUserRole = (userId: string, role: 'admin' | 'marshall'): boolean => {
+  return updateUser(userId, { role });
+};
+
+export const updateUserName = (userId: string, name: string): boolean => {
+  return updateUser(userId, { name });
 };

@@ -17,7 +17,7 @@ export default function MarshallsPage() {
   // Form state for adding/editing
   const [formData, setFormData] = useState({
     name: "",
-    callsign: "",
+    role: "marshall" as 'admin' | 'marshall',
     tagLine: "",
     description: "",
     bloodType: "",
@@ -41,7 +41,7 @@ export default function MarshallsPage() {
     setEditingMember(member);
     setFormData({
       name: member.name,
-      callsign: member.callsign,
+      role: member.role,
       tagLine: member.tagLine,
       description: member.description,
       bloodType: member.bloodType,
@@ -54,7 +54,7 @@ export default function MarshallsPage() {
   const handleAddClick = () => {
     setFormData({
       name: "",
-      callsign: "",
+      role: "marshall" as 'admin' | 'marshall',
       tagLine: "",
       description: "",
       bloodType: "",
@@ -74,7 +74,7 @@ export default function MarshallsPage() {
         mockStaffMembers[index] = {
           ...mockStaffMembers[index],
           name: formData.name.trim(),
-          callsign: formData.callsign.trim(),
+          role: formData.role,
           tagLine: formData.tagLine.trim(),
           description: formData.description.trim(),
           bloodType: formData.bloodType.trim(),
@@ -87,7 +87,9 @@ export default function MarshallsPage() {
       const newMember: StaffMember = {
         id: `staff-${Date.now()}`,
         name: formData.name.trim(),
-        callsign: formData.callsign.trim(),
+        username: formData.name.trim().toLowerCase().replace(/\s+/g, '.'), // Generate username from name
+        password: "temp123", // Default password
+        role: formData.role,
         tagLine: formData.tagLine.trim(),
         description: formData.description.trim(),
         bloodType: formData.bloodType.trim(),
@@ -158,7 +160,7 @@ export default function MarshallsPage() {
                   {/* Member Info */}
                   <div className="p-4">
                     <h3 className="font-semibold text-white text-lg mb-1">{member.name}</h3>
-                    <p className="text-blue-400 text-sm font-medium mb-2">{member.callsign}</p>
+                    <p className="text-blue-400 text-sm font-medium mb-2">{member.role}</p>
                     <p className="text-gray-400 text-sm italic mb-3 line-clamp-2">{member.tagLine}</p>
 
                     {/* Action Buttons */}
@@ -237,8 +239,8 @@ export default function MarshallsPage() {
 
                         {/* Callsign */}
                         <div>
-                          <h4 className="text-lg font-semibold text-white mb-1">Callsign</h4>
-                          <p className="text-blue-400 font-medium text-lg">{selectedMember.callsign}</p>
+                          <h4 className="text-lg font-semibold text-white mb-1">Role</h4>
+                          <p className="text-blue-400 font-medium text-lg">{selectedMember.role}</p>
                         </div>
 
                         {/* Tag Line */}
@@ -309,15 +311,16 @@ export default function MarshallsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Callsign *
+                    Role *
                   </label>
-                  <input
-                    type="text"
-                    value={formData.callsign}
-                    onChange={(e) => setFormData({...formData, callsign: e.target.value})}
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({...formData, role: e.target.value as 'admin' | 'marshall'})}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Enter callsign"
-                  />
+                  >
+                    <option value="marshall">Marshall</option>
+                    <option value="admin">Admin</option>
+                  </select>
                 </div>
 
                 <div>
@@ -399,7 +402,7 @@ export default function MarshallsPage() {
                 </button>
                 <button
                   onClick={handleSaveMember}
-                  disabled={!formData.name.trim() || !formData.callsign.trim()}
+                  disabled={!formData.name.trim()}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingMember ? "Update" : "Add"} Marshall
