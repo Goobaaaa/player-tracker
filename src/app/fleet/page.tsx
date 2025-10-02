@@ -10,6 +10,7 @@ import { NavigationLayout } from "@/components/navigation-layout";
 export default function FleetPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<Vehicle | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -107,7 +108,7 @@ export default function FleetPage() {
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-white">Fleet Management</h1>
-              <p className="text-gray-400 mt-1">Manage your team's vehicles and equipment</p>
+              <p className="text-gray-400 mt-1">Manage your team&apos;s vehicles and equipment</p>
             </div>
             <button
               onClick={handleAddClick}
@@ -140,41 +141,36 @@ export default function FleetPage() {
                   </div>
 
                   {/* Vehicle Info */}
-                  <div className="p-4">
+                  <div
+                    className="p-4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVehicle(vehicle);
+                    }}
+                  >
                     <h3 className="font-semibold text-white text-lg mb-2">{vehicle.name}</h3>
                     <p className="text-gray-400 text-sm mb-3 line-clamp-2">{vehicle.description}</p>
 
-                    {/* Status Badge */}
-                    <div className="flex items-center justify-between">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        vehicle.status === 'available'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {vehicle.status}
-                      </span>
-
-                      {/* Action Buttons */}
-                      <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditClick(vehicle);
-                          }}
-                          className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-white transition-colors"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteVehicle(vehicle);
-                          }}
-                          className="p-1 bg-red-600 hover:bg-red-700 rounded text-white transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(vehicle);
+                        }}
+                        className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-white transition-colors"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteVehicle(vehicle);
+                        }}
+                        className="p-1 bg-red-600 hover:bg-red-700 rounded text-white transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -196,60 +192,92 @@ export default function FleetPage() {
         </div>
 
         {/* Vehicle Detail Modal */}
-        {selectedVehicle && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50" onClick={() => setSelectedVehicle(null)}>
-            <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-2xl font-bold text-white">{selectedVehicle.name}</h2>
-                  <button
-                    onClick={() => setSelectedVehicle(null)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </div>
+      {selectedVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50" onClick={() => setSelectedVehicle(null)}>
+          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+    
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Vehicle Image - Clickable for full screen */}
+                <div
+                  className="aspect-video bg-gray-700 rounded-lg overflow-hidden cursor-pointer group relative"
+                  onClick={() => setFullscreenImage(selectedVehicle)}
+                >
+                  <Image
+                    src={selectedVehicle.imageUrl}
+                    alt={selectedVehicle.name}
+                    width={600}
+                    height={400}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+                  />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Vehicle Image */}
-                  <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
-                    <Image
-                      src={selectedVehicle.imageUrl}
-                      alt={selectedVehicle.name}
-                      width={600}
-                      height={400}
-                      className="object-cover w-full h-full"
-                    />
+                  {/* View Icon Overlay */}
+                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-black/50 rounded-full p-2">
+                      <Eye className="h-4 w-4 text-white" />
+                    </div>
                   </div>
 
-                  {/* Vehicle Details */}
+                  {/* Click to view text */}
+                  <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-black/50 rounded px-2 py-1">
+                      <span className="text-white text-xs">Click to view full screen</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle Details */}
+                <div className="flex flex-col justify-between h-full">
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                      <h3 className="text-2xl font-bold text-white mb-2">{selectedVehicle.name}</h3>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-2">Description</h4>
                       <p className="text-gray-300">{selectedVehicle.description}</p>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">Specifications</h3>
+                      <h4 className="text-lg font-semibold text-white mb-2">Specifications</h4>
                       <p className="text-gray-300 whitespace-pre-wrap">{selectedVehicle.details || 'No specifications available'}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">Status</h3>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedVehicle.status === 'available'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {selectedVehicle.status}
-                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Full Screen Image Modal */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/90"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <div
+            className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={fullscreenImage.imageUrl}
+              alt={fullscreenImage.name}
+              width={1200}
+              height={800}
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+
+            {/* Close Button */}
+            <button
+              onClick={() => setFullscreenImage(null)}
+              className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* Add/Edit Vehicle Modal */}
         {(showAddModal || showEditModal) && (

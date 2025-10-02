@@ -95,7 +95,10 @@ export default function HomePage() {
       {/* Left-hand navigation menu */}
       <div className="w-64 bg-gray-800 border-r border-gray-700">
         <div className="p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Navigation</h2>
+          <div className="flex items-center space-x-3 mb-6">
+            <Image src="/media/USMSBadge.png" alt="USMS Badge" width={40} height={40} className="object-contain" />
+            <h2 className="text-2xl font-bold text-white">USMS</h2>
+          </div>
           <nav className="space-y-2">
             {navItems.map((item, index) => (
               <a

@@ -49,18 +49,10 @@ export function NavigationLayout({ children }: NavigationLayoutProps) {
     { icon: Quote, label: "Quote Wall", href: "/quote-wall" },
     { icon: Gift, label: "Commendation Jar", href: "/commendation-jar" },
     { icon: Calendar, label: "Upcoming Events", href: "/upcoming-events" },
-    { icon: User, label: "Players", href: "/players" },
-    { icon: FileText, label: "Templates", href: "/templates" },
-    { icon: Shield, label: "Admin Dashboard", href: "/dashboard" },
   ];
 
-  // Filter admin-only items if user is not admin
-  const filteredNavItems = navItems.filter(item => {
-    if (item.label === "Admin Dashboard" && user?.role !== 'admin') {
-      return false;
-    }
-    return true;
-  });
+  // No filtering needed as all nav items are available to all users
+  const filteredNavItems = navItems;
 
   if (!isAuthenticated) {
     return (
@@ -77,7 +69,7 @@ export function NavigationLayout({ children }: NavigationLayoutProps) {
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-6">
             <Image src="/media/USMSBadge.png" alt="USMS Badge" width={40} height={40} className="object-contain" />
-            <h2 className="text-xl font-bold text-white">USMS</h2>
+            <h2 className="text-2xl font-bold text-white">USMS</h2>
           </div>
 
           <nav className="space-y-2">

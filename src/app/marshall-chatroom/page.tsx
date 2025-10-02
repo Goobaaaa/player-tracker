@@ -335,7 +335,7 @@ export default function MarshallChatroomPage() {
             </div>
           )}
 
-          <div className="flex items-end space-x-2">
+          <div className="flex items-center space-x-2">
             <input
               type="file"
               ref={fileInputRef}

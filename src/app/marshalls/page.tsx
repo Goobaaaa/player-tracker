@@ -205,54 +205,66 @@ export default function MarshallsPage() {
         {selectedMember && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50" onClick={() => setSelectedMember(null)}>
             <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-2xl font-bold text-white">{selectedMember.name}</h2>
-                  <button
-                    onClick={() => setSelectedMember(null)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </div>
+              {/* Close button positioned absolutely */}
+              <div className="relative">
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white bg-gray-900/50 rounded-full p-2"
+                >
+                  <X className="h-6 w-6" />
+                </button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Portrait */}
-                  <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
-                    <Image
-                      src={selectedMember.portraitUrl}
-                      alt={selectedMember.name}
-                      width={400}
-                      height={400}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-
-                  {/* Member Details */}
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">Callsign</h3>
-                      <p className="text-blue-400 font-medium">{selectedMember.callsign}</p>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Portrait */}
+                    <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                      <Image
+                        src={selectedMember.portraitUrl}
+                        alt={selectedMember.name}
+                        width={400}
+                        height={400}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">Tag Line</h3>
-                      <p className="text-gray-300 italic">{selectedMember.tagLine}</p>
-                    </div>
+                    {/* Member Details - Aligned with image height */}
+                    <div className="flex flex-col justify-between h-full">
+                      <div className="space-y-4">
+                        {/* Name */}
+                        <div>
+                          <h3 className="text-2xl font-bold text-white mb-2">{selectedMember.name}</h3>
+                        </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">Description</h3>
-                      <p className="text-gray-300">{selectedMember.description}</p>
-                    </div>
+                        {/* Callsign */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-1">Callsign</h4>
+                          <p className="text-blue-400 font-medium text-lg">{selectedMember.callsign}</p>
+                        </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">Blood Type</h3>
-                      <p className="text-gray-300">{selectedMember.bloodType}</p>
-                    </div>
+                        {/* Tag Line */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-1">Tag Line</h4>
+                          <p className="text-gray-300 italic">{selectedMember.tagLine}</p>
+                        </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">Favourite Hobby</h3>
-                      <p className="text-gray-300">{selectedMember.favouriteHobby}</p>
+                        {/* Description */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-1">Description</h4>
+                          <p className="text-gray-300">{selectedMember.description}</p>
+                        </div>
+
+                        {/* Blood Type */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-1">Blood Type</h4>
+                          <p className="text-gray-300">{selectedMember.bloodType}</p>
+                        </div>
+
+                        {/* Favourite Hobby */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-1">Favourite Hobby</h4>
+                          <p className="text-gray-300">{selectedMember.favouriteHobby}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
