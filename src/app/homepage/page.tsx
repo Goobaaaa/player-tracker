@@ -132,7 +132,7 @@ export default function HomePage() {
               <div className="space-y-2">
                 <button
                   onClick={handleCreateBlankTemplate}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                 >
                   <Plus className="h-5 w-5" />
                   <span>Create New Template</span>
