@@ -227,6 +227,20 @@ export class TemplateDataManager {
     return true;
   }
 
+  getEvents(templateId: string): Event[] {
+    const data = this.getTemplateData(templateId);
+    return data ? data.events : [];
+  }
+
+  addEvent(templateId: string, event: Event): boolean {
+    const data = this.getTemplateData(templateId);
+    if (!data) return false;
+
+    data.events.push(event);
+    data.lastModified = new Date().toISOString();
+    return true;
+  }
+
   // Clear all data for a template (useful for testing)
   clearTemplateData(templateId: string): boolean {
     const data = this.getTemplateData(templateId);

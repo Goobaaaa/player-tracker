@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getTemplateById, hasTemplateAccess, initializeBlankTemplate, getTemplateDashboardSummary, getTemplateTasks } from "@/lib/template-aware-data";
+import { getTemplateById, hasTemplateAccess, initializeBlankTemplate, getTemplateDashboardSummary, getTemplateTasks, getTemplateAuditLog } from "@/lib/template-aware-data";
 import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, updateDashboardSummary, getCurrentAuditLog, initializeSampleData } from "@/lib/mock-data";
 import { Task, DashboardSummary, Template } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
@@ -82,11 +82,12 @@ export default function TemplatePage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const currentLog = getCurrentAuditLog();
-      setAuditLog(currentLog);
+      const templateId = params.templateId as string;
+      const templateLog = getTemplateAuditLog(templateId);
+      setAuditLog(templateLog);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [params.templateId]);
 
   const loadDashboardData = async () => {
     try {
@@ -95,12 +96,11 @@ export default function TemplatePage() {
       // Load template-specific data
       const templateSummary = getTemplateDashboardSummary(templateId);
       const templateTasks = getTemplateTasks(templateId);
+      const templateLog = getTemplateAuditLog(templateId);
 
       setSummary(templateSummary);
       setTasks(templateTasks);
-
-      // For now, use global audit log (this could be made template-specific later)
-      setAuditLog(getCurrentAuditLog());
+      setAuditLog(templateLog);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }

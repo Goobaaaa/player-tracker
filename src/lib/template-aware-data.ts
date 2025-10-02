@@ -142,6 +142,16 @@ export function hasTemplateAccess(templateId: string, userId: string): boolean {
   return mockTemplatePermissions.some(p => p.templateId === templateId && p.userId === userId);
 }
 
+// Template-specific audit log
+export function getTemplateAuditLog(templateId: string): AuditLogEntry[] {
+  const data = templateDataManager.getTemplateData(templateId);
+  if (!data) return [];
+
+  // For now, return empty audit log for templates
+  // In a real implementation, you would have template-specific audit events
+  return [];
+}
+
 // Template dashboard summary
 export function getTemplateDashboardSummary(templateId: string): DashboardSummary {
   const players = getTemplatePlayers(templateId);
@@ -155,7 +165,7 @@ export function getTemplateDashboardSummary(templateId: string): DashboardSummar
     totalAssetsValue,
     totalCashBalance: 0, // This would be calculated from finance transactions
     recentTasks: tasks.slice(0, 5), // Get 5 most recent tasks
-    recentActivity: [] // This would be populated from audit logs
+    recentActivity: [] // Empty for new templates
   };
 }
 
