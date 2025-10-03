@@ -18,7 +18,17 @@ import { useNotification } from "@/components/notification-container";
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputAppName, setInputAppName] = useState("");
-  const { appName, setAppName, appLogo, setAppLogo, theme, setTheme, sessionTimeout, setSessionTimeout, handleLogoUpload } = useAppSettings();
+  const { settings, updateSetting } = useAppSettings();
+  const handleLogoUpload = (file: File) => {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  const { appName, appLogo, theme, sessionTimeout } = settings;
   const { showSuccess, showError, showInfo } = useNotification();
 
   // Initialize input with current app name
@@ -204,7 +214,7 @@ export default function SettingsPage() {
                           />
                           <Button
                             onClick={() => {
-                              setAppName(inputAppName);
+                              updateSetting('appName', inputAppName);
                               showSuccess(`Application name updated to: ${inputAppName}`);
                             }}
                             className="bg-blue-600 hover:bg-blue-700"
@@ -231,7 +241,7 @@ export default function SettingsPage() {
                                   setIsUploadingLogo(true);
                                   try {
                                     const logoUrl = await handleLogoUpload(file);
-                                    setAppLogo(logoUrl);
+                                    updateSetting('appLogo', logoUrl);
                                     setLogoFile(file);
                                     showSuccess(`Logo uploaded: ${file.name}`);
                                   } catch (error) {
@@ -274,7 +284,7 @@ export default function SettingsPage() {
                         <div className="flex items-center space-x-4">
                           <div className="flex bg-gray-700 rounded-lg p-1">
                             <button
-                              onClick={() => setTheme("light")}
+                              onClick={() => updateSetting('theme', 'light')}
                               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                 theme === "light" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
                               }`}
@@ -282,7 +292,7 @@ export default function SettingsPage() {
                               Light
                             </button>
                             <button
-                              onClick={() => setTheme("dark")}
+                              onClick={() => updateSetting('theme', 'dark')}
                               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                 theme === "dark" ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"
                               }`}
@@ -354,7 +364,7 @@ export default function SettingsPage() {
                           value={sessionTimeout}
                           onChange={(e) => {
                             const newTimeout = parseInt(e.target.value, 10);
-                            setSessionTimeout(newTimeout);
+                            updateSetting('sessionTimeout', newTimeout);
                             showSuccess(`Session timeout updated to ${newTimeout} minutes`);
                           }}
                           className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"

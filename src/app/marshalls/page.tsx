@@ -39,8 +39,8 @@ export default function MarshallsPage() {
   const loadStaffMembers = async () => {
     try {
       const response = await usersApi.getUsers();
-      if (response.data) {
-        setStaffMembers(response.data.users);
+      if (response.data && typeof response.data === 'object' && 'users' in response.data) {
+        setStaffMembers((response.data as any).users);
       } else if (response.error) {
         setError(response.error);
       }

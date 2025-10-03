@@ -333,7 +333,7 @@ export default function TasksPage() {
       'Are you sure you want to delete this comment?',
       () => {
         // Use the data store function to delete the comment
-        if (deleteTaskComment(taskId, commentId)) {
+        if (deleteTaskComment(commentId)) {
           // Reload tasks to get the updated state from the data store
           loadTasks();
         }

@@ -12,7 +12,8 @@ import { useTemplate } from "@/contexts/template-context";
 export function Header() {
   const [ukTime, setUkTime] = useState("");
   const [usTime, setUsTime] = useState("");
-  const { appName, appLogo } = useAppSettings();
+  const { settings } = useAppSettings();
+  const { appName, appLogo } = settings;
   const { currentTemplate, isTemplateMode, exitTemplateMode } = useTemplate();
   const router = useRouter();
 

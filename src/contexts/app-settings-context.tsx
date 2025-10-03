@@ -14,6 +14,7 @@ interface AppSettingsContextType {
   settings: AppSettings;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   resetSettings: () => void;
+  handleLogoUpload: (file: File) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -146,5 +147,3 @@ export function useAppSettings() {
   return context;
 }
 
-// Export the context value type for TypeScript
-export type AppSettingsContextType = ReturnType<typeof useAppSettings>;

@@ -65,7 +65,7 @@ export function CreateTemplateModal({
 
       // Assign permissions to selected users
       selectedUsers.forEach(userId => {
-        assignTemplatePermission(newTemplate.id, userId, currentUserId);
+        assignTemplatePermission(userId, newTemplate.id);
       });
 
       onTemplateCreated(newTemplate);

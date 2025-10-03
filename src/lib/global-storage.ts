@@ -131,7 +131,7 @@ export const globalStorage = {
       ...member,
       id: `staff-global-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
-    GLOBAL_DATA.staffMembers.push(newMember);
+    (GLOBAL_DATA.staffMembers as StaffMember[]).push(newMember);
     return newMember;
   },
 
@@ -142,17 +142,26 @@ export const globalStorage = {
 };
 
 // App settings storage (global, not localStorage)
-export const globalAppSettings = {
+interface GlobalAppSettings {
+  appName: string;
+  appLogo: string;
+  theme: 'dark' | 'light';
+  sessionTimeout: number;
+  getSetting(key: keyof GlobalAppSettings): any;
+  setSetting(key: keyof GlobalAppSettings, value: any): void;
+}
+
+export const globalAppSettings: GlobalAppSettings = {
   appName: 'USMS Player Tracker',
   appLogo: '',
   theme: 'dark',
   sessionTimeout: 8 * 60 * 60 * 1000, // 8 hours
 
-  getSetting(key: keyof typeof globalAppSettings): any {
+  getSetting(key: keyof GlobalAppSettings): any {
     return globalAppSettings[key];
   },
 
-  setSetting(key: keyof typeof globalAppSettings, value: any): void {
+  setSetting(key: keyof GlobalAppSettings, value: any): void {
     (globalAppSettings as any)[key] = value;
   }
 };

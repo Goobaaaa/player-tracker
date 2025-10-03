@@ -369,8 +369,12 @@ export const resetAllData = (): void => {
 // Dashboard summary
 export const mockDashboardSummary: DashboardSummary = {
   totalPlayers: mockPlayers.length,
+  totalAssets: mockAssets.length,
   totalAssetsValue: mockAssets.reduce((sum, asset) => sum + asset.vehicleValue, 0),
   totalCashBalance: 0,
+  activeTasks: 0,
+  overdueTasks: 0,
+  totalIncidents: 0,
   recentTasks: [],
   recentActivity: []
 };

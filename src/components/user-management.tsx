@@ -15,8 +15,7 @@ import {
   unsuspendUser,
   getVisibleStaffMembers,
   saveStaffMembers,
-  HIDDEN_ADMIN,
-  isHiddenAdmin
+  HIDDEN_ADMIN
 } from "@/lib/mock-data";
 import { Template, StaffMember } from "@/lib/database";
 import { Button } from "@/components/ui/button";
@@ -103,7 +102,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
 
     const currentUser = users.find(u => u.role === 'admin');
     if (currentUser) {
-      assignTemplatePermission(selectedTemplate, selectedUser, currentUser.id);
+      assignTemplatePermission(selectedUser, selectedTemplate);
     }
 
     setSelectedTemplate("");
@@ -194,11 +193,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
     if (user.isSuspended) {
       unsuspendUser(user.id);
     } else {
-      // Get current admin user (for now, use the first admin user found)
-      const currentUser = users.find(u => u.role === 'admin');
-      if (currentUser) {
-        suspendUser(user.id, currentUser.id);
-      }
+      suspendUser(user.id);
     }
     setUsers([...getVisibleStaffMembers()]);
   };

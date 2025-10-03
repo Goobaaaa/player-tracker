@@ -565,7 +565,8 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
         vehicleValue: newVehicleForm.vehicleValue,
         vehicleLocation: newVehicleForm.vehicleLocation.trim(),
         acquiredAt: new Date().toISOString(),
-        notes: newVehicleForm.notes.trim()
+        notes: newVehicleForm.notes.trim(),
+        createdAt: new Date().toISOString()
       };
 
       // Add to mock assets array and update local state

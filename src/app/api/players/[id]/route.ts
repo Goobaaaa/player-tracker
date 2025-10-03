@@ -5,18 +5,19 @@ import { verifyToken } from '@/lib/auth-utils'
 // GET /api/players/[id] - Get a specific player
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('auth-token')?.value
     const decoded = verifyToken(token || '')
+    const { id } = await context.params
 
     if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const player = await prisma.player.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assets: true,
         weapons: true,
@@ -51,11 +52,12 @@ export async function GET(
 // PUT /api/players/[id] - Update a player
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('auth-token')?.value
     const decoded = verifyToken(token || '')
+    const { id } = await context.params
 
     if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -64,7 +66,7 @@ export async function PUT(
     const playerData = await request.json()
 
     const player = await prisma.player.update({
-      where: { id: params.id },
+      where: { id },
       data: playerData,
       include: {
         creator: {
@@ -90,18 +92,19 @@ export async function PUT(
 // DELETE /api/players/[id] - Delete a player
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('auth-token')?.value
     const decoded = verifyToken(token || '')
+    const { id } = await context.params
 
     if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     await prisma.player.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Player deleted successfully' })

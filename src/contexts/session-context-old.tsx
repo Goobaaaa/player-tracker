@@ -16,7 +16,7 @@ const SessionContext = createContext<SessionContext | undefined>(undefined);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [isSessionActive, setIsSessionActive] = useState(true);
-  const { sessionTimeout } = useAppSettings();
+  const { settings } = useAppSettings();
   const router = useRouter();
 
   const resetSessionTimer = () => {
@@ -28,7 +28,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const checkSessionTimeout = () => {
       const now = Date.now();
       const inactiveTime = now - lastActivity;
-      const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
+      const timeoutMs = settings.sessionTimeout; // Already in milliseconds
 
       // Check if user was suspended and force logout
       if (checkUserSuspension()) {
@@ -53,7 +53,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const interval = setInterval(checkSessionTimeout, 30 * 1000);
 
     return () => clearInterval(interval);
-  }, [lastActivity, sessionTimeout, router]);
+  }, [lastActivity, settings.sessionTimeout, router]);
 
   // Track user activity
   useEffect(() => {

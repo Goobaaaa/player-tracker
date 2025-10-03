@@ -166,8 +166,12 @@ export function getTemplateDashboardSummary(templateId: string): DashboardSummar
 
   return {
     totalPlayers: players.length,
+    totalAssets: assets.length,
     totalAssetsValue,
     totalCashBalance: 0, // This would be calculated from finance transactions
+    activeTasks: tasks.filter(task => task.status !== 'completed').length,
+    overdueTasks: 0, // Would need deadline logic
+    totalIncidents: 0, // Template-specific incidents
     recentTasks: tasks.slice(0, 5), // Get 5 most recent tasks
     recentActivity: [] // Empty for new templates
   };

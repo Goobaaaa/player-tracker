@@ -40,8 +40,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setSession(null);
       } else {
-        setUser(response.data.user);
-        setSession(response.data.session);
+        const data = response.data as { user: User; session: { access_token: string } };
+        setUser(data.user);
+        setSession(data.session);
       }
     } catch (error) {
       console.error('Error refreshing session:', error);
@@ -61,8 +62,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const result = await authApi.login(username, password);
 
       if (result.success && result.data) {
-        setUser(result.data.user);
-        setSession(result.data.session);
+        const data = result.data as { user: User; message: string };
+        setUser(data.user);
+        setSession({ access_token: 'cookie-based' });
         return { success: true };
       } else {
         return { success: false, error: result.error };

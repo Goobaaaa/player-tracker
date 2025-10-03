@@ -54,7 +54,13 @@ export function TemplateManagement({ template, onClose, onSave }: TemplateManage
       savedTemplate = { ...template, name, description, logoUrl };
     } else {
       // Create new template
-      savedTemplate = createTemplate(name, logoUrl, description);
+      savedTemplate = createTemplate({
+        name,
+        description,
+        logoUrl,
+        isActive: true,
+        createdBy: 'current-user'
+      });
     }
 
     onSave(savedTemplate);

@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from './prisma'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
+const JWT_SECRET: string = process.env.JWT_SECRET || 'fallback-secret-key'
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d'
 
 export interface AuthUser {
   id: string
@@ -35,7 +35,7 @@ export function generateToken(user: AuthUser): string {
       role: user.role
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
   )
 }
 

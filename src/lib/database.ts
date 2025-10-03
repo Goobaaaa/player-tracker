@@ -34,6 +34,7 @@ export interface Asset {
   acquiredAt: string
   notes?: string
   vehicleImages?: string[]
+  createdAt: string
 }
 
 export interface FinanceTransaction {
@@ -242,8 +243,12 @@ export interface Event {
 
 export interface DashboardSummary {
   totalPlayers: number
+  totalAssets: number
   totalAssetsValue: number
   totalCashBalance: number
+  activeTasks: number
+  overdueTasks: number
+  totalIncidents: number
   recentTasks: Task[]
   recentActivity: {
     type: 'player' | 'document' | 'task'
