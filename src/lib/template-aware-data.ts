@@ -1,7 +1,7 @@
 import { Player, Asset, Task, DashboardSummary, Document, Incident, Weapon, Template, TemplatePermission, StaffMember, Vehicle } from './database';
 import { AuditLogEntry } from '../components/activity-feed';
 import { templateDataManager } from './template-data';
-import { mockTemplates, mockTemplatePermissions, mockStaffMembers } from './mock-data';
+import { getLiveTemplates, getLiveStaffMembers, saveTemplates, saveStaffMembers } from './mock-data';
 
 // Template-aware data access functions
 export function getTemplatePlayers(templateId: string): Player[] {

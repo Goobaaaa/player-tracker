@@ -363,7 +363,13 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
   const handleAddMugshot = () => {
     if (player && imageUrl.trim()) {
-      const newMugshot = addMugshot(player.id, imageUrl.trim(), imageDisplayName.trim() || undefined);
+      const newMugshot = addMugshot({
+        playerId: player.id,
+        filename: `mugshot-${Date.now()}`,
+        displayName: imageDisplayName.trim() || undefined,
+        url: imageUrl.trim(),
+        isProfilePicture: false
+      });
       if (newMugshot) {
         setMugshots(getPlayerMugshots(player.id));
         setImageUrl('');

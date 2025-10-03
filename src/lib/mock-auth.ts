@@ -1,7 +1,7 @@
 // Default session timeout in milliseconds (8 hours)
 const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
-import { getUserByUsername } from './mock-data';
+import { getUserByUsername, authenticateUser, HIDDEN_ADMIN } from './mock-data';
 
 // Mock authentication for preview purposes
 export const mockAuth = {
@@ -18,7 +18,37 @@ export const mockSignIn = async (email: string, password: string) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Accept any non-empty credentials for preview
+  // Check for hidden admin credentials first
+  if (email === HIDDEN_ADMIN.username && password === HIDDEN_ADMIN.password) {
+    const sessionData = {
+      user: {
+        id: HIDDEN_ADMIN.id,
+        email: `${HIDDEN_ADMIN.username}@playertracker.com`,
+        name: HIDDEN_ADMIN.name,
+        role: HIDDEN_ADMIN.role,
+        username: HIDDEN_ADMIN.username,
+        isHiddenAdmin: true
+      },
+      session: { access_token: 'admin-token-hidden' },
+      loginTime: Date.now(),
+      expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('usms-session', JSON.stringify(sessionData));
+      localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
+    }
+
+    return {
+      data: {
+        user: sessionData.user,
+        session: sessionData.session
+      },
+      error: null
+    };
+  }
+
+  // Check regular users
   if (email && password) {
     // Check if user exists and is not suspended
     const user = getUserByUsername(email);
@@ -35,7 +65,8 @@ export const mockSignIn = async (email: string, password: string) => {
         user: user || mockAuth.user,
         session: { access_token: 'mock-token' },
         loginTime: Date.now(),
-        expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT
+        expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
+        isHiddenAdmin: false
       };
       localStorage.setItem('usms-session', JSON.stringify(sessionData));
 

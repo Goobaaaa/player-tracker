@@ -71,15 +71,17 @@ export default function IncidentsPage() {
 
   const handleCreateIncident = async () => {
     try {
-      addIncident(
-        formData.title,
-        formData.incidentDateTime,
-        formData.suspects,
-        formData.officers,
-        formData.otherIndividuals,
-        formData.description,
-        formData.mediaUrls
-      );
+      addIncident({
+        title: formData.title,
+        incidentDateTime: formData.incidentDateTime,
+        suspects: formData.suspects,
+        officers: formData.officers,
+        otherIndividuals: formData.otherIndividuals,
+        description: formData.description,
+        mediaUrls: formData.mediaUrls,
+        status: 'open',
+        createdBy: '1'
+      });
 
       setIncidents(getAllIncidents());
       setShowCreateModal(false);

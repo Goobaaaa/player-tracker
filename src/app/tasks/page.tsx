@@ -256,13 +256,14 @@ export default function TasksPage() {
         });
       }
 
-      const newCommentObj = addTaskComment(
-        taskId,
-        "current_user",
-        "Current User",
-        commentText || "",
-        mediaUrls
-      );
+      const newCommentObj = addTaskComment(taskId, {
+        taskId: taskId,
+        userId: "current_user",
+        username: "Current User",
+        text: commentText || "",
+        mediaUrls: mediaUrls,
+        documentIds: []
+      });
 
       if (newCommentObj) {
         loadTasks();
@@ -367,16 +368,18 @@ export default function TasksPage() {
         }
       } else {
         // Create new task
-        const newTask = createTask(
-          taskName.trim(),
-          taskDescription.trim(),
-          taskPriority,
-          taskRisk,
-          selectedUsers,
-          taskDeadline,
-          "current_user", // In a real app, this would be the actual user ID
-          taskMediaUrls.length > 0 ? taskMediaUrls : undefined
-        );
+        const newTask = createTask({
+          name: taskName.trim(),
+          description: taskDescription.trim(),
+          priority: taskPriority,
+          risk: taskRisk,
+          assignedUsers: selectedUsers,
+          deadline: taskDeadline,
+          createdBy: "current_user", // In a real app, this would be the actual user ID
+          mediaUrls: taskMediaUrls.length > 0 ? taskMediaUrls : undefined,
+          status: 'active',
+          comments: []
+        });
 
         if (newTask) {
           showSuccess("Task created successfully!");
