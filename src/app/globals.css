@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Smooth transitions for all interactive elements */
+.transition-all-smooth {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-transform-smooth {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-opacity-smooth {
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transition animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth page transition effects */
+@keyframes pageTransitionIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageTransitionOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+}
+
+/* Enhanced page container transitions */
+.page-transition-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth transitions for main content areas */
+main {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced card transitions */
+.transition-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle background animation for page transitions */
+.page-transition-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.05) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  z-index: 1;
+}
+
+.page-transition-bg.active {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes subtleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  opacity: 0;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slideIn {
+  opacity: 0;
+  animation: slideIn 0.7s ease-out forwards;
+}
+
+.animate-subtleFadeIn {
+  opacity: 0;
+  animation: subtleFadeIn 0.8s ease-out forwards;
+}
+
+/* Staggered animations for cards - longer delays */
+.animate-stagger-1 {
+  animation-delay: 0.2s;
+}
+
+.animate-stagger-2 {
+  animation-delay: 0.4s;
+}
+
+.animate-stagger-3 {
+  animation-delay: 0.6s;
+}
+
+.animate-stagger-4 {
+  animation-delay: 0.8s;
+}
+
+.animate-stagger-5 {
+  animation-delay: 1.0s;
+}
+
+.animate-stagger-6 {
+  animation-delay: 1.2s;
+}
+
+.animate-stagger-7 {
+  animation-delay: 1.4s;
+}
+
+.animate-stagger-8 {
+  animation-delay: 1.6s;
+}
+
+.animate-stagger-9 {
+  animation-delay: 1.8s;
+}
+
+.animate-stagger-10 {
+  animation-delay: 2.0s;
+}
+
+/* Theme-specific styles */
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+.dark-theme {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+.light-theme {
+  --background: #fafafa;
+  --foreground: #1a1a1a;
+}
+
+/* Light theme overrides */
+.light-theme .min-h-screen {
+  background-color: #fafafa !important;
+}
+
+.light-theme .bg-gray-900 {
+  background-color: #ffffff !important;
+}
+
+.light-theme .bg-gray-800 {
+  background-color: #f8f9fa !important;
+}
+
+.light-theme .bg-gray-700 {
+  background-color: #e9ecef !important;
+}
+
+.light-theme .bg-gray-600 {
+  background-color: #dee2e6 !important;
+}
+
+.light-theme .text-white {
+  color: #1a1a1a !important;
+}
+
+.light-theme .text-gray-400 {
+  color: #6c757d !important;
+}
+
+.light-theme .text-gray-300 {
+  color: #495057 !important;
+}
+
+.light-theme .border-gray-700 {
+  border-color: #dee2e6 !important;
+}
+
+.light-theme .border-gray-600 {
+  border-color: #ced4da !important;
+}
+
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
