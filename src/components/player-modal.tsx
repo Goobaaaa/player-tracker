@@ -5,7 +5,7 @@ import React from "react";
 import Image from "next/image";
 import { Player, Asset, Mugshot, Media, HouseMedia, Document, Weapon } from "@/lib/database";
 import { getPlayerAssets, calculatePlayerAssetsValue, updatePlayer, addPlayer, deletePlayer, getPlayerMugshots, setProfilePicture, getPlayerProfilePicture, addMugshot, getPlayerMedia, addMedia, getPlayerHouseMedia, addHouseMedia, mockAssets, mockMugshots, mockMedia, mockHouseMedia, getPlayerDocuments, addPlayerDocument, deletePlayerDocument, getPlayerWeapons, mockWeapons, addVehicleImage, removeVehicleImage } from "@/lib/mock-data";
-import { createTemplatePlayer, getTemplateAssets, getTemplateDocuments, getTemplateWeapons } from "@/lib/template-aware-data";
+import { createTemplatePlayer } from "@/lib/template-aware-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

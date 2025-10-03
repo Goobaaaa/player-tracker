@@ -42,7 +42,7 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
 
     // Check initially and whenever pathname changes
     checkTemplateInUrl();
-  }, [pathname]);
+  }, [pathname, manuallyExited]);
 
   const isTemplateMode = currentTemplate !== null && !manuallyExited;
 

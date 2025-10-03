@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    } catch (urlError) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid URL format' },
         { status: 400 }

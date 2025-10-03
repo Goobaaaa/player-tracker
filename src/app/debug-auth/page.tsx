@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockGetSession, isSessionActive, getSessionTimeout } from "@/lib/mock-auth";
+import { mockGetSession, isSessionActive } from "@/lib/mock-auth";
 
 export default function DebugAuthPage() {
   const [authStatus, setAuthStatus] = useState<string>("Checking...");

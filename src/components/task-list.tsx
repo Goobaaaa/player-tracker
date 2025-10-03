@@ -1,6 +1,5 @@
 import { Task } from "@/lib/database";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle, User, Calendar } from "lucide-react";

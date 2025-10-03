@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { validateAndCleanLocalStorage } from "@/lib/localStorage-cleanup";
 
 interface AppSettings {
   appName: string;

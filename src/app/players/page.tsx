@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { getPlayerProfilePicture, getPlayerAssets } from "@/lib/mock-data";
-import { getTemplatePlayers, createTemplatePlayer } from "@/lib/template-aware-data";
+import { getTemplatePlayers } from "@/lib/template-aware-data";
 import { Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -29,34 +29,7 @@ export default function PlayersPage() {
     const router = useRouter();
   const { currentTemplate, isTemplateMode } = useTemplate();
 
-  const checkAuth = useCallback(async () => {
-    const { data: { session }, error } = await mockGetSession();
-    if (error || !session) {
-      router.push("/login");
-      return;
-    }
-
-    setIsAuthenticated(true);
-    loadPlayers();
-  }, [router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (searchQuery === "") {
-      setFilteredPlayers(players);
-    } else {
-      const filtered = players.filter(player =>
-        player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        player.alias.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredPlayers(filtered);
-    }
-  }, [searchQuery, players]);
-
-  const loadPlayers = async () => {
+  const loadPlayers = useCallback(async () => {
     try {
       let playersData: Player[];
 
@@ -73,7 +46,34 @@ export default function PlayersPage() {
     } catch (error) {
       console.error("Error loading players:", error);
     }
-  };
+  }, [isTemplateMode, currentTemplate]);
+
+  const checkAuth = useCallback(async () => {
+    const { data: { session }, error } = await mockGetSession();
+    if (error || !session) {
+      router.push("/login");
+      return;
+    }
+
+    setIsAuthenticated(true);
+    loadPlayers();
+  }, [router, loadPlayers]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (searchQuery === "") {
+      setFilteredPlayers(players);
+    } else {
+      const filtered = players.filter(player =>
+        player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        player.alias.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredPlayers(filtered);
+    }
+  }, [searchQuery, players]);
 
   const handleViewPlayer = (player: Player) => {
     setSelectedPlayer(player);

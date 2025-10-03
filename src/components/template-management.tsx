@@ -6,6 +6,7 @@ import { Template } from "@/lib/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, X, Save } from "lucide-react";
+import Image from "next/image";
 
 interface TemplateManagementProps {
   template?: Template;
@@ -117,9 +118,11 @@ export function TemplateManagement({ template, onClose, onSave }: TemplateManage
 
             {logoPreview ? (
               <div className="relative">
-                <img
+                <Image
                   src={logoPreview}
                   alt="Template logo preview"
+                  width={128}
+                  height={128}
                   className="w-32 h-32 object-cover rounded-lg border-2 border-gray-600"
                 />
                 <button

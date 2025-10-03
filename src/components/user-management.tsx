@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   mockStaffMembers,
   getAllTemplates,
@@ -510,9 +511,11 @@ export function UserManagement({ onClose }: UserManagementProps) {
                 <div key={template.id} className="bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     {template.logoUrl && (
-                      <img
+                      <Image
                         src={template.logoUrl}
                         alt={template.name}
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded"
                       />
                     )}

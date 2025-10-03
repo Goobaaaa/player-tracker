@@ -1,7 +1,7 @@
 // Default session timeout in milliseconds (8 hours)
 const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
-import { getUserByUsername, isUserSuspended } from './mock-data';
+import { getUserByUsername } from './mock-data';
 
 // Mock authentication for preview purposes
 export const mockAuth = {
@@ -178,7 +178,7 @@ export const isSessionActive = (): boolean => {
         }
 
         return true;
-      } catch (error) {
+      } catch {
         return false;
       }
     }
@@ -200,7 +200,7 @@ export const checkUserSuspension = (): boolean => {
             return true; // User was suspended and logged out
           }
         }
-      } catch (error) {
+      } catch {
         return false;
       }
     }

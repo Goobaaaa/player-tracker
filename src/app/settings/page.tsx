@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, User, Shield, Database, Palette, Upload, X, Save } from "lucide-react";
+import { Settings, User, Shield, Database, Upload, X, Save } from "lucide-react";
 import Image from "next/image";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useNotification } from "@/components/notification-container";
@@ -18,8 +18,8 @@ import { useNotification } from "@/components/notification-container";
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputAppName, setInputAppName] = useState("");
-  const { appName, setAppName, appLogo, setAppLogo, theme, setTheme, sessionTimeout, setSessionTimeout, resetToDefaults, handleLogoUpload } = useAppSettings();
-  const { showSuccess, showError, showInfo, confirm } = useNotification();
+  const { appName, setAppName, appLogo, setAppLogo, theme, setTheme, sessionTimeout, setSessionTimeout, handleLogoUpload } = useAppSettings();
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Initialize input with current app name
   useEffect(() => {

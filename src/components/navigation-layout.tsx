@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import Image from "next/image";
-import { LogOut, Home, Shield, Car, MessageSquare, Camera, Quote, Gift, Calendar, User, FileText } from "lucide-react";
+import { LogOut, Home, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
 
 interface NavigationLayoutProps {
   children: React.ReactNode;

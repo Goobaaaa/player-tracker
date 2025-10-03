@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTemplates, getUserTemplates, createTemplate, assignTemplatePermission, hasTemplateAccess } from "@/lib/mock-data";
-import { createNewTemplate } from "@/lib/template-aware-data";
+import { getAllTemplates, getUserTemplates } from "@/lib/mock-data";
 import { Template } from "@/lib/database";
 import Image from "next/image";
-import { Plus, Users, Settings, LogOut, Home, Shield, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
+import { Plus, Users, LogOut, Home, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
 import { UserManagement } from "@/components/user-management";
 import { CreateTemplateModal } from "@/components/create-template-modal";
 
@@ -19,6 +18,18 @@ export default function HomePage() {
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const router = useRouter();
+
+  const loadTemplates = useCallback(() => {
+    if (!user) return;
+
+    if (user.role === 'admin') {
+      const allTemplates = getAllTemplates();
+      setTemplates(allTemplates);
+    } else {
+      const userTemplates = getUserTemplates(user.id);
+      setTemplates(userTemplates);
+    }
+  }, [user]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,19 +43,7 @@ export default function HomePage() {
       loadTemplates();
     };
     checkAuth();
-  }, [router, user]);
-
-  const loadTemplates = () => {
-    if (!user) return;
-
-    if (user.role === 'admin') {
-      const allTemplates = getAllTemplates();
-      setTemplates(allTemplates);
-    } else {
-      const userTemplates = getUserTemplates(user.id);
-      setTemplates(userTemplates);
-    }
-  };
+  }, [router, user, loadTemplates]);
 
   const handleCreateTemplate = () => {
     setShowCreateTemplateModal(true);

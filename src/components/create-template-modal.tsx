@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Users, Image, Save } from "lucide-react";
+import { X, Users, ImageIcon, Save } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,7 +126,7 @@ export function CreateTemplateModal({
           {/* Custom Image URL */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              <Image className="inline h-4 w-4 mr-2" />
+              <ImageIcon className="inline h-4 w-4 mr-2" />
               Template Icon URL
             </label>
             <div className="space-y-4">
@@ -152,9 +153,11 @@ export function CreateTemplateModal({
                     Preview
                   </label>
                   <div className="bg-gray-700 rounded-lg p-4 flex items-center justify-center">
-                    <img
+                    <Image
                       src={customIconUrl}
                       alt="Custom icon preview"
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-contain rounded-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;

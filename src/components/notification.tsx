@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -25,6 +25,13 @@ const Notification: React.FC<NotificationProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose?.(id);
+    }, 300); // Match the animation duration
+  }, [id, onClose]);
+
   useEffect(() => {
     // Trigger entrance animation
     const enterTimer = setTimeout(() => {
@@ -40,14 +47,7 @@ const Notification: React.FC<NotificationProps> = ({
       clearTimeout(enterTimer);
       clearTimeout(dismissTimer);
     };
-  }, [duration]);
-
-  const handleClose = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose?.(id);
-    }, 300); // Match the animation duration
-  };
+  }, [duration, handleClose]);
 
   const getIcon = () => {
     switch (type) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, addTaskComment, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
+import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
 import { Task, DashboardSummary } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
@@ -15,7 +15,6 @@ import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen } from "lucide-react";
 import Image from "next/image";
-import { useTemplate } from "@/contexts/template-context";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -23,11 +22,9 @@ export default function DashboardPage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [showFullAuditLog, setShowFullAuditLog] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const router = useRouter();
-  const { currentTemplate, isTemplateMode } = useTemplate();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -254,7 +251,7 @@ export default function DashboardPage() {
                 <ActivityFeed
                   activities={auditLog}
                   limit={5}
-                  showFullLog={showFullAuditLog}
+                  showFullLog={false}
                   onToggleFullLog={() => router.push("/audit-log")}
                 />
               </FadeInCard>

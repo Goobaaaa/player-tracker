@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Search, Filter } from "lucide-react";
+import { Download, Filter } from "lucide-react";
 
 const auditActions = ['create', 'update', 'delete', 'add', 'comment'] as const;
 const entityTypes = ['suspect', 'task', 'document', 'asset', 'media', 'comment', 'incident'] as const;

@@ -37,11 +37,10 @@ export default function OCRTextFinderPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Validate file
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
     const maxSize = 10 * 1024 * 1024; // 10MB
 
@@ -56,7 +55,7 @@ export default function OCRTextFinderPage() {
     }
 
     return true;
-  };
+  }, [showError]);
 
   // Real OCR processing function using Tesseract.js
   const processOCR = async (file: File, fileName?: string, source: 'file' | 'url' = 'file', sourceUrl?: string): Promise<OCRResult> => {
@@ -105,7 +104,7 @@ export default function OCRTextFinderPage() {
         throw new Error(errorData.error || 'Failed to fetch image via API');
       }
 
-      const { dataUrl, contentType, size } = await apiResponse.json();
+      const { dataUrl, contentType } = await apiResponse.json();
 
       // Convert data URL to blob
       const response = await fetch(dataUrl);
@@ -170,7 +169,7 @@ export default function OCRTextFinderPage() {
     } else {
       showError('Please drop a valid image file');
     }
-  }, [showError, showSuccess]);
+  }, [showError, showSuccess, validateFile]);
 
   // URL input handler
   const handleUrlSubmit = async () => {
@@ -403,7 +402,6 @@ export default function OCRTextFinderPage() {
                 <CardContent className="space-y-4">
                   {/* File Upload Area */}
                   <div
-                    ref={dropZoneRef}
                     className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                       isDragging
                         ? 'border-blue-500 bg-blue-500/10'

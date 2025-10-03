@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
 import { getTemplateById, hasTemplateAccess, initializeBlankTemplate, getTemplateDashboardSummary, getTemplateTasks, getTemplateAuditLog } from "@/lib/template-aware-data";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, updateDashboardSummary, getCurrentAuditLog, initializeSampleData } from "@/lib/mock-data";
 import { Task, DashboardSummary, Template } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
@@ -14,7 +13,7 @@ import { TaskList } from "@/components/task-list";
 import { ActivityFeed } from "@/components/activity-feed";
 import FadeInCard from "@/components/fade-in-card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, User, Calendar, MessageSquare, Eye, FolderOpen, Shield } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Calendar, MessageSquare, Eye, FolderOpen, Shield } from "lucide-react";
 import Image from "next/image";
 import { useTemplate } from "@/contexts/template-context";
 
@@ -24,14 +23,29 @@ export default function TemplatePage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [showFullAuditLog, setShowFullAuditLog] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [template, setTemplate] = useState<Template | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
   const router = useRouter();
   const params = useParams();
   const { setCurrentTemplate } = useTemplate();
+
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const templateId = params.templateId as string;
+
+      // Load template-specific data
+      const templateSummary = getTemplateDashboardSummary(templateId);
+      const templateTasks = getTemplateTasks(templateId);
+      const templateLog = getTemplateAuditLog(templateId);
+
+      setSummary(templateSummary);
+      setTasks(templateTasks);
+      setAuditLog(templateLog);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    }
+  }, [params.templateId]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -78,7 +92,7 @@ export default function TemplatePage() {
       loadDashboardData();
     };
     checkAuth();
-  }, [router, params.templateId, setCurrentTemplate]);
+  }, [router, params.templateId, setCurrentTemplate, loadDashboardData]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,23 +102,6 @@ export default function TemplatePage() {
     }, 1000);
     return () => clearInterval(interval);
   }, [params.templateId]);
-
-  const loadDashboardData = async () => {
-    try {
-      const templateId = params.templateId as string;
-
-      // Load template-specific data
-      const templateSummary = getTemplateDashboardSummary(templateId);
-      const templateTasks = getTemplateTasks(templateId);
-      const templateLog = getTemplateAuditLog(templateId);
-
-      setSummary(templateSummary);
-      setTasks(templateTasks);
-      setAuditLog(templateLog);
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    }
-  };
 
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);

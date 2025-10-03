@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -11,7 +10,6 @@ export default function PageTransition({ children }: PageTransitionProps) {
   const [currentContent, setCurrentContent] = useState(children);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [contentReady, setContentReady] = useState(false);
-  const pathname = usePathname();
   const previousContentRef = useRef(children);
 
   useEffect(() => {

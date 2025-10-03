@@ -5,7 +5,7 @@ import { NavigationLayout } from "@/components/navigation-layout";
 import { mockCommendations } from "@/lib/mock-data";
 import { Commendation } from "@/lib/database";
 import Image from "next/image";
-import { Award, Plus, X, Calendar, User, Trophy, Medal } from "lucide-react";
+import { Award, Plus, X, Calendar, User, Trophy } from "lucide-react";
 
 export default function CommendationJarPage() {
   const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);

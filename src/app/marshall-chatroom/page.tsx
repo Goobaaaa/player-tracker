@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockChatMessages, mockUsers } from "@/lib/mock-data";
+import { mockChatMessages } from "@/lib/mock-data";
 import { ChatMessage } from "@/lib/database";
 import Image from "next/image";
 import { MessageSquare, Send, Trash2, Edit, X, Upload, Smile } from "lucide-react";
@@ -14,7 +14,6 @@ export default function MarshallChatroomPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedMessageForReaction, setSelectedMessageForReaction] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +116,6 @@ export default function MarshallChatroomPage() {
       loadMessages();
     }
     setSelectedMessageForReaction(null);
-    setShowEmojiPicker(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

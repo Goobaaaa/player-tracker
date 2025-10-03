@@ -1,4 +1,4 @@
-import { Player, Asset, FinanceTransaction, Task, Mugshot, Media, HouseMedia, Document, Incident, Weapon, Vehicle, ChatMessage, MediaItem, Quote, Commendation, Event } from './database';
+import { Player, Asset, Task, Mugshot, Media, HouseMedia, Document, Incident, Weapon, Vehicle, ChatMessage, Quote, Commendation, Event } from './database';
 
 export interface TemplateData {
   id: string;

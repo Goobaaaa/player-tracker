@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Fix cross-origin warnings for local development
   allowedDevOrigins: ["http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://192.168.98.42:3001", "http://192.168.98.42:3002", "http://192.168.98.42:3003"],
 
-  // Configure domains for external images
+  // Configure domains for external images using remotePatterns
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -28,29 +28,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.pexels.com' },
       { protocol: 'https', hostname: 'www.canva.com' },
       { protocol: 'https', hostname: 'media.discordapp.net' },
-    ],
-    domains: [
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'picsum.photos',
-      'i.imgur.com',
-      'i.ibb.co',
-      'upload.wikimedia.org',
-      'www.w3schools.com',
-      'cdn.pixabay.com',
-      'www.freepnglogos.com',
-      'i.gyazo.com',
-      'i.postimg.cc',
-      'image.ibb.co',
-      'preview.ibb.co',
-      'www.gettyimages.com',
-      'media.istockphoto.com',
-      'www.shutterstock.com',
-      'image.shutterstock.com',
-      'cdn.dribbble.com',
-      'images.pexels.com',
-      'www.canva.com',
-      'media.discordapp.net',
     ],
   },
 };
