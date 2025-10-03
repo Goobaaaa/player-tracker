@@ -34,7 +34,8 @@
       "Bash(powershell:*)",
       "Bash(next start:*)",
       "Bash(npx next:*)",
-      "Bash(npm run setup:*)"
+      "Bash(npm run setup:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
