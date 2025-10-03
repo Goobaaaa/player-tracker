@@ -26,7 +26,7 @@ const entityTypes = ['suspect', 'task', 'document', 'asset', 'media', 'comment',
 export default function AuditLogPage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [filteredLog, setFilteredLog] = useState<AuditLogEntry[]>([]);
-  const [users, setUsers] = useState<StaffMember[]>([]); // Fixed mockUsers issue
+  const [users, setUsers] = useState<StaffMember[]>([]); // Fixed mockUsers issue - Vercel rebuild triggered
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
