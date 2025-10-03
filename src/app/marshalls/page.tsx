@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getVisibleStaffMembers, updateUser, getUserByUsername, saveStaffMembers } from "@/lib/mock-data";
+import { getVisibleStaffMembers, updateUser, getUserByUsername, saveStaffMembers, addAdminCreatedUser } from "@/lib/mock-data";
 import { StaffMember } from "@/lib/database";
 import Image from "next/image";
 import { User, Edit, Trash2, X, Plus } from "lucide-react";
@@ -17,6 +17,8 @@ export default function MarshallsPage() {
   // Form state for adding/editing
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
+    password: "",
     role: "marshall" as 'admin' | 'marshall',
     tagLine: "",
     description: "",
@@ -41,6 +43,8 @@ export default function MarshallsPage() {
     setEditingMember(member);
     setFormData({
       name: member.name,
+      username: member.username,
+      password: member.password,
       role: member.role,
       tagLine: member.tagLine,
       description: member.description,
@@ -54,6 +58,8 @@ export default function MarshallsPage() {
   const handleAddClick = () => {
     setFormData({
       name: "",
+      username: "",
+      password: "",
       role: "marshall" as 'admin' | 'marshall',
       tagLine: "",
       description: "",
@@ -65,7 +71,7 @@ export default function MarshallsPage() {
   };
 
   const handleSaveMember = () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim() || !formData.username.trim() || !formData.password.trim()) return;
 
     if (editingMember) {
       // Update existing member
@@ -80,12 +86,11 @@ export default function MarshallsPage() {
       };
       updateUser(editingMember.id, updatedMember);
     } else {
-      // Add new member
-      const newMember: StaffMember = {
-        id: `staff-${Date.now()}`,
+      // Add new member using cross-computer compatible function
+      const newMember = addAdminCreatedUser({
         name: formData.name.trim(),
-        username: formData.name.trim().toLowerCase().replace(/\s+/g, '.'), // Generate username from name
-        password: "temp123", // Default password
+        username: formData.username.trim().toLowerCase(),
+        password: formData.password.trim(),
         role: formData.role,
         tagLine: formData.tagLine.trim(),
         description: formData.description.trim(),
@@ -94,11 +99,8 @@ export default function MarshallsPage() {
         portraitUrl: formData.portraitUrl.trim(),
         isSuspended: false,
         createdAt: new Date().toISOString(),
-        createdBy: "current-user"
-      };
-      const allStaff = getVisibleStaffMembers();
-      allStaff.push(newMember);
-      saveStaffMembers(allStaff);
+        createdBy: "admin"
+      });
     }
 
     loadStaffMembers();
@@ -310,6 +312,32 @@ export default function MarshallsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Enter username (lowercase, no spaces)"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Enter password"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Role *
                   </label>
                   <select
@@ -401,7 +429,7 @@ export default function MarshallsPage() {
                 </button>
                 <button
                   onClick={handleSaveMember}
-                  disabled={!formData.name.trim()}
+                  disabled={!formData.name.trim() || !formData.username.trim() || !formData.password.trim()}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingMember ? "Update" : "Add"} Marshall

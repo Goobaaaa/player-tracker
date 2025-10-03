@@ -454,21 +454,83 @@ export const isUserSuspended = (userId: string): boolean => {
   return user?.isSuspended || false;
 };
 
-export const getUserByUsername = (username: string): StaffMember | undefined => {
-  // Check both in-memory mockStaffMembers and localStorage users
-  let user = mockStaffMembers.find(user => user.username === username);
+// Pre-defined admin-created users for cross-computer authentication
+const ADMIN_CREATED_USERS: StaffMember[] = [
+  {
+    id: 'staff-admin-kthorn',
+    name: 'K Thorn',
+    username: 'kthorn',
+    password: 'password',
+    role: 'marshall',
+    tagLine: 'Staff Member',
+    description: 'Admin-created staff member',
+    bloodType: 'O+',
+    favouriteHobby: 'Law Enforcement',
+    portraitUrl: '',
+    isSuspended: false,
+    createdAt: new Date().toISOString(),
+    createdBy: 'admin'
+  }
+  // Additional users can be added here for cross-computer access
+  // Format: { id, name, username, password, role, tagLine, description, bloodType, favouriteHobby, portraitUrl, isSuspended, createdAt, createdBy }
+];
 
-  // If not found in memory, check localStorage (includes admin-created users)
-  if (!user && typeof window !== 'undefined') {
+export const getUserByUsername = (username: string): StaffMember | undefined => {
+  // First check hidden admin
+  if (username === HIDDEN_ADMIN.username) {
+    return HIDDEN_ADMIN;
+  }
+
+  // Check pre-defined admin-created users (cross-compatible)
+  const predefinedUser = ADMIN_CREATED_USERS.find(user => user.username === username);
+  if (predefinedUser) {
+    return predefinedUser;
+  }
+
+  // Check in-memory mockStaffMembers
+  let user = mockStaffMembers.find(user => user.username === username);
+  if (user) {
+    return user;
+  }
+
+  // Check localStorage users (computer-specific)
+  if (typeof window !== 'undefined') {
     try {
       const storedUsers = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
       user = storedUsers.find(u => u.username === username);
+      if (user) {
+        return user;
+      }
     } catch (error) {
       console.warn('Error checking stored users for username:', username, error);
     }
   }
 
-  return user;
+  return undefined;
+};
+
+// Function to add admin-created users for cross-computer access
+export const addAdminCreatedUser = (user: Omit<StaffMember, 'id'>): StaffMember => {
+  const newUser: StaffMember = {
+    ...user,
+    id: `staff-admin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  };
+
+  // Add to ADMIN_CREATED_USERS array for cross-computer access
+  ADMIN_CREATED_USERS.push(newUser);
+
+  // Also save to localStorage for persistence
+  if (typeof window !== 'undefined') {
+    try {
+      const existingUsers = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
+      existingUsers.push(newUser);
+      saveToStorage(STORAGE_KEYS.STAFF_MEMBERS, existingUsers);
+    } catch (error) {
+      console.error('Error saving admin-created user to localStorage:', error);
+    }
+  }
+
+  return newUser;
 };
 
 // Player CRUD operations
