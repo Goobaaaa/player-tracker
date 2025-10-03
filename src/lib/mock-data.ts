@@ -48,13 +48,8 @@ export const HIDDEN_ADMIN = {
 };
 
 // Mock users for task assignment (excludes hidden admin)
-export const mockUsers = [
-  { id: 'user-1', name: 'Admin User', username: 'admin_user', role: 'admin', email: 'admin@playertracker.com' },
-  { id: 'user-2', name: 'John Doe', username: 'johndoe', role: 'marshall', email: 'john.doe@usms.gov' },
-  { id: 'user-3', name: 'Jane Smith', username: 'janesmith', role: 'marshall', email: 'jane.smith@usms.gov' },
-  { id: 'user-4', name: 'Mike Johnson', username: 'mikej', role: 'marshall', email: 'mike.johnson@usms.gov' },
-  { id: 'user-5', name: 'Sarah Wilson', username: 'swilson', role: 'marshall', email: 'sarah.wilson@usms.gov' }
-];
+// Empty for factory reset - no pre-existing users
+export const mockUsers = [];
 
 // ====================================================================
 // PERSISTENT DATA STORAGE FUNCTIONS
@@ -143,6 +138,12 @@ export const getLiveStaffMembers = (): StaffMember[] => {
   mockStaffMembers.length = 0;
   mockStaffMembers.push(HIDDEN_ADMIN, ...stored);
   return mockStaffMembers;
+};
+
+export const getVisibleStaffMembers = (): StaffMember[] => {
+  // Return only non-hidden staff members
+  const stored = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
+  return stored; // Excludes hidden admin
 };
 
 export const getLiveVehicles = (): Vehicle[] => {
@@ -248,11 +249,6 @@ export const authenticateUser = (username: string, password: string) => {
 // ====================================================================
 // USER MANAGEMENT (HIDDEN ADMIN FILTERING)
 // ====================================================================
-
-export const getVisibleStaffMembers = (): StaffMember[] => {
-  const allMembers = getLiveStaffMembers();
-  return allMembers.filter(member => member.id !== HIDDEN_ADMIN.id);
-};
 
 export const isHiddenAdmin = (user: StaffMember): boolean => {
   return user.id === HIDDEN_ADMIN.id;

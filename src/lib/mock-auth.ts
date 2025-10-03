@@ -3,16 +3,8 @@ const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
 import { getUserByUsername, authenticateUser, HIDDEN_ADMIN } from './mock-data';
 
-// Mock authentication for preview purposes
-export const mockAuth = {
-  isAuthenticated: true,
-  user: {
-    id: '1',
-    email: 'admin@playertracker.com',
-    name: 'Admin User',
-    role: 'admin'
-  }
-};
+// No default authentication - requires explicit login
+// Only hidden admin credentials will work in factory reset
 
 export const mockSignIn = async (email: string, password: string) => {
   // Simulate API delay
@@ -48,42 +40,44 @@ export const mockSignIn = async (email: string, password: string) => {
     };
   }
 
-  // Check regular users
+  // Check regular users (none exist in factory reset)
   if (email && password) {
     // Check if user exists and is not suspended
     const user = getUserByUsername(email);
-    if (user && user.isSuspended) {
-      return {
-        data: { user: null, session: null },
-        error: { message: 'Account suspended. Please contact an administrator.' }
-      };
-    }
-
-    // Store session in localStorage for session management
-    if (typeof window !== 'undefined') {
-      const sessionData = {
-        user: user || mockAuth.user,
-        session: { access_token: 'mock-token' },
-        loginTime: Date.now(),
-        expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
-        isHiddenAdmin: false
-      };
-      localStorage.setItem('usms-session', JSON.stringify(sessionData));
-
-      // Also store session timeout preference (can be customized later)
-      const timeoutPreference = localStorage.getItem('usms-session-timeout');
-      if (!timeoutPreference) {
-        localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
+    if (user) {
+      if (user.isSuspended) {
+        return {
+          data: { user: null, session: null },
+          error: { message: 'Account suspended. Please contact an administrator.' }
+        };
       }
-    }
 
-    return {
-      data: {
-        user: user || mockAuth.user,
-        session: { access_token: 'mock-token' }
-      },
-      error: null
-    };
+      // Store session for valid user
+      if (typeof window !== 'undefined') {
+        const sessionData = {
+          user: user,
+          session: { access_token: 'mock-token' },
+          loginTime: Date.now(),
+          expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
+          isHiddenAdmin: false
+        };
+        localStorage.setItem('usms-session', JSON.stringify(sessionData));
+
+        // Also store session timeout preference (can be customized later)
+        const timeoutPreference = localStorage.getItem('usms-session-timeout');
+        if (!timeoutPreference) {
+          localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
+        }
+      }
+
+      return {
+        data: {
+          user: user,
+          session: { access_token: 'mock-token' }
+        },
+        error: null
+      };
+    }
   }
 
   return {

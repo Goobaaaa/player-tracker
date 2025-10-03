@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockStaffMembers } from "@/lib/mock-data";
+import { getVisibleStaffMembers } from "@/lib/mock-data";
 import { StaffMember } from "@/lib/database";
 import Image from "next/image";
 import { User, Edit, Trash2, X, Plus } from "lucide-react";
@@ -30,7 +30,7 @@ export default function MarshallsPage() {
   }, []);
 
   const loadStaffMembers = () => {
-    setStaffMembers(mockStaffMembers);
+    setStaffMembers(getVisibleStaffMembers());
   };
 
   const handleMemberClick = (member: StaffMember) => {
