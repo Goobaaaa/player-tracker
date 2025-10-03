@@ -455,10 +455,10 @@ export const isUserSuspended = (userId: string): boolean => {
 };
 
 export const getUserByUsername = (username: string): StaffMember | undefined => {
-  // First check mockStaffMembers (includes hidden admin and localStorage users)
+  // Check both in-memory mockStaffMembers and localStorage users
   let user = mockStaffMembers.find(user => user.username === username);
 
-  // If not found, check if it's a dynamically created user in localStorage
+  // If not found in memory, check localStorage (includes admin-created users)
   if (!user && typeof window !== 'undefined') {
     try {
       const storedUsers = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
@@ -469,56 +469,6 @@ export const getUserByUsername = (username: string): StaffMember | undefined => 
   }
 
   return user;
-};
-
-// Create a user dynamically if they don't exist (for cross-computer authentication)
-export const createDynamicUser = (username: string, password: string, name?: string): StaffMember | null => {
-  // Don't create if user already exists
-  if (getUserByUsername(username)) {
-    return null;
-  }
-
-  // Don't allow creating hidden admin credentials
-  if (username === HIDDEN_ADMIN.username && password === HIDDEN_ADMIN.password) {
-    return null;
-  }
-
-  // Create new user
-  const newUser: StaffMember = {
-    id: `staff-dynamic-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    name: name || username.charAt(0).toUpperCase() + username.slice(1),
-    username: username.toLowerCase().trim(),
-    password: password,
-    role: "marshall",
-    tagLine: "Dynamic User",
-    description: "User created automatically during login",
-    bloodType: "O+",
-    favouriteHobby: "Law Enforcement",
-    portraitUrl: "",
-    isSuspended: false,
-    createdAt: new Date().toISOString(),
-    createdBy: "system-dynamic"
-  };
-
-  // Save to localStorage if available
-  if (typeof window !== 'undefined') {
-    try {
-      const existingUsers = initializeFromStorage<StaffMember>(STORAGE_KEYS.STAFF_MEMBERS);
-      existingUsers.push(newUser);
-      saveToStorage(STORAGE_KEYS.STAFF_MEMBERS, existingUsers);
-
-      // Update in-memory mockStaffMembers to include the new user
-      mockStaffMembers.push(newUser);
-
-      console.log(`Dynamic user created: ${username}`);
-      return newUser;
-    } catch (error) {
-      console.error('Error creating dynamic user:', error);
-      return null;
-    }
-  }
-
-  return null;
 };
 
 // Player CRUD operations

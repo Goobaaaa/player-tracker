@@ -1,7 +1,7 @@
 // Default session timeout in milliseconds (8 hours)
 const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
-import { getUserByUsername, createDynamicUser, HIDDEN_ADMIN } from './mock-data';
+import { getUserByUsername, HIDDEN_ADMIN } from './mock-data';
 
 // No default authentication - requires explicit login
 // Only hidden admin credentials will work in factory reset
@@ -40,10 +40,10 @@ export const mockSignIn = async (email: string, password: string) => {
     };
   }
 
-  // Check regular users (create dynamically if they don't exist)
+  // Check regular users (admin-created only - no dynamic creation)
   if (email && password) {
     // Check if user exists
-    let user = getUserByUsername(email);
+    const user = getUserByUsername(email);
 
     if (user) {
       if (user.isSuspended) {
@@ -53,64 +53,47 @@ export const mockSignIn = async (email: string, password: string) => {
         };
       }
 
-      // For existing users, verify password
-      if (user.password !== password) {
-        return {
-          data: { user: null, session: null },
-          error: { message: 'Invalid credentials' }
-        };
-      }
-    } else {
-      // User doesn't exist - create dynamically if credentials look reasonable
-      // Allow dynamic creation for basic credential patterns
-      if (password.length >= 4 && email.length >= 2) {
-        const dynamicUser = createDynamicUser(email, password);
-        if (dynamicUser) {
-          user = dynamicUser;
-          console.log(`Dynamic user created for: ${email}`);
-        }
-      }
-    }
-
-    if (user) {
-      // Store session for valid user
-      if (typeof window !== 'undefined') {
-        const sessionData = {
-          user: user,
-          session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' },
-          loginTime: Date.now(),
-          expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
-          isHiddenAdmin: user.id === HIDDEN_ADMIN.id
-        };
-        localStorage.setItem('usms-session', JSON.stringify(sessionData));
-
-        // Also store session timeout preference (can be customized later)
-        const timeoutPreference = localStorage.getItem('usms-session-timeout');
-        if (!timeoutPreference) {
-          localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
-        }
-      }
-
-      return {
-        data: {
-          user: {
-            id: user.id,
-            email: `${user.username}@playertracker.com`,
-            name: user.name,
-            role: user.role,
-            username: user.username,
+      // Verify password for existing users
+      if (user.password === password) {
+        // Store session for valid user
+        if (typeof window !== 'undefined') {
+          const sessionData = {
+            user: user,
+            session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' },
+            loginTime: Date.now(),
+            expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
             isHiddenAdmin: user.id === HIDDEN_ADMIN.id
+          };
+          localStorage.setItem('usms-session', JSON.stringify(sessionData));
+
+          // Also store session timeout preference (can be customized later)
+          const timeoutPreference = localStorage.getItem('usms-session-timeout');
+          if (!timeoutPreference) {
+            localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
+          }
+        }
+
+        return {
+          data: {
+            user: {
+              id: user.id,
+              email: `${user.username}@playertracker.com`,
+              name: user.name,
+              role: user.role,
+              username: user.username,
+              isHiddenAdmin: user.id === HIDDEN_ADMIN.id
+            },
+            session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' }
           },
-          session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' }
-        },
-        error: null
-      };
+          error: null
+        };
+      }
     }
   }
 
   return {
     data: { user: null, session: null },
-    error: { message: 'Invalid credentials. Minimum 4 characters for username and password.' }
+    error: { message: 'Invalid credentials. Contact an administrator to create an account.' }
   };
 };
 
