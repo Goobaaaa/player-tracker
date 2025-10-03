@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getCurrentAuditLog, mockUsers } from "@/lib/mock-data";
+import { getCurrentAuditLog, getVisibleStaffMembers } from "@/lib/mock-data";
+import { StaffMember } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -25,6 +26,7 @@ const entityTypes = ['suspect', 'task', 'document', 'asset', 'media', 'comment',
 export default function AuditLogPage() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [filteredLog, setFilteredLog] = useState<AuditLogEntry[]>([]);
+  const [users, setUsers] = useState<StaffMember[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
@@ -56,8 +58,10 @@ export default function AuditLogPage() {
   const loadAuditLogData = async () => {
     try {
       const currentLog = getCurrentAuditLog();
+      const visibleUsers = getVisibleStaffMembers();
       setAuditLog(currentLog);
       setFilteredLog(currentLog);
+      setUsers(visibleUsers);
     } catch (error) {
       console.error("Error loading audit log data:", error);
     }
@@ -276,7 +280,7 @@ export default function AuditLogPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
                         <SelectItem value="all">All Users</SelectItem>
-                        {mockUsers.map(user => (
+                        {users.map(user => (
                           <SelectItem key={user.id} value={user.id}>
                             {user.username}
                           </SelectItem>

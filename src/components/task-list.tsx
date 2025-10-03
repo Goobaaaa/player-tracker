@@ -1,17 +1,18 @@
-import { Task } from "@/lib/database";
+import { Task, StaffMember } from "@/lib/database";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle, User, Calendar } from "lucide-react";
-import { mockUsers, getDaysUntilDeadline, toggleTaskCompleted } from "@/lib/mock-data";
+import { getDaysUntilDeadline, toggleTaskCompleted } from "@/lib/mock-data";
 
 interface TaskListProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
   isDashboard?: boolean;
+  users?: StaffMember[];
 }
 
-export function TaskList({ tasks, onTaskClick, isDashboard = false }: TaskListProps) {
+export function TaskList({ tasks, onTaskClick, isDashboard = false, users = [] }: TaskListProps) {
   const getStatusIcon = (status: Task["status"]) => {
     switch (status) {
       case "completed": return <CheckCircle className="h-4 w-4 text-green-400" />;
@@ -55,7 +56,7 @@ export function TaskList({ tasks, onTaskClick, isDashboard = false }: TaskListPr
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
+    return userIds.map(id => users.find(user => user.id === id)?.name || id).join(", ");
   };
 
   const handleToggleCompleted = (taskId: string, e: React.MouseEvent) => {

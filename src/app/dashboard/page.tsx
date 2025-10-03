@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
-import { Task, DashboardSummary } from "@/lib/database";
+import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, getVisibleStaffMembers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
+import { Task, DashboardSummary, StaffMember } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
+  const [users, setUsers] = useState<StaffMember[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
@@ -68,6 +69,7 @@ export default function DashboardPage() {
       setSummary(mockDashboardSummary);
       setTasks(getAllTasks());
       setAuditLog(getCurrentAuditLog());
+      setUsers(getVisibleStaffMembers());
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
@@ -116,7 +118,7 @@ export default function DashboardPage() {
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
+    return userIds.map(id => users.find(user => user.id === id)?.name || id).join(", ");
   };
 
   const getDeadlineDisplay = (deadline: string, taskStatus?: Task["status"]) => {
@@ -237,7 +239,7 @@ export default function DashboardPage() {
               <FadeInCard delay={3}>
                 <SummaryCard
                   title="Total Officers"
-                  value={mockUsers.length}
+                  value={users.length}
                   icon="👮"
                 />
               </FadeInCard>
@@ -245,7 +247,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FadeInCard delay={4}>
-                <TaskList tasks={tasks} onTaskClick={handleTaskClick} isDashboard={true} />
+                <TaskList tasks={tasks} onTaskClick={handleTaskClick} isDashboard={true} users={users} />
               </FadeInCard>
               <FadeInCard delay={5}>
                 <ActivityFeed

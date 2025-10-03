@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getVisibleStaffMembers } from "@/lib/mock-data";
+import { getVisibleStaffMembers, updateUser, getUserByUsername, saveStaffMembers } from "@/lib/mock-data";
 import { StaffMember } from "@/lib/database";
 import Image from "next/image";
 import { User, Edit, Trash2, X, Plus } from "lucide-react";
@@ -69,19 +69,16 @@ export default function MarshallsPage() {
 
     if (editingMember) {
       // Update existing member
-      const index = mockStaffMembers.findIndex(m => m.id === editingMember.id);
-      if (index > -1) {
-        mockStaffMembers[index] = {
-          ...mockStaffMembers[index],
-          name: formData.name.trim(),
-          role: formData.role,
-          tagLine: formData.tagLine.trim(),
-          description: formData.description.trim(),
-          bloodType: formData.bloodType.trim(),
-          favouriteHobby: formData.favouriteHobby.trim(),
-          portraitUrl: formData.portraitUrl.trim()
-        };
-      }
+      const updatedMember = {
+        name: formData.name.trim(),
+        role: formData.role,
+        tagLine: formData.tagLine.trim(),
+        description: formData.description.trim(),
+        bloodType: formData.bloodType.trim(),
+        favouriteHobby: formData.favouriteHobby.trim(),
+        portraitUrl: formData.portraitUrl.trim()
+      };
+      updateUser(editingMember.id, updatedMember);
     } else {
       // Add new member
       const newMember: StaffMember = {
@@ -99,7 +96,9 @@ export default function MarshallsPage() {
         createdAt: new Date().toISOString(),
         createdBy: "current-user"
       };
-      mockStaffMembers.push(newMember);
+      const allStaff = getVisibleStaffMembers();
+      allStaff.push(newMember);
+      saveStaffMembers(allStaff);
     }
 
     loadStaffMembers();
@@ -110,11 +109,10 @@ export default function MarshallsPage() {
 
   const handleDeleteMember = (member: StaffMember) => {
     if (confirm(`Are you sure you want to delete ${member.name}?`)) {
-      const index = mockStaffMembers.findIndex(m => m.id === member.id);
-      if (index > -1) {
-        mockStaffMembers.splice(index, 1);
-        loadStaffMembers();
-      }
+      const allStaff = getVisibleStaffMembers();
+      const filteredStaff = allStaff.filter(m => m.id !== member.id);
+      saveStaffMembers(filteredStaff);
+      loadStaffMembers();
     }
   };
 

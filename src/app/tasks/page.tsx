@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted, deleteTaskComment } from "@/lib/mock-data";
+import { getAllTasks, createTask, updateTask, deleteTask, getVisibleStaffMembers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted, deleteTaskComment } from "@/lib/mock-data";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, Clock, AlertCircle, Plus, Search, User, Calendar, X, Edit, Trash2, MessageSquare, Eye, FolderOpen } from "lucide-react";
-import { Task } from "@/lib/database";
+import { Task, StaffMember } from "@/lib/database";
 import FadeInCard from "@/components/fade-in-card";
 import Image from "next/image";
 import { useNotification } from "@/components/notification-container";
@@ -20,6 +20,7 @@ import { useNotification } from "@/components/notification-container";
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<StaffMember[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -105,6 +106,7 @@ export default function TasksPage() {
     try {
       updateTaskOverdueStatus(); // Update overdue status
       setTasks(getAllTasks());
+      setUsers(getVisibleStaffMembers());
     } catch (error) {
       console.error("Error loading tasks:", error);
     }
@@ -401,7 +403,7 @@ export default function TasksPage() {
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
+    return userIds.map(id => users.find(user => user.id === id)?.name || id).join(", ");
   };
 
   if (!isAuthenticated) {
@@ -1003,7 +1005,7 @@ export default function TasksPage() {
                     Assigned Staff * (Select at least one)
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {mockUsers.map((user) => (
+                    {users.map((user) => (
                       <label
                         key={user.id}
                         className="flex items-center space-x-2 p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 transition-colors"
