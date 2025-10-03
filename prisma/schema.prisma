@@ -1,0 +1,313 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  username    String    @unique
+  password    String    // bcrypt hashed
+  name        String
+  role        Role      @default(MARSHALL)
+  tagLine     String?
+  description String?
+  bloodType   String?
+  hobby       String? @map("favouriteHobby")
+  portraitUrl String?
+  isSuspended Boolean  @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  createdTasks   Task[] @relation("TaskCreator")
+  assignedTasks   Task[] @relation("TaskAssignee")
+  createdPlayers Player[]
+  createdAssets   Asset[]
+  createdIncidents Incident[] @relation("IncidentCreator")
+  taskComments    TaskComment[]
+  auditLogs       AuditLogEntry[]
+
+  @@map("staff_members")
+}
+
+model Player {
+  id           String   @id @default(cuid())
+  name         String
+  dateOfBirth   DateTime?
+  address      String?
+  phoneNumber  String?
+  email        String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String   @map("createdBy")
+
+  // Relations
+  assets       Asset[]
+  weapons      Weapon[]
+  mugshots     Mugshot[]
+  documents    PlayerDocument[]
+  transactions FinanceTransaction[]
+  incidents    Incident[]
+  creator      User     @relation(fields: [createdBy], references: [id])
+
+  @@map("players")
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  playerId    String   @map("player_id")
+  name        String
+  type        String   // vehicle, weapon, property, etc.
+  description String?
+  value       Float
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   @map("createdBy")
+
+  // Relations
+  player      Player   @relation(fields: [playerId], references: [id])
+  creator     User     @relation(fields: [createdBy], references: [id])
+
+  @@map("assets")
+}
+
+model Weapon {
+  id          String   @id @default(cuid())
+  playerId    String   @map("player_id")
+  type        String
+  brand       String?
+  model       String?
+  serialNumber String?
+  status      String   @default("ACTIVE")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  player      Player   @relation(fields: [playerId], references: [id])
+
+  @@map("weapons")
+}
+
+model Mugshot {
+  id        String   @id @default(cuid())
+  playerId  String   @map("player_id")
+  imageUrl  String   @map("url")
+  createdAt DateTime @default(now())
+
+  // Relations
+  player     Player   @relation(fields: [playerId], references: [id])
+
+  @@map("mugshots")
+}
+
+model PlayerDocument {
+  id        String   @id @default(cuid())
+  playerId  String   @map("player_id")
+  name      String
+  type      String
+  url       String
+  createdAt DateTime @default(now())
+
+  // Relations
+  player     Player   @relation(fields: [playerId], references: [id])
+
+  @@map("player_documents")
+}
+
+model Task {
+  id            String      @id @default(cuid())
+  title         String
+  description    String?
+  status        TaskStatus  @default(ACTIVE)
+  priority      Priority    @default(MEDIUM)
+  risk          Risk        @default(LOW)
+  deadline      DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     String      @map("createdBy")
+  assignedTo     String?     @map("assigned_to")
+
+  // Relations
+  creator       User        @relation("TaskCreator", fields: [createdBy], references: [id])
+  assignees     User[]      @relation("TaskAssignee")
+  comments      TaskComment[]
+
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  task      Task     @relation(fields: [taskId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("task_comments")
+}
+
+model Incident {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  type        String       // arrest, warning, citation, etc.
+  location    String?
+  date        DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdBy   String       @map("createdBy")
+
+  // Relations
+  players    Player[]
+  creator    User         @relation("IncidentCreator", fields: [createdBy], references: [id])
+
+  @@map("incidents")
+}
+
+model FinanceTransaction {
+  id          String           @id @default(cuid())
+  playerId    String           @map("player_id")
+  type        TransactionType @default(CREDIT)
+  amount      Float
+  description String?
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  player      Player           @relation(fields: [playerId], references: [id])
+
+  @@map("finance_transactions")
+}
+
+model AuditLogEntry {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  action      String   // create, update, delete, add, comment
+  entityType  String   // suspect, task, document, etc.
+  entityId    String   @map("entity_id")
+  entityName  String?
+  details     String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_log_entries")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("templates")
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  make        String
+  model       String
+  year        Int
+  color       String
+  plateNumber String   @map("plate_number")
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("vehicles")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  content   String
+  timestamp DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model MediaItem {
+  id        String   @id @default(cuid())
+  url       String
+  type      String   // image, video, etc.
+  caption   String?
+  createdAt DateTime @default(now())
+
+  @@map("media_items")
+}
+
+model Quote {
+  id        String   @id @default(cuid())
+  text      String
+  author    String
+  createdAt DateTime @default(now())
+
+  @@map("quotes")
+}
+
+model Commendation {
+  id        String   @id @default(cuid())
+  recipient String   @map("recipient_id")
+  text      String
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now())
+
+  @@map("commendations")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  attendees   String?
+  createdAt   DateTime @default(now())
+
+  @@map("events")
+}
+
+enum Role {
+  ADMIN
+  MARSHALL
+}
+
+enum TaskStatus {
+  ACTIVE
+  COMPLETED
+  OVERDUE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Risk {
+  LOW
+  MEDIUM
+  HIGH
+  DANGEROUS
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}

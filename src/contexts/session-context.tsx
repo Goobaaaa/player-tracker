@@ -1,15 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { mockGetSession } from '@/lib/mock-auth';
+import { authApi } from '@/lib/api-client';
 
 interface User {
   id: string;
-  email: string;
+  username: string;
   name: string;
   role: string;
-  username: string;
-  isHiddenAdmin?: boolean;
+  isSuspended: boolean;
 }
 
 interface Session {
@@ -22,6 +21,7 @@ interface SessionContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -34,15 +34,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = async () => {
     setLoading(true);
     try {
-      const { data: { session, user }, error } = await mockGetSession();
+      const response = await authApi.getSession();
 
-      if (error) {
-        // Clear session if error occurs
+      if (response.error || !response.data) {
         setUser(null);
         setSession(null);
       } else {
-        setUser(user);
-        setSession(session);
+        setUser(response.data.user);
+        setSession(response.data.session);
       }
     } catch (error) {
       console.error('Error refreshing session:', error);
@@ -57,9 +56,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     refreshSession();
   }, []);
 
+  const login = async (username: string, password: string) => {
+    try {
+      const result = await authApi.login(username, password);
+
+      if (result.success && result.data) {
+        setUser(result.data.user);
+        setSession(result.data.session);
+        return { success: true };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Login failed' };
+    }
+  };
+
   const signOut = async () => {
-    // Session management is now handled globally in mock-auth
-    await refreshSession();
+    try {
+      await authApi.logout();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -69,7 +90,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         session,
         loading,
         signOut,
-        refreshSession
+        refreshSession,
+        login
       }}
     >
       {children}

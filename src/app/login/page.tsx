@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { mockSignIn } from "@/lib/mock-auth";
+import { useSession } from "@/contexts/session-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -15,6 +15,7 @@ function LoginPageContent() {
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useSession();
 
   useEffect(() => {
     const message = searchParams.get('message');
@@ -29,12 +30,12 @@ function LoginPageContent() {
     setError(null);
 
     try {
-      const { data, error } = await mockSignIn(username, password);
+      const result = await login(username, password);
 
-      if (error) {
-        setError(error.message);
-      } else if (data.user) {
+      if (result.success) {
         router.push("/homepage");
+      } else {
+        setError(result.error || "Login failed");
       }
     } catch {
       setError("An unexpected error occurred");
@@ -87,7 +88,8 @@ function LoginPageContent() {
           )}
 
           <div className="text-gray-400 text-xs text-center space-y-1">
-            <p>• Use admin/admin for administrator access</p>
+            <p>• Use admin/admin123 for administrator access</p>
+            <p>• Use marshall/marshall123 for marshall access</p>
             <p>• User accounts must be created by an administrator</p>
             <p>• Contact your admin if you need login credentials</p>
           </div>
