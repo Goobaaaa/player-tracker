@@ -49,7 +49,7 @@ export const HIDDEN_ADMIN = {
 
 // Mock users for task assignment (excludes hidden admin)
 // Empty for factory reset - no pre-existing users
-export const mockUsers = [];
+export const mockUsers: Array<{id: string; name: string; username: string}> = [];
 
 // ====================================================================
 // PERSISTENT DATA STORAGE FUNCTIONS
