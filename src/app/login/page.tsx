@@ -86,6 +86,12 @@ function LoginPageContent() {
             <div className="text-orange-400 text-sm text-center">{infoMessage}</div>
           )}
 
+          <div className="text-gray-400 text-xs text-center space-y-1">
+            <p>• Use admin/admin for administrator access</p>
+            <p>• Any 4+ character username/password creates an account</p>
+            <p>• First login creates your user account automatically</p>
+          </div>
+
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 h-12"
