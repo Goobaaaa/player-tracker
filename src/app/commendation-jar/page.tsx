@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockCommendations } from "@/lib/mock-data";
+import { getCommendations, createCommendation } from "@/lib/data";
+import { createClient } from "@/lib/supabase";
 import { Commendation } from "@/lib/database";
 import Image from "next/image";
 import { Award, Plus, X, Calendar, User, Trophy } from "lucide-react";
 
 export default function CommendationJarPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [commendations, setCommendations] = useState<Commendation[]>([]);
   const [selectedCommendation, setSelectedCommendation] = useState<Commendation | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -18,32 +19,36 @@ export default function CommendationJarPage() {
     fullExplanation: "",
     imageUrl: ""
   });
+  const supabase = createClient();
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadCommendations();
-  }, []);
+    const fetchUserAndCommendations = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      loadCommendations();
+    };
+    fetchUserAndCommendations();
+  }, [supabase.auth]);
 
-  const loadCommendations = () => {
-    setCommendations(mockCommendations.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()));
+  const loadCommendations = async () => {
+    const data = await getCommendations();
+    setCommendations(data.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()));
   };
 
-  const handleAddCommendation = () => {
-    if (!formData.recipientName.trim() || !formData.shortReason.trim()) return;
+  const handleAddCommendation = async () => {
+    if (!formData.recipientName.trim() || !formData.shortReason.trim() || !user) return;
 
-    const newCommendation: Commendation = {
-      id: `commend-${Date.now()}`,
+    const newCommendation: Omit<Commendation, 'id' | 'issuedAt'> = {
       recipientName: formData.recipientName.trim(),
       shortReason: formData.shortReason.trim(),
       fullExplanation: formData.fullExplanation.trim(),
-      issuedBy: user?.id || '1',
-      issuedByName: user?.name || 'Unknown',
+      issuedBy: user.id,
+      issuedByName: user.user_metadata?.name || 'Unknown User',
       imageUrl: formData.imageUrl || "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop",
-      issuedAt: new Date().toISOString()
     };
 
-    mockCommendations.push(newCommendation);
-    loadCommendations();
+    await createCommendation(newCommendation);
+    await loadCommendations();
     setShowAddModal(false);
     setFormData({
       recipientName: "",

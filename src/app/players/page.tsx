@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { getPlayerProfilePicture, getPlayerAssets } from "@/lib/mock-data";
-import { getTemplatePlayers } from "@/lib/template-aware-data";
+import { createClient } from "@/lib/supabase";
+import { getPlayers, getPlayerAssets } from "@/lib/data";
 import { Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -25,43 +24,41 @@ export default function PlayersPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [assetCounts, setAssetCounts] = useState<Record<string, number>>({});
   
-    const router = useRouter();
-  const { currentTemplate, isTemplateMode } = useTemplate();
+  const router = useRouter();
+  const supabase = createClient();
 
   const loadPlayers = useCallback(async () => {
     try {
-      let playersData: Player[];
-
-      if (isTemplateMode && currentTemplate) {
-        // Load template-specific players
-        playersData = getTemplatePlayers(currentTemplate.id);
-      } else {
-        // Load all players (for non-template mode)
-        playersData = []; // This would be from global data if needed
-      }
-
+      const playersData = await getPlayers();
       setPlayers(playersData);
       setFilteredPlayers(playersData);
+
+      // Fetch asset counts for all players
+      const counts: Record<string, number> = {};
+      for (const player of playersData) {
+        const assets = await getPlayerAssets(player.id);
+        counts[player.id] = assets.length;
+      }
+      setAssetCounts(counts);
     } catch (error) {
       console.error("Error loading players:", error);
     }
-  }, [isTemplateMode, currentTemplate]);
-
-  const checkAuth = useCallback(async () => {
-    const { data: { session }, error } = await mockGetSession();
-    if (error || !session) {
-      router.push("/login");
-      return;
-    }
-
-    setIsAuthenticated(true);
-    loadPlayers();
-  }, [router, loadPlayers]);
+  }, []);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setIsAuthenticated(true);
+      loadPlayers();
+    };
     checkAuth();
-  }, [checkAuth]);
+  }, [loadPlayers, router, supabase.auth]);
 
   useEffect(() => {
     if (searchQuery === "") {
@@ -194,9 +191,7 @@ export default function PlayersPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPlayers.map((player, index) => {
-                const assetCount = getPlayerAssets(player.id).length;
-                return (
+              {filteredPlayers.map((player, index) => (
                 <FadeInCard
                     key={player.id}
                     delay={index + 1}
@@ -218,7 +213,7 @@ export default function PlayersPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={getPlayerProfilePicture(player.id) || player.avatarUrl} alt={player.name} />
+                          <AvatarImage src={player.avatarUrl || undefined} alt={player.name} />
                           <AvatarFallback className="bg-blue-600">
                             {player.name.charAt(0)}
                           </AvatarFallback>
@@ -238,7 +233,7 @@ export default function PlayersPage() {
                     )}
 
                     <div className="flex justify-between items-center text-sm text-gray-400 mb-4">
-                      <span>Assets: {assetCount}</span>
+                      <span>Assets: {assetCounts[player.id] || 0}</span>
                     </div>
 
                     <div className="flex space-x-2">

@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Search, Filter } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
-import { mockPlayers, getAllTasks, mockDocuments } from "@/lib/mock-data";
+import { getPlayers, getTasks, getDocuments } from "@/lib/data";
+import { Player, Task, Document } from "@/lib/database";
 
 import Link from "next/link";
 
@@ -40,17 +41,23 @@ function SearchResults() {
   }, []);
 
   useEffect(() => {
-    if (!query || !isAuthenticated) {
-      setSearchResults([]);
-      return;
-    }
+    const performSearch = async () => {
+      if (!query || !isAuthenticated) {
+        setSearchResults([]);
+        return;
+      }
 
-    const performSearch = () => {
       const queryLower = query.toLowerCase();
       const results: SearchResult[] = [];
 
+      const [players, tasks, documents] = await Promise.all([
+        getPlayers(),
+        getTasks(),
+        getDocuments()
+      ]);
+
       // Search players
-      mockPlayers.forEach(player => {
+      players.forEach(player => {
         let score = 0;
         if (player.name.toLowerCase().includes(queryLower)) score += 10;
         if (player.alias?.toLowerCase().includes(queryLower)) score += 8;
@@ -70,7 +77,7 @@ function SearchResults() {
       });
 
       // Search tasks
-      getAllTasks().forEach(task => {
+      tasks.forEach(task => {
         let score = 0;
         if (task.name.toLowerCase().includes(queryLower)) score += 10;
         if (task.description?.toLowerCase().includes(queryLower)) score += 5;
@@ -81,7 +88,7 @@ function SearchResults() {
             id: task.id,
             type: 'task',
             title: task.name,
-            description: task.description || 'No description' + ` • Priority: ${task.priority} • Status: ${task.status}`,
+            description: (task.description || 'No description') + ` • Priority: ${task.priority} • Status: ${task.status}`,
             url: `/tasks`,
             relevanceScore: score
           });
@@ -89,7 +96,7 @@ function SearchResults() {
       });
 
       // Search documents
-      mockDocuments.forEach(doc => {
+      documents.forEach(doc => {
         let score = 0;
         if (doc.filename.toLowerCase().includes(queryLower)) score += 10;
         if (doc.description?.toLowerCase().includes(queryLower)) score += 5;

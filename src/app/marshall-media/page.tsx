@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockMediaItems } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getMediaItems, createMediaItem, deleteMediaItem, uploadMediaFile } from "@/lib/data";
 import { MediaItem } from "@/lib/database";
 import Image from "next/image";
 import { Camera, Upload, X, Plus, Eye, Trash2 } from "lucide-react";
 
 export default function MarshallMediaPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -17,14 +18,20 @@ export default function MarshallMediaPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadMediaItems();
-  }, []);
+    const fetchUserAndMedia = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      loadMediaItems();
+    };
+    fetchUserAndMedia();
+  }, [supabase.auth]);
 
-  const loadMediaItems = () => {
-    setMediaItems(mockMediaItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadMediaItems = async () => {
+    const data = await getMediaItems();
+    setMediaItems(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   };
 
   const handleAddClick = () => {
@@ -34,53 +41,49 @@ export default function MarshallMediaPage() {
     setShowAddModal(true);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setNewMediaUrl(result);
-        setPreviewImage(result);
+      try {
+        const url = await uploadMediaFile(file);
+        setNewMediaUrl(url);
+        setPreviewImage(url);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      } finally {
         setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleAddMedia = () => {
-    if (!newMediaUrl.trim()) return;
+  const handleAddMedia = async () => {
+    if (!newMediaUrl.trim() || !user) return;
 
-    const newMedia: MediaItem = {
-      id: `media-${Date.now()}`,
+    const newMedia: Omit<MediaItem, 'id' | 'createdAt'> = {
       url: newMediaUrl,
       description: newMediaDescription.trim() || "No description provided",
-      uploaderId: user?.id || '1',
-      uploaderName: user?.name || 'Unknown',
-      createdAt: new Date().toISOString()
+      uploaderId: user.id,
+      uploaderName: user.user_metadata?.name || 'Unknown User',
     };
 
-    mockMediaItems.push(newMedia);
-    loadMediaItems();
+    await createMediaItem(newMedia);
+    await loadMediaItems();
     setShowAddModal(false);
     setNewMediaUrl("");
     setNewMediaDescription("");
     setPreviewImage(null);
   };
 
-  const handleDeleteMedia = (media: MediaItem) => {
+  const handleDeleteMedia = async (media: MediaItem) => {
     if (confirm(`Are you sure you want to delete this media item?`)) {
-      const index = mockMediaItems.findIndex(m => m.id === media.id);
-      if (index > -1) {
-        mockMediaItems.splice(index, 1);
-        loadMediaItems();
-      }
+      await deleteMediaItem(media.id);
+      await loadMediaItems();
     }
   };
 
   const canDeleteMedia = (media: MediaItem) => {
-    return media.uploaderId === user?.id || user?.role === 'admin';
+    return media.uploaderId === user?.id || user?.user_metadata?.role === 'admin';
   };
 
   return (

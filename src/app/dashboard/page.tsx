@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { mockDashboardSummary, getAllTasks, updateTaskOverdueStatus, mockUsers, getCurrentAuditLog, initializeSampleData, updateDashboardSummary, getDaysUntilDeadline, hasTemplateAccess } from "@/lib/mock-data";
-import { Task, DashboardSummary } from "@/lib/database";
+import { createClient } from "@/lib/supabase";
+import { getDashboardSummary, getTasks, getAuditLog, getStaffMembers } from "@/lib/data";
+import { getDaysUntilDeadline } from "@/lib/utils";
+import { Task, DashboardSummary, StaffMember } from "@/lib/database";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -20,61 +21,45 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [fullscreenImage, setFullscreenImage] = useState<{url: string, name: string} | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session, user }, error } = await mockGetSession();
-      if (error || !session) {
+    const checkAuthAndLoadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/login");
         return;
       }
-
-      // Check if there's a template parameter and verify access
-      const urlParams = new URLSearchParams(window.location.search);
-      const templateId = urlParams.get('template');
-
-      if (templateId) {
-        const hasAccess = hasTemplateAccess(templateId, user.id);
-        if (!hasAccess) {
-          router.push("/access-denied");
-          return;
-        }
-      }
-
       setIsAuthenticated(true);
       loadDashboardData();
     };
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentLog = getCurrentAuditLog();
-      setAuditLog(currentLog);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    checkAuthAndLoadData();
+  }, [router, supabase.auth]);
 
   const loadDashboardData = async () => {
     try {
-      updateTaskOverdueStatus();
-      initializeSampleData();
-      updateDashboardSummary();
-      setSummary(mockDashboardSummary);
-      setTasks(getAllTasks());
-      setAuditLog(getCurrentAuditLog());
+      const [summaryData, tasksData, auditLogData, staffData] = await Promise.all([
+        getDashboardSummary(),
+        getTasks(),
+        getAuditLog(),
+        getStaffMembers(),
+      ]);
+      setSummary(summaryData);
+      setTasks(tasksData);
+      setAuditLog(auditLogData);
+      setStaff(staffData);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
   };
 
   const handleTaskClick = (task: Task) => {
-    console.log("Task clicked:", task);
     setSelectedTask(task);
   };
 
@@ -116,7 +101,7 @@ export default function DashboardPage() {
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
+    return userIds.map(id => staff.find(user => user.id === id)?.name || id).join(", ");
   };
 
   const getDeadlineDisplay = (deadline: string, taskStatus?: Task["status"]) => {
@@ -237,7 +222,7 @@ export default function DashboardPage() {
               <FadeInCard delay={3}>
                 <SummaryCard
                   title="Total Officers"
-                  value={mockUsers.length}
+                  value={summary.totalOfficers}
                   icon="👮"
                 />
               </FadeInCard>

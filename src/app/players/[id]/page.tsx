@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { mockPlayers, getPlayerAssets, getPlayerTransactions, calculatePlayerBalance, calculatePlayerAssetsValue } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getPlayer, getPlayerAssets, getPlayerTransactions } from "@/lib/data";
 import { Player, Asset, FinanceTransaction } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -22,30 +22,51 @@ export default function PlayerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const playerId = params.id as string;
+  const supabase = createClient();
 
   useEffect(() => {
     const loadPage = async () => {
-      const { data: { session }, error } = await mockGetSession();
-      if (error || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/login");
         return;
       }
+      setIsAuthenticated(true);
+
+      if (!playerId) return;
 
       try {
-        const foundPlayer = mockPlayers.find(p => p.id === playerId);
+        const foundPlayer = await getPlayer(playerId);
         if (foundPlayer) {
           setPlayer(foundPlayer);
-          setAssets(getPlayerAssets(playerId));
-          setTransactions(getPlayerTransactions(playerId));
+          const [assetsData, transactionsData] = await Promise.all([
+            getPlayerAssets(playerId),
+            getPlayerTransactions(playerId),
+          ]);
+          setAssets(assetsData);
+          setTransactions(transactionsData);
         }
-        setIsAuthenticated(true);
       } catch (error) {
         console.error("Error loading player data:", error);
       }
     };
 
     loadPage();
-  }, [router, playerId]);
+  }, [router, playerId, supabase.auth]);
+
+  const calculatePlayerBalance = (transactions: FinanceTransaction[]): number => {
+    return transactions.reduce((balance, transaction) => {
+      if (transaction.type === 'credit') {
+        return balance + transaction.amount;
+      } else {
+        return balance - transaction.amount;
+      }
+    }, 0);
+  };
+
+  const calculatePlayerAssetsValue = (assets: Asset[]): number => {
+    return assets.reduce((sum, asset) => sum + asset.vehicleValue, 0);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -208,7 +229,7 @@ export default function PlayerDetailPage() {
                       <DollarSign className="h-5 w-5 text-green-400" />
                       <div>
                         <p className="text-sm text-gray-400">Cash Balance</p>
-                        <p className="text-xl font-bold text-white">${calculatePlayerBalance(playerId).toLocaleString()}</p>
+                        <p className="text-xl font-bold text-white">${calculatePlayerBalance(transactions).toLocaleString()}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -220,7 +241,7 @@ export default function PlayerDetailPage() {
                       <Package className="h-5 w-5 text-blue-400" />
                       <div>
                         <p className="text-sm text-gray-400">Total Assets</p>
-                        <p className="text-xl font-bold text-white">${calculatePlayerAssetsValue(playerId).toLocaleString()}</p>
+                        <p className="text-xl font-bold text-white">${calculatePlayerAssetsValue(assets).toLocaleString()}</p>
                       </div>
                     </div>
                   </CardContent>

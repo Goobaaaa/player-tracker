@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Template } from "@/lib/database";
-import { getTemplateById } from "@/lib/mock-data";
+import { getTemplateById } from "@/lib/data";
 
 interface TemplateContextType {
   currentTemplate: Template | null;
@@ -23,11 +23,11 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
 
   // Check URL for template parameter on mount and route changes
   useEffect(() => {
-    const checkTemplateInUrl = () => {
+    const checkTemplateInUrl = async () => {
       // Check if we're on a template page
       const pathParts = pathname.split('/');
       if (pathParts[1] === 'template' && pathParts[2]) {
-        const template = getTemplateById(pathParts[2]);
+        const template = await getTemplateById(pathParts[2]);
         if (template) {
           setCurrentTemplate(template);
           setManuallyExited(false);

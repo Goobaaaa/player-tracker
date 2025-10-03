@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { getAllIncidents, addIncident, updateIncident, deleteIncident, mockPlayers } from "@/lib/mock-data";
-import { Incident } from "@/lib/database";
+import { createClient } from "@/lib/supabase";
+import { getIncidents, createIncident, updateIncident, deleteIncident, getPlayers } from "@/lib/data";
+import { Incident, Player } from "@/lib/database";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import Image from "next/image";
 
 export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -30,6 +31,7 @@ export default function IncidentsPage() {
   const [incidentToView, setIncidentToView] = useState<Incident | null>(null);
   const router = useRouter();
   const { confirm } = useNotification();
+  const supabase = createClient();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -47,31 +49,45 @@ export default function IncidentsPage() {
   const [individualInput, setIndividualInput] = useState("");
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session }, error } = await mockGetSession();
-      if (error || !session) {
+    const checkAuthAndLoadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/login");
         return;
       }
 
       setIsAuthenticated(true);
       loadIncidents();
+      loadPlayers();
     };
 
-    checkAuth();
-  }, [router]);
+    checkAuthAndLoadData();
+  }, [router, supabase.auth]);
 
   const loadIncidents = async () => {
     try {
-      setIncidents(getAllIncidents());
+      const data = await getIncidents();
+      setIncidents(data);
     } catch (error) {
       console.error("Error loading incidents:", error);
     }
   };
 
+  const loadPlayers = async () => {
+    try {
+      const data = await getPlayers();
+      setPlayers(data);
+    } catch (error) {
+      console.error("Error loading players:", error);
+    }
+  };
+
   const handleCreateIncident = async () => {
     try {
-      addIncident({
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not found");
+
+      await createIncident({
         title: formData.title,
         incidentDateTime: formData.incidentDateTime,
         suspects: formData.suspects,
@@ -80,10 +96,10 @@ export default function IncidentsPage() {
         description: formData.description,
         mediaUrls: formData.mediaUrls,
         status: 'open',
-        createdBy: '1'
+        createdBy: user.id,
       });
 
-      setIncidents(getAllIncidents());
+      await loadIncidents();
       setShowCreateModal(false);
       resetForm();
     } catch (error) {
@@ -93,10 +109,8 @@ export default function IncidentsPage() {
 
   const handleUpdateIncident = async (id: string, updates: Partial<Incident>) => {
     try {
-      const updated = updateIncident(id, updates);
-      if (updated) {
-        setIncidents(getAllIncidents());
-      }
+      await updateIncident(id, updates);
+      await loadIncidents();
     } catch (error) {
       console.error("Error updating incident:", error);
     }
@@ -105,10 +119,10 @@ export default function IncidentsPage() {
   const handleDeleteIncident = async (id: string) => {
     confirm(
       "Are you sure you want to delete this incident?",
-      () => {
+      async () => {
         try {
-          deleteIncident(id);
-          setIncidents(getAllIncidents());
+          await deleteIncident(id);
+          await loadIncidents();
         } catch (error) {
           console.error("Error deleting incident:", error);
         }
@@ -317,7 +331,7 @@ export default function IncidentsPage() {
                           <SelectValue placeholder="Add suspect" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600 text-white">
-                          {mockPlayers.map(player => (
+                          {players.map(player => (
                             <SelectItem key={player.id} value={player.name} className="text-white hover:bg-gray-700 focus:bg-gray-700">{player.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -507,7 +521,7 @@ export default function IncidentsPage() {
                           <SelectValue placeholder="Add suspect" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600 text-white">
-                          {mockPlayers.map(player => (
+                          {players.map(player => (
                             <SelectItem key={player.id} value={player.name} className="text-white hover:bg-gray-700 focus:bg-gray-700">{player.name}</SelectItem>
                           ))}
                         </SelectContent>

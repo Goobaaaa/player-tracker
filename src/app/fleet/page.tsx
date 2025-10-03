@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockVehicles } from "@/lib/mock-data";
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from "@/lib/data";
 import { Vehicle } from "@/lib/database";
 import Image from "next/image";
 import { Car, Edit, Trash2, X, Plus, Eye } from "lucide-react";
@@ -27,8 +27,9 @@ export default function FleetPage() {
     loadVehicles();
   }, []);
 
-  const loadVehicles = () => {
-    setVehicles(mockVehicles);
+  const loadVehicles = async () => {
+    const vehicles = await getVehicles();
+    setVehicles(vehicles);
   };
 
   const handleVehicleClick = (vehicle: Vehicle) => {
@@ -56,49 +57,37 @@ export default function FleetPage() {
     setShowAddModal(true);
   };
 
-  const handleSaveVehicle = () => {
+  const handleSaveVehicle = async () => {
     if (!formData.name.trim()) return;
 
     if (editingVehicle) {
-      // Update existing vehicle
-      const index = mockVehicles.findIndex(v => v.id === editingVehicle.id);
-      if (index > -1) {
-        mockVehicles[index] = {
-          ...mockVehicles[index],
-          name: formData.name.trim(),
-          description: formData.description.trim(),
-          imageUrl: formData.imageUrl.trim(),
-          details: formData.details.trim()
-        };
-      }
+      await updateVehicle(editingVehicle.id, {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        imageUrl: formData.imageUrl.trim(),
+        details: formData.details.trim()
+      });
     } else {
-      // Add new vehicle
-      const newVehicle: Vehicle = {
-        id: `vehicle-${Date.now()}`,
+      await createVehicle({
         name: formData.name.trim(),
         description: formData.description.trim(),
         imageUrl: formData.imageUrl.trim(),
         details: formData.details.trim(),
         status: "available",
-        createdAt: new Date().toISOString(),
         createdBy: "current-user" // TODO: Get actual user from auth
-      };
-      mockVehicles.push(newVehicle);
+      });
     }
 
-    loadVehicles();
+    await loadVehicles();
     setShowEditModal(false);
     setShowAddModal(false);
     setEditingVehicle(null);
   };
 
-  const handleDeleteVehicle = (vehicle: Vehicle) => {
+  const handleDeleteVehicle = async (vehicle: Vehicle) => {
     if (confirm(`Are you sure you want to delete ${vehicle.name}?`)) {
-      const index = mockVehicles.findIndex(v => v.id === vehicle.id);
-      if (index > -1) {
-        mockVehicles.splice(index, 1);
-        loadVehicles();
-      }
+      await deleteVehicle(vehicle.id);
+      await loadVehicles();
     }
   };
 

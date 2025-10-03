@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockChatMessages } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getChatMessages, createChatMessage, updateChatMessage, deleteChatMessage } from "@/lib/data";
 import { ChatMessage } from "@/lib/database";
 import Image from "next/image";
 import { MessageSquare, Send, Trash2, Edit, X, Upload, Smile } from "lucide-react";
 
 export default function MarshallChatroomPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -17,44 +18,60 @@ export default function MarshallChatroomPage() {
   const [selectedMessageForReaction, setSelectedMessageForReaction] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   const emojis = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "👏", "🙏", "💪", "🔥", "✅"];
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadMessages();
-  }, []);
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, [supabase.auth]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const initialMessages = await getChatMessages();
+      setMessages(initialMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+    };
+    fetchMessages();
+
+    const channel = supabase
+      .channel('realtime-chat')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+        fetchMessages();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const loadMessages = () => {
-    setMessages(mockChatMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedImage) return;
+    if (!user) return;
 
-    const message: ChatMessage = {
-      id: `chat-${Date.now()}`,
-      authorId: user?.id || '1',
-      authorName: user?.name || 'Unknown',
+    const message: Omit<ChatMessage, 'id' | 'createdAt'> = {
+      authorId: user.id,
+      authorName: user.user_metadata?.name || 'Unknown User',
       content: newMessage.trim(),
-      createdAt: new Date().toISOString(),
       reactions: {},
       mediaUrls: selectedImage ? [selectedImage] : []
     };
 
-    mockChatMessages.push(message);
-    loadMessages();
+    await createChatMessage(message);
     setNewMessage("");
     setSelectedImage(null);
-    scrollToBottom();
   };
 
   const handleEditMessage = (messageId: string) => {
@@ -65,56 +82,43 @@ export default function MarshallChatroomPage() {
     }
   };
 
-  const handleSaveEdit = (messageId: string) => {
-    const messageIndex = mockChatMessages.findIndex(m => m.id === messageId);
-    if (messageIndex > -1) {
-      mockChatMessages[messageIndex] = {
-        ...mockChatMessages[messageIndex],
-        content: editingContent,
-        editedAt: new Date().toISOString()
-      };
-      loadMessages();
-      setEditingMessageId(null);
-      setEditingContent("");
-    }
+  const handleSaveEdit = async (messageId: string) => {
+    await updateChatMessage(messageId, {
+      content: editingContent,
+      editedAt: new Date().toISOString()
+    });
+    setEditingMessageId(null);
+    setEditingContent("");
   };
 
-  const handleDeleteMessage = (messageId: string) => {
+  const handleDeleteMessage = async (messageId: string) => {
     if (confirm("Are you sure you want to delete this message?")) {
-      const index = mockChatMessages.findIndex(m => m.id === messageId);
-      if (index > -1) {
-        mockChatMessages.splice(index, 1);
-        loadMessages();
-      }
+      await deleteChatMessage(messageId);
     }
   };
 
-  const handleAddReaction = (messageId: string, emoji: string) => {
-    const messageIndex = mockChatMessages.findIndex(m => m.id === messageId);
-    if (messageIndex > -1) {
-      const message = mockChatMessages[messageIndex];
-      const reactions = { ...message.reactions };
+  const handleAddReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
 
-      if (!reactions[emoji]) {
-        reactions[emoji] = [];
-      }
+    const reactions = { ...message.reactions };
 
-      const userIndex = reactions[emoji].indexOf(user?.id || '1');
-      if (userIndex > -1) {
-        reactions[emoji].splice(userIndex, 1);
-        if (reactions[emoji].length === 0) {
-          delete reactions[emoji];
-        }
-      } else {
-        reactions[emoji].push(user?.id || '1');
-      }
-
-      mockChatMessages[messageIndex] = {
-        ...message,
-        reactions
-      };
-      loadMessages();
+    if (!reactions[emoji]) {
+      reactions[emoji] = [];
     }
+
+    const userIndex = reactions[emoji].indexOf(user.id);
+    if (userIndex > -1) {
+      reactions[emoji].splice(userIndex, 1);
+      if (reactions[emoji].length === 0) {
+        delete reactions[emoji];
+      }
+    } else {
+      reactions[emoji].push(user.id);
+    }
+
+    await updateChatMessage(messageId, { reactions });
     setSelectedMessageForReaction(null);
   };
 

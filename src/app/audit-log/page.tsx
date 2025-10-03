@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { getCurrentAuditLog, mockUsers } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getAuditLog, getStaffMembers } from "@/lib/data";
 import { AuditLogEntry } from "@/components/activity-feed";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download, Filter } from "lucide-react";
+import { StaffMember } from "@/lib/database";
 
 const auditActions = ['create', 'update', 'delete', 'add', 'comment'] as const;
 const entityTypes = ['suspect', 'task', 'document', 'asset', 'media', 'comment', 'incident'] as const;
@@ -29,37 +30,32 @@ export default function AuditLogPage() {
   const [selectedAction, setSelectedAction] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedEntityType, setSelectedEntityType] = useState<string>("all");
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session }, error } = await mockGetSession();
-      if (error || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/login");
         return;
       }
       setIsAuthenticated(true);
-      loadAuditLogData();
+      loadData();
     };
     checkAuth();
-  }, [router]);
+  }, [router, supabase.auth]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentLog = getCurrentAuditLog();
-      setAuditLog(currentLog);
-      applyFilters(currentLog, selectedAction, selectedUser, selectedEntityType);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [selectedAction, selectedUser, selectedEntityType]);
-
-  const loadAuditLogData = async () => {
+  const loadData = async () => {
     try {
-      const currentLog = getCurrentAuditLog();
-      setAuditLog(currentLog);
-      setFilteredLog(currentLog);
+      const logData = await getAuditLog();
+      setAuditLog(logData);
+      setFilteredLog(logData);
+      const staffData = await getStaffMembers();
+      setStaff(staffData);
     } catch (error) {
-      console.error("Error loading audit log data:", error);
+      console.error("Error loading data:", error);
     }
   };
 
@@ -276,7 +272,7 @@ export default function AuditLogPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
                         <SelectItem value="all">All Users</SelectItem>
-                        {mockUsers.map(user => (
+                        {staff.map(user => (
                           <SelectItem key={user.id} value={user.id}>
                             {user.username}
                           </SelectItem>

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockQuotes } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getQuotes, createQuote } from "@/lib/data";
 import { Quote } from "@/lib/database";
 import { MessageSquare, Plus, X, User, Calendar, HelpCircle } from "lucide-react";
 
 export default function QuoteWallPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,32 +17,36 @@ export default function QuoteWallPage() {
     whenSaid: "",
     whySaid: ""
   });
+  const supabase = createClient();
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadQuotes();
-  }, []);
+    const fetchUserAndQuotes = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      loadQuotes();
+    };
+    fetchUserAndQuotes();
+  }, [supabase.auth]);
 
-  const loadQuotes = () => {
-    setQuotes(mockQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadQuotes = async () => {
+    const data = await getQuotes();
+    setQuotes(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   };
 
-  const handleAddQuote = () => {
-    if (!formData.quoteText.trim() || !formData.whoSaidIt.trim()) return;
+  const handleAddQuote = async () => {
+    if (!formData.quoteText.trim() || !formData.whoSaidIt.trim() || !user) return;
 
-    const newQuote: Quote = {
-      id: `quote-${Date.now()}`,
+    const newQuote: Omit<Quote, 'id' | 'createdAt'> = {
       quoteText: formData.quoteText.trim(),
       whoSaidIt: formData.whoSaidIt.trim(),
       whenSaid: formData.whenSaid.trim(),
       whySaid: formData.whySaid.trim(),
-      submittedBy: user?.id || '1',
-      submittedByName: user?.name || 'Anonymous',
-      createdAt: new Date().toISOString()
+      submittedBy: user.id,
+      submittedByName: user.user_metadata?.name || 'Anonymous',
     };
 
-    mockQuotes.push(newQuote);
-    loadQuotes();
+    await createQuote(newQuote);
+    await loadQuotes();
     setShowAddModal(false);
     setFormData({
       quoteText: "",

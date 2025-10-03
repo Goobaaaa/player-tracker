@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTemplates, getUserTemplates } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getTemplates, getTemplatePermissions } from "@/lib/data";
 import { Template } from "@/lib/database";
 import Image from "next/image";
 import { Plus, Users, LogOut, Home, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
@@ -12,38 +12,49 @@ import { CreateTemplateModal } from "@/components/create-template-modal";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
 
-  const loadTemplates = useCallback(() => {
+  const loadTemplates = useCallback(async () => {
     if (!user) return;
 
-    if (user.role === 'admin') {
-      const allTemplates = getAllTemplates();
+    if (user.user_metadata?.role === 'admin') {
+      const allTemplates = await getTemplates();
       setTemplates(allTemplates);
     } else {
-      const userTemplates = getUserTemplates(user.id);
+      const allTemplates = await getTemplates();
+      const permissions = await getTemplatePermissions();
+      const userTemplateIds = permissions
+        .filter(p => p.userId === user.id)
+        .map(p => p.templateId);
+      const userTemplates = allTemplates.filter(t => userTemplateIds.includes(t.id));
       setTemplates(userTemplates);
     }
   }, [user]);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session, user: sessionUser }, error } = await mockGetSession();
-      if (error || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/login");
         return;
       }
       setIsAuthenticated(true);
-      setUser(sessionUser);
-      loadTemplates();
+      setUser(session.user);
     };
     checkAuth();
-  }, [router, user, loadTemplates]);
+  }, [router, supabase.auth]);
+
+  useEffect(() => {
+    if (user) {
+      loadTemplates();
+    }
+  }, [user, loadTemplates]);
 
   const handleCreateTemplate = () => {
     setShowCreateTemplateModal(true);
@@ -63,8 +74,7 @@ export default function HomePage() {
   };
 
   const handleLogout = async () => {
-    const { mockSignOut } = await import("@/lib/mock-auth");
-    await mockSignOut();
+    await supabase.auth.signOut();
     router.push("/login");
   };
 

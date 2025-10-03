@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockStaffMembers } from "@/lib/mock-data";
+import { getStaffMembers, createStaffMember, updateStaffMember, deleteStaffMember } from "@/lib/data";
 import { StaffMember } from "@/lib/database";
 import Image from "next/image";
 import { User, Edit, Trash2, X, Plus } from "lucide-react";
@@ -29,8 +29,9 @@ export default function MarshallsPage() {
     loadStaffMembers();
   }, []);
 
-  const loadStaffMembers = () => {
-    setStaffMembers(mockStaffMembers);
+  const loadStaffMembers = async () => {
+    const members = await getStaffMembers();
+    setStaffMembers(members);
   };
 
   const handleMemberClick = (member: StaffMember) => {
@@ -64,28 +65,21 @@ export default function MarshallsPage() {
     setShowAddModal(true);
   };
 
-  const handleSaveMember = () => {
+  const handleSaveMember = async () => {
     if (!formData.name.trim()) return;
 
     if (editingMember) {
-      // Update existing member
-      const index = mockStaffMembers.findIndex(m => m.id === editingMember.id);
-      if (index > -1) {
-        mockStaffMembers[index] = {
-          ...mockStaffMembers[index],
-          name: formData.name.trim(),
-          role: formData.role,
-          tagLine: formData.tagLine.trim(),
-          description: formData.description.trim(),
-          bloodType: formData.bloodType.trim(),
-          favouriteHobby: formData.favouriteHobby.trim(),
-          portraitUrl: formData.portraitUrl.trim()
-        };
-      }
+      await updateStaffMember(editingMember.id, {
+        name: formData.name.trim(),
+        role: formData.role,
+        tagLine: formData.tagLine.trim(),
+        description: formData.description.trim(),
+        bloodType: formData.bloodType.trim(),
+        favouriteHobby: formData.favouriteHobby.trim(),
+        portraitUrl: formData.portraitUrl.trim()
+      });
     } else {
-      // Add new member
-      const newMember: StaffMember = {
-        id: `staff-${Date.now()}`,
+      await createStaffMember({
         name: formData.name.trim(),
         username: formData.name.trim().toLowerCase().replace(/\s+/g, '.'), // Generate username from name
         password: "temp123", // Default password
@@ -96,25 +90,20 @@ export default function MarshallsPage() {
         favouriteHobby: formData.favouriteHobby.trim(),
         portraitUrl: formData.portraitUrl.trim(),
         isSuspended: false,
-        createdAt: new Date().toISOString(),
         createdBy: "current-user"
-      };
-      mockStaffMembers.push(newMember);
+      });
     }
 
-    loadStaffMembers();
+    await loadStaffMembers();
     setShowEditModal(false);
     setShowAddModal(false);
     setEditingMember(null);
   };
 
-  const handleDeleteMember = (member: StaffMember) => {
+  const handleDeleteMember = async (member: StaffMember) => {
     if (confirm(`Are you sure you want to delete ${member.name}?`)) {
-      const index = mockStaffMembers.findIndex(m => m.id === member.id);
-      if (index > -1) {
-        mockStaffMembers.splice(index, 1);
-        loadStaffMembers();
-      }
+      await deleteStaffMember(member.id);
+      await loadStaffMembers();
     }
   };
 

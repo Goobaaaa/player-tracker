@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
-import { getAllTasks, createTask, updateTask, deleteTask, mockUsers, updateTaskOverdueStatus, getDaysUntilDeadline, addTaskComment, toggleTaskCompleted, deleteTaskComment } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase";
+import { getTasks, createTask, updateTask, deleteTask, getStaffMembers, addTaskComment, deleteTaskComment } from "@/lib/data";
+import { getDaysUntilDeadline } from "@/lib/utils";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { useNotification } from "@/components/notification-container";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
@@ -44,22 +46,23 @@ export default function TasksPage() {
   const [taskMediaFiles, setTaskMediaFiles] = useState<File[]>([]);
   const [taskMediaUrls, setTaskMediaUrls] = useState<string[]>([]);
   const router = useRouter();
+  const supabase = createClient();
   const { showSuccess, showError, confirm } = useNotification();
 
-  const checkAuth = useCallback(async () => {
-    const { data: { session }, error } = await mockGetSession();
+  const loadData = useCallback(async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session) {
       router.push("/login");
       return;
     }
-
     setIsAuthenticated(true);
-    loadTasks();
-  }, [router]);
+    await loadTasks();
+    await loadStaff();
+  }, [router, supabase.auth]);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     let filtered = tasks;
@@ -68,7 +71,7 @@ export default function TasksPage() {
     if (searchQuery) {
       filtered = filtered.filter(task =>
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -103,10 +106,19 @@ export default function TasksPage() {
 
   const loadTasks = async () => {
     try {
-      updateTaskOverdueStatus(); // Update overdue status
-      setTasks(getAllTasks());
+      const data = await getTasks();
+      setTasks(data);
     } catch (error) {
       console.error("Error loading tasks:", error);
+    }
+  };
+
+  const loadStaff = async () => {
+    try {
+      const data = await getStaffMembers();
+      setStaff(data);
+    } catch (error) {
+      console.error("Error loading staff:", error);
     }
   };
 
@@ -204,46 +216,38 @@ export default function TasksPage() {
     setTaskMediaFiles([]); // Reset files, they'll need to be re-selected
   };
 
-  const handleToggleCompleted = (taskId: string) => {
-    toggleTaskCompleted(taskId);
-    loadTasks();
+  const handleToggleCompleted = async (task: Task) => {
+    const newStatus = task.status === 'completed' ? 'active' : 'completed';
+    await updateTask(task.id, { status: newStatus });
+    await loadTasks();
   };
 
   const handleDeleteTask = (taskId: string) => {
     confirm(
       'Are you sure you want to delete this task?',
-      () => {
-        deleteTask(taskId);
-        loadTasks(); // Reload tasks from data store to reflect deletion
+      async () => {
+        await deleteTask(taskId);
+        await loadTasks(); // Reload tasks from data store to reflect deletion
       }
     );
   };
 
   const handleAddComment = async (taskId: string) => {
     const commentText = newComment[taskId]?.trim();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      showError("You must be logged in to comment.");
+      return;
+    }
 
     if (commentText || (commentAttachments[taskId]?.length > 0) || (imageAttachments[taskId]?.[0]?.url.trim())) {
       const mediaUrls = [];
 
-      // Process file attachments
+      // Process file attachments (this is a simplified example, real implementation would upload to storage)
       if (commentAttachments[taskId]?.length > 0) {
-        const fileArray = commentAttachments[taskId];
-        const fileNamesArray = mediaFileNames[taskId] || {};
-
-        for (let index = 0; index < fileArray.length; index++) {
-          const file = fileArray[index];
-          const customName = fileNamesArray[index] || file.name;
-
-          if (file.type.startsWith('image/')) {
-            const dataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = (e) => resolve(e.target?.result as string);
-              reader.readAsDataURL(file);
-            });
-            mediaUrls.push(`${customName}:${dataUrl}`);
-          } else {
-            mediaUrls.push(`${customName}:mock-file-${Date.now()}-${file.name}`);
-          }
+        for (const file of commentAttachments[taskId]) {
+          mediaUrls.push(`file:${file.name}`);
         }
       }
 
@@ -256,22 +260,20 @@ export default function TasksPage() {
         });
       }
 
-      const newCommentObj = addTaskComment(taskId, {
+      await addTaskComment({
         taskId: taskId,
-        userId: "current_user",
-        username: "Current User",
+        userId: user.id,
+        username: user.user_metadata?.name || "Anonymous",
         text: commentText || "",
         mediaUrls: mediaUrls,
         documentIds: []
       });
 
-      if (newCommentObj) {
-        loadTasks();
-        setNewComment({ ...newComment, [taskId]: "" });
-        setCommentAttachments({ ...commentAttachments, [taskId]: [] });
-        setMediaFileNames({ ...mediaFileNames, [taskId]: {} });
-        setImageAttachments({ ...imageAttachments, [taskId]: [{ url: "", name: "" }] });
-      }
+      await loadTasks();
+      setNewComment({ ...newComment, [taskId]: "" });
+      setCommentAttachments({ ...commentAttachments, [taskId]: [] });
+      setMediaFileNames({ ...mediaFileNames, [taskId]: {} });
+      setImageAttachments({ ...imageAttachments, [taskId]: [{ url: "", name: "" }] });
     }
   };
 
@@ -312,14 +314,14 @@ export default function TasksPage() {
   const handleDeleteAttachment = (taskId: string, commentId: string, attachmentIndex: number) => {
     confirm(
       'Are you sure you want to delete this attachment?',
-      () => {
+      async () => {
         const task = tasks.find(t => t.id === taskId);
         if (task) {
           const comment = task.comments.find(c => c.id === commentId);
           if (comment && comment.mediaUrls) {
             comment.mediaUrls.splice(attachmentIndex, 1);
-            updateTask(taskId, { comments: task.comments });
-            loadTasks();
+            await updateTask(taskId, { comments: task.comments });
+            await loadTasks();
           }
         }
       }
@@ -329,28 +331,30 @@ export default function TasksPage() {
   const handleDeleteComment = (taskId: string, commentId: string) => {
     confirm(
       'Are you sure you want to delete this comment?',
-      () => {
-        // Use the data store function to delete the comment
-        if (deleteTaskComment(taskId, commentId)) {
-          // Reload tasks to get the updated state from the data store
-          loadTasks();
-        }
+      async () => {
+        await deleteTaskComment(commentId);
+        await loadTasks();
       }
     );
   };
 
   
-  const handleSubmitTask = () => {
+  const handleSubmitTask = async () => {
     if (taskName.trim() && taskDeadline && selectedUsers.length > 0) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        showError("You must be logged in to create a task.");
+        return;
+      }
+
       if (editingTask) {
         // Update existing task
-        // Combine existing media URLs with new ones
         const allMediaUrls = [
           ...(editingTask.mediaUrls || []),
           ...taskMediaUrls.filter(url => !(editingTask.mediaUrls || []).includes(url))
         ];
 
-        const success = updateTask(editingTask.id, {
+        await updateTask(editingTask.id, {
           name: taskName.trim(),
           description: taskDescription.trim(),
           priority: taskPriority,
@@ -359,34 +363,26 @@ export default function TasksPage() {
           deadline: taskDeadline,
           mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : undefined,
         });
-
-        if (success) {
-          setEditingTask(null);
-          showSuccess("Task updated successfully!");
-        } else {
-          showError("Failed to update task.");
-        }
+        setEditingTask(null);
+        showSuccess("Task updated successfully!");
       } else {
         // Create new task
-        const newTask = createTask({
+        await createTask({
           name: taskName.trim(),
           description: taskDescription.trim(),
           priority: taskPriority,
           risk: taskRisk,
           assignedUsers: selectedUsers,
           deadline: taskDeadline,
-          createdBy: "current_user", // In a real app, this would be the actual user ID
+          createdBy: user.id,
           mediaUrls: taskMediaUrls.length > 0 ? taskMediaUrls : undefined,
           status: 'active',
           comments: []
         });
-
-        if (newTask) {
-          showSuccess("Task created successfully!");
-        }
+        showSuccess("Task created successfully!");
       }
 
-      loadTasks(); // Reload tasks from data store
+      await loadTasks();
       setShowCreateModal(false);
       // Reset form
       setTaskName("");
@@ -401,7 +397,7 @@ export default function TasksPage() {
   };
 
   const getAssignedUserNames = (userIds: string[]) => {
-    return userIds.map(id => mockUsers.find(user => user.id === id)?.name || id).join(", ");
+    return userIds.map(id => staff.find(user => user.id === id)?.name || id).join(", ");
   };
 
   if (!isAuthenticated) {
@@ -1003,7 +999,7 @@ export default function TasksPage() {
                     Assigned Staff * (Select at least one)
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {mockUsers.map((user) => (
+                    {staff.map((user) => (
                       <label
                         key={user.id}
                         className="flex items-center space-x-2 p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 transition-colors"

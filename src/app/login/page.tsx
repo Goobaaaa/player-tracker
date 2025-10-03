@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { mockSignIn } from "@/lib/mock-auth";
+import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -28,15 +28,21 @@ function LoginPageContent() {
     setLoading(true);
     setError(null);
 
+    const supabase = createClient();
     try {
-      const { data, error } = await mockSignIn(username, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password,
+      });
 
       if (error) {
         setError(error.message);
       } else if (data.user) {
         router.push("/homepage");
+      } else {
+        setError("An unexpected error occurred during login.");
       }
-    } catch {
+    } catch (err) {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
