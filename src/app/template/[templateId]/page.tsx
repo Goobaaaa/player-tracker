@@ -263,7 +263,7 @@ export default function TemplatePage() {
                 <ActivityFeed
                   activities={auditLog}
                   limit={5}
-                  showFullLog={showFullAuditLog}
+                  showFullLog={false}
                   onToggleFullLog={() => router.push("/audit-log")}
                 />
               </FadeInCard>
