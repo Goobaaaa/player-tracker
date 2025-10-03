@@ -1,6 +1,8 @@
 // Default session timeout in milliseconds (8 hours)
 const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
+import { getUserByUsername, isUserSuspended } from './mock-data';
+
 // Mock authentication for preview purposes
 export const mockAuth = {
   isAuthenticated: true,
@@ -18,10 +20,19 @@ export const mockSignIn = async (email: string, password: string) => {
 
   // Accept any non-empty credentials for preview
   if (email && password) {
+    // Check if user exists and is not suspended
+    const user = getUserByUsername(email);
+    if (user && user.isSuspended) {
+      return {
+        data: { user: null, session: null },
+        error: { message: 'Account suspended. Please contact an administrator.' }
+      };
+    }
+
     // Store session in localStorage for session management
     if (typeof window !== 'undefined') {
       const sessionData = {
-        user: mockAuth.user,
+        user: user || mockAuth.user,
         session: { access_token: 'mock-token' },
         loginTime: Date.now(),
         expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT
@@ -37,7 +48,7 @@ export const mockSignIn = async (email: string, password: string) => {
 
     return {
       data: {
-        user: mockAuth.user,
+        user: user || mockAuth.user,
         session: { access_token: 'mock-token' }
       },
       error: null
@@ -150,7 +161,45 @@ export const isSessionActive = (): boolean => {
         const session = JSON.parse(sessionData);
         const currentTime = Date.now();
         const expiryTime = session.expiresAt || (session.loginTime + getSessionTimeout());
-        return currentTime < expiryTime;
+
+        // Check if session has expired
+        if (currentTime >= expiryTime) {
+          return false;
+        }
+
+        // Check if user is suspended
+        if (session.user && session.user.username) {
+          const user = getUserByUsername(session.user.username);
+          if (user && user.isSuspended) {
+            // Force logout by removing session
+            localStorage.removeItem('usms-session');
+            return false;
+          }
+        }
+
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+  }
+  return false;
+};
+
+export const checkUserSuspension = (): boolean => {
+  if (typeof window !== 'undefined') {
+    const sessionData = localStorage.getItem('usms-session');
+    if (sessionData) {
+      try {
+        const session = JSON.parse(sessionData);
+        if (session.user && session.user.username) {
+          const user = getUserByUsername(session.user.username);
+          if (user && user.isSuspended) {
+            // Force logout by removing session
+            localStorage.removeItem('usms-session');
+            return true; // User was suspended and logged out
+          }
+        }
       } catch (error) {
         return false;
       }

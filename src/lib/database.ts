@@ -170,6 +170,9 @@ export interface StaffMember {
   bloodType: string
   favouriteHobby: string
   portraitUrl?: string
+  isSuspended: boolean
+  suspendedAt?: string
+  suspendedBy?: string
   createdAt: string
   createdBy: string
 }

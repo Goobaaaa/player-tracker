@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSettings } from "./app-settings-context";
+import { checkUserSuspension } from "@/lib/mock-auth";
 
 interface SessionContext {
   isSessionActive: boolean;
@@ -29,6 +30,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const inactiveTime = now - lastActivity;
       const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
 
+      // Check if user was suspended and force logout
+      if (checkUserSuspension()) {
+        setIsSessionActive(false);
+        // Redirect to login with suspension message
+        router.push('/login?message=Your account has been suspended. Please contact an administrator.');
+        return;
+      }
+
       if (inactiveTime > timeoutMs) {
         setIsSessionActive(false);
         // Clear any stored session data
@@ -40,8 +49,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Check every minute
-    const interval = setInterval(checkSessionTimeout, 60 * 1000);
+    // Check every 30 seconds for faster suspension detection
+    const interval = setInterval(checkSessionTimeout, 30 * 1000);
 
     return () => clearInterval(interval);
   }, [lastActivity, sessionTimeout, router]);

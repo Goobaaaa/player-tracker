@@ -9,13 +9,15 @@ import {
   hasTemplateAccess,
   updateUser,
   updateUserRole,
-  updateUserName
+  updateUserName,
+  suspendUser,
+  unsuspendUser
 } from "@/lib/mock-data";
 import { Template, StaffMember } from "@/lib/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Shield, Trash2, UserPlus, Edit2, Save, XCircle } from "lucide-react";
+import { X, Plus, Shield, Trash2, UserPlus, Edit2, Save, XCircle, Ban, UserCheck } from "lucide-react";
 
 interface UserManagementProps {
   onClose: () => void;
@@ -79,6 +81,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
       bloodType: newUser.bloodType || "O+",
       favouriteHobby: newUser.favouriteHobby || "Serving Justice",
       portraitUrl: "",
+      isSuspended: false,
       createdAt: new Date().toISOString(),
       createdBy: "admin"
     };
@@ -172,6 +175,19 @@ export function UserManagement({ onClose }: UserManagementProps) {
       mockStaffMembers.splice(userIndex, 1);
       setUsers([...mockStaffMembers]);
     }
+  };
+
+  const toggleUserSuspension = (user: StaffMember) => {
+    if (user.isSuspended) {
+      unsuspendUser(user.id);
+    } else {
+      // Get current admin user (for now, use the first admin user found)
+      const currentUser = users.find(u => u.role === 'admin');
+      if (currentUser) {
+        suspendUser(user.id, currentUser.id);
+      }
+    }
+    setUsers([...mockStaffMembers]);
   };
 
   return (
@@ -364,22 +380,35 @@ export function UserManagement({ onClose }: UserManagementProps) {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-lg font-semibold">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-white font-medium text-lg">{user.name}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium text-lg truncate">{user.name}</p>
+                        {user.isSuspended && user.suspendedAt && (
+                          <p className="text-gray-400 text-sm">
+                            Suspended on {new Date(user.suspendedAt).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
-                      <Badge className={`${user.role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'} text-white`}>
+                    </div>
+                    <div className="flex items-center space-x-2 flex-shrink-0 px-4">
+                      {user.isSuspended && (
+                        <Badge className="bg-red-600 text-white whitespace-nowrap">
+                          <Ban className="h-3 w-3 mr-1" />
+                          Suspended
+                        </Badge>
+                      )}
+                      <Badge className={`${user.role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'} text-white whitespace-nowrap`}>
                         <Shield className="h-3 w-3 mr-1" />
                         {user.role}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-shrink-0">
                       <Button
                         onClick={() => startEditingUser(user)}
                         variant="outline"
@@ -388,6 +417,28 @@ export function UserManagement({ onClose }: UserManagementProps) {
                       >
                         <Edit2 className="h-4 w-4 mr-1" />
                         Edit
+                      </Button>
+                      <Button
+                        onClick={() => toggleUserSuspension(user)}
+                        variant="outline"
+                        size="sm"
+                        className={`${user.isSuspended
+                          ? 'bg-green-600 border-green-500 text-green-300 hover:bg-green-500'
+                          : 'bg-orange-600 border-orange-500 text-orange-300 hover:bg-orange-500'
+                        }`}
+                        title={user.isSuspended ? 'Unsuspend user' : 'Suspend user'}
+                      >
+                        {user.isSuspended ? (
+                          <>
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            Unsuspend
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="h-4 w-4 mr-1" />
+                            Suspend
+                          </>
+                        )}
                       </Button>
                       <Button
                         onClick={() => deleteUser(user.id)}

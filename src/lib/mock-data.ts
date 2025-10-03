@@ -61,6 +61,7 @@ export const mockStaffMembers: StaffMember[] = [
     bloodType: 'O+',
     favouriteHobby: 'Rock climbing',
     portraitUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+    isSuspended: false,
     createdAt: new Date().toISOString(),
     createdBy: '1'
   },
@@ -75,6 +76,7 @@ export const mockStaffMembers: StaffMember[] = [
     bloodType: 'A-',
     favouriteHobby: 'Photography',
     portraitUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b7e6?w=200&h=200&fit=crop&crop=face',
+    isSuspended: false,
     createdAt: new Date().toISOString(),
     createdBy: '1'
   },
@@ -89,6 +91,7 @@ export const mockStaffMembers: StaffMember[] = [
     bloodType: 'B+',
     favouriteHobby: 'Chess',
     portraitUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
+    isSuspended: false,
     createdAt: new Date().toISOString(),
     createdBy: '1'
   },
@@ -103,6 +106,7 @@ export const mockStaffMembers: StaffMember[] = [
     bloodType: 'AB+',
     favouriteHobby: 'Martial arts',
     portraitUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+    isSuspended: false,
     createdAt: new Date().toISOString(),
     createdBy: '1'
   }
@@ -1649,4 +1653,29 @@ export const updateUserRole = (userId: string, role: 'admin' | 'marshall'): bool
 
 export const updateUserName = (userId: string, name: string): boolean => {
   return updateUser(userId, { name });
+};
+
+export const suspendUser = (userId: string, suspendedBy: string): boolean => {
+  return updateUser(userId, {
+    isSuspended: true,
+    suspendedAt: new Date().toISOString(),
+    suspendedBy
+  });
+};
+
+export const unsuspendUser = (userId: string): boolean => {
+  return updateUser(userId, {
+    isSuspended: false,
+    suspendedAt: undefined,
+    suspendedBy: undefined
+  });
+};
+
+export const isUserSuspended = (userId: string): boolean => {
+  const user = mockStaffMembers.find(u => u.id === userId);
+  return user ? user.isSuspended : false;
+};
+
+export const getUserByUsername = (username: string): StaffMember | undefined => {
+  return mockStaffMembers.find(u => u.username === username);
 };

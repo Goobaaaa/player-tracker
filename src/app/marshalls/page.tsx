@@ -95,6 +95,7 @@ export default function MarshallsPage() {
         bloodType: formData.bloodType.trim(),
         favouriteHobby: formData.favouriteHobby.trim(),
         portraitUrl: formData.portraitUrl.trim(),
+        isSuspended: false,
         createdAt: new Date().toISOString(),
         createdBy: "current-user"
       };
