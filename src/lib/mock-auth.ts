@@ -2,6 +2,19 @@
 const DEFAULT_SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
 import { getUserByUsername, HIDDEN_ADMIN } from './mock-data';
+import { globalAppSettings } from './global-storage';
+
+// Global session storage (cross-computer compatible)
+interface SessionData {
+  user: any;
+  session: { access_token: string };
+  loginTime: number;
+  expiresAt: number;
+  isHiddenAdmin: boolean;
+}
+
+// Global session storage (works across all computers)
+const GLOBAL_SESSIONS: Map<string, SessionData> = new Map();
 
 // No default authentication - requires explicit login
 // Only hidden admin credentials will work in factory reset
@@ -12,7 +25,8 @@ export const mockSignIn = async (email: string, password: string) => {
 
   // Check for hidden admin credentials first
   if (email === HIDDEN_ADMIN.username && password === HIDDEN_ADMIN.password) {
-    const sessionData = {
+    const sessionId = `admin-session-${Date.now()}`;
+    const sessionData: SessionData = {
       user: {
         id: HIDDEN_ADMIN.id,
         email: `${HIDDEN_ADMIN.username}@playertracker.com`,
@@ -23,13 +37,11 @@ export const mockSignIn = async (email: string, password: string) => {
       },
       session: { access_token: 'admin-token-hidden' },
       loginTime: Date.now(),
-      expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT
+      expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
+      isHiddenAdmin: true
     };
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('usms-session', JSON.stringify(sessionData));
-      localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
-    }
+    GLOBAL_SESSIONS.set(sessionId, sessionData);
 
     return {
       data: {
@@ -55,35 +67,28 @@ export const mockSignIn = async (email: string, password: string) => {
 
       // Verify password for existing users
       if (user.password === password) {
-        // Store session for valid user
-        if (typeof window !== 'undefined') {
-          const sessionData = {
-            user: user,
-            session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' },
-            loginTime: Date.now(),
-            expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
-            isHiddenAdmin: user.id === HIDDEN_ADMIN.id
-          };
-          localStorage.setItem('usms-session', JSON.stringify(sessionData));
+        const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const sessionData: SessionData = {
+          user: {
+            id: user.id,
+            email: `${user.username}@playertracker.com`,
+            name: user.name,
+            role: user.role,
+            username: user.username,
+            isHiddenAdmin: false
+          },
+          session: { access_token: 'mock-token' },
+          loginTime: Date.now(),
+          expiresAt: Date.now() + DEFAULT_SESSION_TIMEOUT,
+          isHiddenAdmin: false
+        };
 
-          // Also store session timeout preference (can be customized later)
-          const timeoutPreference = localStorage.getItem('usms-session-timeout');
-          if (!timeoutPreference) {
-            localStorage.setItem('usms-session-timeout', String(DEFAULT_SESSION_TIMEOUT));
-          }
-        }
+        GLOBAL_SESSIONS.set(sessionId, sessionData);
 
         return {
           data: {
-            user: {
-              id: user.id,
-              email: `${user.username}@playertracker.com`,
-              name: user.name,
-              role: user.role,
-              username: user.username,
-              isHiddenAdmin: user.id === HIDDEN_ADMIN.id
-            },
-            session: { access_token: user.id === HIDDEN_ADMIN.id ? 'admin-token-hidden' : 'mock-token' }
+            user: sessionData.user,
+            session: { access_token: 'mock-token' }
           },
           error: null
         };
@@ -100,10 +105,8 @@ export const mockSignIn = async (email: string, password: string) => {
 export const mockSignOut = async () => {
   await new Promise(resolve => setTimeout(resolve, 200));
 
-  // Clear session from localStorage
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('usms-session');
-  }
+  // Clear all global sessions
+  GLOBAL_SESSIONS.clear();
 
   return { error: null };
 };
@@ -111,48 +114,58 @@ export const mockSignOut = async () => {
 export const mockGetSession = async () => {
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Check if session exists in localStorage
-  if (typeof window !== 'undefined') {
-    try {
-      const sessionData = localStorage.getItem('usms-session');
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
+  // Check if any active sessions exist in global storage
+  const currentTime = Date.now();
+  const sessionTimeout = globalAppSettings.getSetting('sessionTimeout') || DEFAULT_SESSION_TIMEOUT;
 
-        // Validate the session structure and check timeout
-        if (session && session.session && session.user) {
-          // Check if session has expired
-          const currentTime = Date.now();
-          const sessionTimeout = parseInt(localStorage.getItem('usms-session-timeout') || String(DEFAULT_SESSION_TIMEOUT));
+  // Find the most recent valid session
+  let validSession: SessionData | null = null;
+  let expiredSessionIds: string[] = [];
 
-          // Use expiresAt if available, otherwise calculate from loginTime
-          const expiryTime = session.expiresAt || (session.loginTime + sessionTimeout);
+  for (const [sessionId, session] of GLOBAL_SESSIONS.entries()) {
+    const expiryTime = session.expiresAt || (session.loginTime + sessionTimeout);
 
-          if (currentTime < expiryTime) {
-            // Session is still valid
-            return {
-              data: {
-                session: session.session,
-                user: session.user
-              },
-              error: null
-            };
-          } else {
-            // Session has expired, clean it up
-            console.log('Session expired, removing from localStorage');
-            localStorage.removeItem('usms-session');
-            localStorage.removeItem('usms-session-timeout');
-          }
-        } else {
-          // Invalid session structure, remove it
-          console.log('Invalid session structure, removing from localStorage');
-          localStorage.removeItem('usms-session');
-        }
+    if (currentTime < expiryTime) {
+      if (!validSession || session.loginTime > validSession.loginTime) {
+        validSession = session;
       }
-    } catch (error) {
-      // Only clear the specific problematic session data
-      console.error('Invalid session data in localStorage:', error);
-      localStorage.removeItem('usms-session');
+    } else {
+      expiredSessionIds.push(sessionId);
     }
+  }
+
+  // Clean up expired sessions
+  expiredSessionIds.forEach(sessionId => {
+    GLOBAL_SESSIONS.delete(sessionId);
+    console.log('Session expired, removing from global storage');
+  });
+
+  if (validSession) {
+    // Check if user is suspended
+    if (validSession.user && validSession.user.username) {
+      const user = getUserByUsername(validSession.user.username);
+      if (user && user.isSuspended) {
+        // Force logout by removing session
+        for (const [sessionId, session] of GLOBAL_SESSIONS.entries()) {
+          if (session.user.username === validSession.user.username) {
+            GLOBAL_SESSIONS.delete(sessionId);
+          }
+        }
+        return {
+          data: { session: null, user: null },
+          error: { message: 'Account suspended. Please contact an administrator.' }
+        };
+      }
+    }
+
+    // Session is still valid
+    return {
+      data: {
+        session: validSession.session,
+        user: validSession.user
+      },
+      error: null
+    };
   }
 
   // No valid session found
@@ -164,82 +177,66 @@ export const mockGetSession = async () => {
 
 // Utility functions for session management
 export const setSessionTimeout = (timeoutMs: number) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('usms-session-timeout', String(timeoutMs));
+  globalAppSettings.setSetting('sessionTimeout', timeoutMs);
 
-    // Update current session expiry if it exists
-    const sessionData = localStorage.getItem('usms-session');
-    if (sessionData) {
-      try {
-        const session = JSON.parse(sessionData);
-        session.expiresAt = Date.now() + timeoutMs;
-        localStorage.setItem('usms-session', JSON.stringify(session));
-      } catch (error) {
-        console.error('Error updating session timeout:', error);
-      }
-    }
+  // Update current session expiry if it exists
+  for (const [sessionId, session] of GLOBAL_SESSIONS.entries()) {
+    session.expiresAt = Date.now() + timeoutMs;
   }
 };
 
 export const getSessionTimeout = (): number => {
-  if (typeof window !== 'undefined') {
-    const timeout = localStorage.getItem('usms-session-timeout');
-    return timeout ? parseInt(timeout) : DEFAULT_SESSION_TIMEOUT;
-  }
-  return DEFAULT_SESSION_TIMEOUT;
+  return globalAppSettings.getSetting('sessionTimeout') || DEFAULT_SESSION_TIMEOUT;
 };
 
 export const isSessionActive = (): boolean => {
-  if (typeof window !== 'undefined') {
-    const sessionData = localStorage.getItem('usms-session');
-    if (sessionData) {
-      try {
-        const session = JSON.parse(sessionData);
-        const currentTime = Date.now();
-        const expiryTime = session.expiresAt || (session.loginTime + getSessionTimeout());
+  const currentTime = Date.now();
+  const sessionTimeout = globalAppSettings.getSetting('sessionTimeout') || DEFAULT_SESSION_TIMEOUT;
 
-        // Check if session has expired
-        if (currentTime >= expiryTime) {
-          return false;
-        }
+  for (const session of GLOBAL_SESSIONS.values()) {
+    const expiryTime = session.expiresAt || (session.loginTime + sessionTimeout);
 
-        // Check if user is suspended
-        if (session.user && session.user.username) {
-          const user = getUserByUsername(session.user.username);
-          if (user && user.isSuspended) {
-            // Force logout by removing session
-            localStorage.removeItem('usms-session');
-            return false;
+    // Check if session has expired
+    if (currentTime >= expiryTime) {
+      continue;
+    }
+
+    // Check if user is suspended
+    if (session.user && session.user.username) {
+      const user = getUserByUsername(session.user.username);
+      if (user && user.isSuspended) {
+        // Force logout by removing session
+        for (const [sessionId, s] of GLOBAL_SESSIONS.entries()) {
+          if (s.user.username === session.user.username) {
+            GLOBAL_SESSIONS.delete(sessionId);
           }
         }
-
-        return true;
-      } catch {
-        return false;
+        continue;
       }
     }
+
+    return true;
   }
+
   return false;
 };
 
 export const checkUserSuspension = (): boolean => {
-  if (typeof window !== 'undefined') {
-    const sessionData = localStorage.getItem('usms-session');
-    if (sessionData) {
-      try {
-        const session = JSON.parse(sessionData);
-        if (session.user && session.user.username) {
-          const user = getUserByUsername(session.user.username);
-          if (user && user.isSuspended) {
-            // Force logout by removing session
-            localStorage.removeItem('usms-session');
-            return true; // User was suspended and logged out
+  for (const session of GLOBAL_SESSIONS.values()) {
+    if (session.user && session.user.username) {
+      const user = getUserByUsername(session.user.username);
+      if (user && user.isSuspended) {
+        // Force logout by removing session
+        for (const [sessionId, s] of GLOBAL_SESSIONS.entries()) {
+          if (s.user.username === session.user.username) {
+            GLOBAL_SESSIONS.delete(sessionId);
           }
         }
-      } catch {
-        return false;
+        return true; // User was suspended and logged out
       }
     }
   }
   return false;
 };
+
+console.log('Global authentication system initialized - sessions work across all computers');
