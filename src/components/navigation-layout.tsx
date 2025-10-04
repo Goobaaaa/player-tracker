@@ -111,5 +111,3 @@ export function NavigationLayout({ children }: NavigationLayoutProps) {
   );
 }
 
-// Import Users icon
-import { Users } from "lucide-react";
