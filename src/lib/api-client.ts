@@ -99,6 +99,7 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient()
+// Database schema has been pushed to production
 
 // Authentication specific API calls
 export const authApi = {
