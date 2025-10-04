@@ -81,6 +81,12 @@ export default function MarshallsPage() {
     setSelectedMember(null);
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClosePreview();
+    }
+  };
+
   const handleSaveMember = async () => {
     if (!formData.name.trim() || !formData.username.trim() || !formData.password.trim()) {
       setError('All required fields must be filled');
@@ -144,23 +150,18 @@ export default function MarshallsPage() {
                   className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 hover:scale-105 transition-all duration-200 cursor-pointer shadow-lg"
                 >
                   {/* Profile Picture */}
-                  <div className="w-24 h-24 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-2 border-gray-600">
+                  <div className="w-24 h-24 bg-gray-700 rounded-full mx-auto mb-4 overflow-hidden border-2 border-gray-600">
                     {member.portraitUrl ? (
                       <img
                         src={member.portraitUrl}
                         alt={member.name}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to default avatar if image fails to load
-                          e.currentTarget.style.display = 'none';
-                          const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (nextElement) {
-                            nextElement.classList.remove('hidden');
-                          }
-                        }}
                       />
-                    ) : null}
-                    <User className="h-12 w-12 text-gray-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="h-12 w-12 text-gray-500" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Member Info */}
@@ -299,16 +300,13 @@ export default function MarshallsPage() {
 
         {/* Staff Member Preview Modal */}
         {showPreviewModal && selectedMember && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/30">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/30"
+            onClick={handleBackdropClick}
+          >
             <div className="bg-gray-800 rounded-lg max-w-2xl w-full p-6 shadow-2xl border border-gray-700">
-              <div className="flex justify-between items-center mb-6">
+              <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white">Staff Member Details</h2>
-                <button
-                  onClick={handleClosePreview}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="h-6 w-6" />
-                </button>
               </div>
 
               <div className="flex flex-col md:flex-row gap-6">
@@ -388,15 +386,7 @@ export default function MarshallsPage() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={handleClosePreview}
-                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                >
-                  Close
-                </button>
-              </div>
+              <p className="text-gray-400 text-sm text-center mt-6">Click outside to close</p>
             </div>
           </div>
         )}
