@@ -110,7 +110,12 @@ export default function MarshallChatroomPage() {
       const message = messages.find(m => m.id === messageId);
       if (!message) return;
 
-      const reactions = message.reactions ? JSON.parse(message.reactions) : {};
+      let reactions: { [key: string]: string[] } = {};
+      try {
+        reactions = message.reactions ? JSON.parse(message.reactions) : {};
+      } catch {
+        reactions = {};
+      }
 
       if (!reactions[emoji]) {
         reactions[emoji] = [];
@@ -265,24 +270,32 @@ export default function MarshallChatroomPage() {
                         ))}
 
                         {/* Reactions */}
-                        {message.reactions && Object.keys(JSON.parse(message.reactions)).length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {Object.entries(JSON.parse(message.reactions)).map(([emoji, userIds]) => (
-                              <button
-                                key={emoji}
-                                onClick={() => handleAddReaction(message.id, emoji)}
-                                className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${
-                                  userIds.includes(user?.id || 'unknown')
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                }`}
-                              >
-                                <span>{emoji}</span>
-                                <span>{userIds.length}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {(() => {
+                          let reactions: { [key: string]: string[] } = {};
+                          try {
+                            reactions = message.reactions ? JSON.parse(message.reactions) : {};
+                          } catch {
+                            reactions = {};
+                          }
+                          return Object.keys(reactions).length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {Object.entries(reactions).map(([emoji, userIds]) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => handleAddReaction(message.id, emoji)}
+                                  className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${
+                                    userIds.includes(user?.id || 'unknown')
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                  }`}
+                                >
+                                  <span>{emoji}</span>
+                                  <span>{userIds.length}</span>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
 
                         {/* Action buttons */}
                         {(canEditMessage(message) || canDeleteMessage(message)) && (
