@@ -12,7 +12,7 @@ interface NavigationLayoutProps {
 
 export function NavigationLayout({ children }: NavigationLayoutProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; username: string; role: string; isSuspended: boolean } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -98,7 +98,7 @@ export function NavigationLayout({ children }: NavigationLayoutProps) {
             <div className="mb-4">
               <p className="text-sm text-gray-400">Logged in as:</p>
               <p className="text-white font-medium">{user?.name}</p>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+              <p className="text-xs text-gray-400">{user?.username}</p>
               <p className="text-xs text-blue-400 capitalize">{user?.role}</p>
             </div>
             <button

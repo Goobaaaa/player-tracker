@@ -470,7 +470,7 @@ export const updateUserName = (userId: string, name: string): boolean => {
 };
 
 export const updateUserRole = (userId: string, role: string): boolean => {
-  updateUser(userId, { role: role as any });
+  updateUser(userId, { role: role.toLowerCase() as 'admin' | 'marshall' });
   return true;
 };
 
@@ -504,7 +504,14 @@ export const createTask = (taskData: Omit<Task, 'id' | 'createdAt'>): Task => {
   return addTask(taskData);
 };
 
-export const addTaskComment = (taskId: string, commentData: any): TaskComment | null => {
+export const addTaskComment = (taskId: string, commentData: {
+  userId?: string;
+  username?: string;
+  text?: string;
+  content?: string;
+  mediaUrls?: string[];
+  documentIds?: string[];
+}): TaskComment | null => {
   const comment: TaskComment = {
     id: `comment-${Date.now()}`,
     taskId,
@@ -570,7 +577,14 @@ export const calculatePlayerAssetsValue = (playerId: string): number => {
   return assets.reduce((total, asset) => total + asset.vehicleValue, 0);
 };
 
-export const addMugshot = (mugshotData: any): Mugshot => {
+export const addMugshot = (mugshotData: {
+  playerId: string;
+  filename?: string;
+  displayName?: string;
+  imageUrl?: string;
+  url?: string;
+  isProfilePicture?: boolean;
+}): Mugshot => {
   const mugshot: Mugshot = {
     id: `mugshot-${Date.now()}`,
     playerId: mugshotData.playerId,
@@ -582,7 +596,13 @@ export const addMugshot = (mugshotData: any): Mugshot => {
   return mugshot;
 };
 
-export const addMedia = (mediaData: any): Media => {
+export const addMedia = (mediaData: {
+  playerId: string;
+  filename: string;
+  displayName?: string;
+  url: string;
+  storagePath?: string;
+}): Media => {
   const media: Media = {
     ...mediaData,
     id: `media-${Date.now()}`,

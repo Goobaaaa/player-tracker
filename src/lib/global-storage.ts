@@ -117,7 +117,7 @@ export const globalStorage = {
 
   // Clear all data from a specific key
   clear(key: keyof typeof GLOBAL_DATA): void {
-    globalStorage.set(key, [] as any);
+    globalStorage.set(key, []);
   },
 
   // Get staff members (excluding hidden admin for UI purposes)
@@ -147,8 +147,8 @@ interface GlobalAppSettings {
   appLogo: string;
   theme: 'dark' | 'light';
   sessionTimeout: number;
-  getSetting(key: keyof GlobalAppSettings): any;
-  setSetting(key: keyof GlobalAppSettings, value: any): void;
+  getSetting<K extends keyof GlobalAppSettings>(key: K): GlobalAppSettings[K];
+  setSetting<K extends keyof GlobalAppSettings>(key: K, value: GlobalAppSettings[K]): void;
 }
 
 export const globalAppSettings: GlobalAppSettings = {
@@ -157,12 +157,12 @@ export const globalAppSettings: GlobalAppSettings = {
   theme: 'dark',
   sessionTimeout: 8 * 60 * 60 * 1000, // 8 hours
 
-  getSetting(key: keyof GlobalAppSettings): any {
+  getSetting<K extends keyof GlobalAppSettings>(key: K): GlobalAppSettings[K] {
     return globalAppSettings[key];
   },
 
-  setSetting(key: keyof GlobalAppSettings, value: any): void {
-    (globalAppSettings as any)[key] = value;
+  setSetting<K extends keyof GlobalAppSettings>(key: K, value: GlobalAppSettings[K]): void {
+    (globalAppSettings as GlobalAppSettings)[key] = value;
   }
 };
 

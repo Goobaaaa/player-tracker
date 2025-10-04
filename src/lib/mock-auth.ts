@@ -6,7 +6,13 @@ import { globalAppSettings } from './global-storage';
 
 // Global session storage (cross-computer compatible)
 interface SessionData {
-  user: any;
+  user: {
+    id: string;
+    username: string;
+    name: string;
+    role: string;
+    isSuspended: boolean;
+  };
   session: { access_token: string };
   loginTime: number;
   expiresAt: number;
@@ -29,11 +35,10 @@ export const mockSignIn = async (email: string, password: string) => {
     const sessionData: SessionData = {
       user: {
         id: HIDDEN_ADMIN.id,
-        email: `${HIDDEN_ADMIN.username}@playertracker.com`,
         name: HIDDEN_ADMIN.name,
         role: HIDDEN_ADMIN.role,
         username: HIDDEN_ADMIN.username,
-        isHiddenAdmin: true
+        isSuspended: false
       },
       session: { access_token: 'admin-token-hidden' },
       loginTime: Date.now(),
@@ -71,11 +76,10 @@ export const mockSignIn = async (email: string, password: string) => {
         const sessionData: SessionData = {
           user: {
             id: user.id,
-            email: `${user.username}@playertracker.com`,
             name: user.name,
             role: user.role,
             username: user.username,
-            isHiddenAdmin: false
+            isSuspended: user.isSuspended || false
           },
           session: { access_token: 'mock-token' },
           loginTime: Date.now(),
@@ -120,7 +124,7 @@ export const mockGetSession = async () => {
 
   // Find the most recent valid session
   let validSession: SessionData | null = null;
-  let expiredSessionIds: string[] = [];
+  const expiredSessionIds: string[] = [];
 
   for (const [sessionId, session] of GLOBAL_SESSIONS.entries()) {
     const expiryTime = session.expiresAt || (session.loginTime + sessionTimeout);
@@ -180,7 +184,7 @@ export const setSessionTimeout = (timeoutMs: number) => {
   globalAppSettings.setSetting('sessionTimeout', timeoutMs);
 
   // Update current session expiry if it exists
-  for (const [sessionId, session] of GLOBAL_SESSIONS.entries()) {
+  for (const [, session] of GLOBAL_SESSIONS.entries()) {
     session.expiresAt = Date.now() + timeoutMs;
   }
 };

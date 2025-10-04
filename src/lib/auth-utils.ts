@@ -41,7 +41,7 @@ export function generateToken(user: AuthUser): string {
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string; name: string; role: string; isSuspended: boolean }
     return {
       id: decoded.id,
       username: decoded.username,
@@ -49,7 +49,7 @@ export function verifyToken(token: string): AuthUser | null {
       role: decoded.role,
       isSuspended: false // Will be checked from database
     }
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -109,7 +109,7 @@ export async function createUser(userData: {
       username: userData.username,
       password: hashedPassword,
       name: userData.name,
-      role: (userData.role as any) || 'MARSHALL'
+      role: (userData.role?.toUpperCase() as 'ADMIN' | 'MARSHALL') || 'MARSHALL'
     }
   })
 

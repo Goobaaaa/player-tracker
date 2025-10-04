@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth-utils'
+import bcrypt from 'bcryptjs'
 
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
@@ -78,7 +79,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash the password
-    const bcrypt = require('bcryptjs')
     const hashedPassword = await bcrypt.hash(userData.password, 12)
 
     const newUser = await prisma.user.create({

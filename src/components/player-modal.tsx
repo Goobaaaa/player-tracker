@@ -445,8 +445,6 @@ export default function PlayerModal({ player, isOpen, onClose, onPlayerSaved, on
 
   const handleAddDocument = () => {
     if (player && documentFile) {
-      // Use custom name if provided, otherwise use original filename
-      const displayName = documentFileName.trim() || documentFile.name;
 
       const newDocument = addPlayerDocument({
         ownerUserId: player.id,

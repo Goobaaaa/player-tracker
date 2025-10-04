@@ -259,7 +259,6 @@ export default function TasksPage() {
       }
 
       const newCommentObj = addTaskComment(taskId, {
-        taskId: taskId,
         userId: "current_user",
         username: "Current User",
         text: commentText || "",

@@ -62,7 +62,7 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
     } catch (error) {
       console.warn('Error loading theme from global storage:', error);
     }
-  }, []);
+  }, [settings.theme]);
 
   // Save settings to global storage when they change
   useEffect(() => {

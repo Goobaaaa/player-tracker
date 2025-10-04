@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+// Disable static generation to prevent SessionProvider issues during build
+export const dynamic = 'force-dynamic';
 import { usersApi } from "@/lib/api-client";
 import { useSession } from "@/contexts/session-context";
-import Image from "next/image";
-import { User, Edit, Trash2, X, Plus } from "lucide-react";
+import { User, X, Plus } from "lucide-react";
 import { NavigationLayout } from "@/components/navigation-layout";
 
 interface StaffMember {
@@ -19,7 +21,6 @@ interface StaffMember {
 export default function MarshallsPage() {
   const { user: currentUser } = useSession();
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [selectedMember, setSelectedMember] = useState<StaffMember | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,17 +41,13 @@ export default function MarshallsPage() {
     try {
       const response = await usersApi.getUsers();
       if (response.data && typeof response.data === 'object' && 'users' in response.data) {
-        setStaffMembers((response.data as any).users);
+        setStaffMembers((response.data as { users: StaffMember[] }).users);
       } else if (response.error) {
         setError(response.error);
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load staff members');
     }
-  };
-
-  const handleMemberClick = (member: StaffMember) => {
-    setSelectedMember(member);
   };
 
   const handleAddClick = () => {
@@ -93,7 +90,7 @@ export default function MarshallsPage() {
           role: "MARSHALL"
         });
       }
-    } catch (error) {
+    } catch {
       setError('Failed to create user');
     } finally {
       setLoading(false);

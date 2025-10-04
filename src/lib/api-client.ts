@@ -1,6 +1,41 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
-export interface ApiResponse<T = any> {
+export interface Player {
+  id: string
+  name: string
+  alias: string
+  avatarUrl?: string
+  notes?: string
+  createdAt: string
+  dna?: string
+  fingerprint?: string
+  phoneNumber?: string
+  status?: 'active' | 'inactive' | 'MIA'
+}
+
+export interface Task {
+  id: string
+  name: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  risk: 'dangerous' | 'high' | 'medium' | 'low'
+  assignedUsers: string[]
+  deadline: string
+  createdBy: string
+  createdAt: string
+  status: 'active' | 'completed' | 'overdue'
+}
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'marshall'
+  avatarUrl?: string
+  createdAt: string
+}
+
+export interface ApiResponse<T = unknown> {
   data?: T
   error?: string
   message?: string
@@ -44,14 +79,14 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' })
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -103,11 +138,11 @@ export const playersApi = {
     return await apiClient.get(`/players/${id}`)
   },
 
-  async createPlayer(playerData: any) {
+  async createPlayer(playerData: Partial<Player>) {
     return await apiClient.post('/players', playerData)
   },
 
-  async updatePlayer(id: string, playerData: any) {
+  async updatePlayer(id: string, playerData: Partial<Player>) {
     return await apiClient.put(`/players/${id}`, playerData)
   },
 
@@ -122,11 +157,11 @@ export const tasksApi = {
     return await apiClient.get('/tasks')
   },
 
-  async createTask(taskData: any) {
+  async createTask(taskData: Partial<Task>) {
     return await apiClient.post('/tasks', taskData)
   },
 
-  async updateTask(id: string, taskData: any) {
+  async updateTask(id: string, taskData: Partial<Task>) {
     return await apiClient.put(`/tasks/${id}`, taskData)
   },
 
@@ -150,7 +185,7 @@ export const usersApi = {
     return await apiClient.post('/users', userData)
   },
 
-  async updateUser(id: string, userData: any) {
+  async updateUser(id: string, userData: Partial<User>) {
     return await apiClient.put(`/users/${id}`, userData)
   },
 

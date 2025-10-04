@@ -12,7 +12,7 @@ import { CreateTemplateModal } from "@/components/create-template-modal";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; username: string; role: string; isSuspended: boolean } | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
