@@ -109,6 +109,16 @@ export const mockSignIn = async (email: string, password: string) => {
 export const mockSignOut = async () => {
   await new Promise(resolve => setTimeout(resolve, 200));
 
+  // First try to call real logout API
+  try {
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.log('Real logout API failed, proceeding with mock logout');
+  }
+
   // Clear all global sessions
   GLOBAL_SESSIONS.clear();
 
@@ -118,7 +128,26 @@ export const mockSignOut = async () => {
 export const mockGetSession = async () => {
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Check if any active sessions exist in global storage
+  // First try to get real session from API
+  try {
+    const response = await fetch('/api/auth/session', {
+      credentials: 'include'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        data: {
+          session: data.session,
+          user: data.user
+        },
+        error: null
+      };
+    }
+  } catch (error) {
+    console.log('Real session API failed, falling back to mock session');
+  }
+
+  // Fallback to mock session system
   const currentTime = Date.now();
   const sessionTimeout = globalAppSettings.getSetting('sessionTimeout') || DEFAULT_SESSION_TIMEOUT;
 
