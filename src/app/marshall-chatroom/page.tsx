@@ -113,7 +113,7 @@ export default function MarshallChatroomPage() {
       let reactions: { [key: string]: string[] } = {};
       if (message.reactions) {
         try {
-          reactions = JSON.parse(message.reactions) as { [key: string]: string[] };
+          reactions = JSON.parse(message.reactions as unknown as string) as { [key: string]: string[] };
         } catch {
           reactions = {};
         }
@@ -276,7 +276,7 @@ export default function MarshallChatroomPage() {
                           let reactions: { [key: string]: string[] } = {};
                           if (message.reactions) {
                             try {
-                              reactions = JSON.parse(message.reactions) as { [key: string]: string[] };
+                              reactions = JSON.parse(message.reactions as unknown as string) as { [key: string]: string[] };
                             } catch {
                               reactions = {};
                             }
