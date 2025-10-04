@@ -41,7 +41,10 @@ export default function MarshallsPage() {
     try {
       const response = await usersApi.getUsers();
       if (response.data && typeof response.data === 'object' && 'users' in response.data) {
-        setStaffMembers((response.data as { users: StaffMember[] }).users);
+        const allUsers = (response.data as { users: StaffMember[] }).users;
+        // Filter out the System Administrator account
+        const filteredUsers = allUsers.filter(user => user.username !== 'admin');
+        setStaffMembers(filteredUsers);
       } else if (response.error) {
         setError(response.error);
       }
