@@ -2,22 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import {
-  mockStaffMembers,
-  getAllTemplates,
-  assignTemplatePermission,
-  removeTemplatePermission,
-  hasTemplateAccess,
-  updateUser,
-  updateUserRole,
-  updateUserName,
-  suspendUser,
-  unsuspendUser,
-  getVisibleStaffMembers,
-  saveStaffMembers,
-  HIDDEN_ADMIN
-} from "@/lib/mock-data";
-import { Template, StaffMember } from "@/lib/database";
+import { useSession } from "@/contexts/session-context";
+import { authApi } from "@/lib/api-client";
+import { Template } from "@/lib/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,74 +14,92 @@ interface UserManagementProps {
   onClose: () => void;
 }
 
+interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  isSuspended: boolean;
+  tagLine?: string | null;
+  description?: string | null;
+  bloodType?: string | null;
+  hobby?: string | null;
+  portraitUrl?: string | null;
+  createdAt: string;
+}
+
 interface NewUser {
   name: string;
   username: string;
   password: string;
-  tagLine: string;
-  description: string;
-  bloodType: string;
-  favouriteHobby: string;
   role: 'admin' | 'marshall';
 }
 
 export function UserManagement({ onClose }: UserManagementProps) {
-  const [users, setUsers] = useState(getVisibleStaffMembers());
+  const { user: currentUser } = useSession();
+  const [users, setUsers] = useState<User[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [newUser, setNewUser] = useState<NewUser>({
     name: "",
     username: "",
     password: "",
-    tagLine: "",
-    description: "",
-    bloodType: "",
-    favouriteHobby: "",
     role: "marshall"
   });
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editingData, setEditingData] = useState<Partial<NewUser>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch users from API
   useEffect(() => {
-    setTemplates(getAllTemplates());
+    fetchUsers();
   }, []);
 
-  // Update templates and user access whenever templates change
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTemplates(getAllTemplates());
-      setUsers([...getVisibleStaffMembers()]);
-    }, 1000); // Check every second for template changes
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      } else {
+        setError('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Error fetching users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!newUser.name.trim() || !newUser.username.trim() || !newUser.password.trim()) return;
 
-    const user = {
-      id: `user-${Date.now()}`,
-      name: newUser.name,
-      username: newUser.username,
-      password: newUser.password,
-      role: newUser.role,
-      tagLine: newUser.tagLine || "USMS Staff",
-      description: newUser.description || "United States Marshall Service Staff Member",
-      bloodType: newUser.bloodType || "O+",
-      favouriteHobby: newUser.favouriteHobby || "Serving Justice",
-      portraitUrl: "",
-      isSuspended: false,
-      createdAt: new Date().toISOString(),
-      createdBy: "admin"
-    };
+    try {
+      setLoading(true);
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUser),
+      });
 
-    mockStaffMembers.push(user);
-    saveStaffMembers(mockStaffMembers);
-    setUsers([...getVisibleStaffMembers()]);
-    setNewUser({ name: "", username: "", password: "", tagLine: "", description: "", bloodType: "", favouriteHobby: "", role: "marshall" });
-    setShowCreateUser(false);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers([...users, data.user]);
+        setNewUser({ name: "", username: "", password: "", role: "marshall" });
+        setShowCreateUser(false);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to create user');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      setError('Error creating user');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAssignPermission = () => {

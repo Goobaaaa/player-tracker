@@ -21,7 +21,7 @@ export default function HomePage() {
   const loadTemplates = useCallback(() => {
     if (!user) return;
 
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
       const allTemplates = getAllTemplates();
       setTemplates(allTemplates);
     } else {
@@ -107,7 +107,7 @@ export default function HomePage() {
             ))}
           </nav>
 
-          {user?.role === 'admin' && (
+          {user?.role === 'ADMIN' && (
             <div className="mt-8 pt-8 border-t border-gray-700">
               <h3 className="text-lg font-semibold text-white mb-4">Admin Actions</h3>
               <div className="space-y-2">
@@ -234,7 +234,7 @@ export default function HomePage() {
             ) : (
               <div className="bg-gray-800 rounded-lg p-6">
                 <p className="text-gray-400">
-                  No templates available. {user?.role === 'admin' && 'Create a template to get started.'}
+                  No templates available. {user?.role === 'ADMIN' && 'Create a template to get started.'}
                 </p>
               </div>
             )}
@@ -255,7 +255,7 @@ export default function HomePage() {
           onClose={() => setShowCreateTemplateModal(false)}
           onTemplateCreated={handleTemplateCreated}
           currentUserId={user.id}
-          isAdmin={user.role === 'admin'}
+          isAdmin={user.role === 'ADMIN'}
         />
       )}
     </div>
