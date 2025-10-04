@@ -162,10 +162,10 @@ export function UserManagement({ onClose }: UserManagementProps) {
   if (currentUser?.role !== 'ADMIN') {
     return (
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
         onClick={handleBackdropClick}
       >
-        <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-700">
           <div className="text-center text-white">
             <h2 className="text-xl font-bold mb-4">Access Denied</h2>
             <p>Admin access required to manage users.</p>
@@ -180,10 +180,10 @@ export function UserManagement({ onClose }: UserManagementProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
-      <div className="bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-700">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">User Management</h2>
           <button
@@ -320,7 +320,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
                 className="w-full bg-gray-600 border-gray-500 text-white px-3 py-2 rounded"
               >
                 <option value="">Choose a user...</option>
-                {users.map((user) => (
+                {users.filter(user => user.username !== 'admin').map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.name} (@{user.username})
                   </option>
@@ -342,10 +342,10 @@ export function UserManagement({ onClose }: UserManagementProps) {
         <div className="space-y-4">
           {loading && users.length === 0 ? (
             <div className="text-center text-gray-400 py-8">Loading users...</div>
-          ) : users.length === 0 ? (
+          ) : users.filter(user => user.username !== 'admin').length === 0 ? (
             <div className="text-center text-gray-400 py-8">No users found</div>
           ) : (
-            users.map((user) => (
+            users.filter(user => user.username !== 'admin').map((user) => (
               <div key={user.id} className="bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">

@@ -110,16 +110,7 @@ export default function MarshallsPage() {
                 <div className="text-red-400 text-sm mt-2">{error}</div>
               )}
             </div>
-            {currentUser?.role === 'ADMIN' && (
-              <button
-                onClick={handleAddClick}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                <Plus className="h-5 w-5" />
-                <span>Add User</span>
-              </button>
-            )}
-          </div>
+                      </div>
         </div>
 
         {/* Staff Grid */}
@@ -154,16 +145,7 @@ export default function MarshallsPage() {
             <div className="text-center py-12">
               <User className="h-16 w-16 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg mb-4">No staff members found</p>
-              {currentUser?.role === 'ADMIN' && (
-                <button
-                  onClick={handleAddClick}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center space-x-2 transition-colors"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span>Add First User</span>
-                </button>
-              )}
-            </div>
+                          </div>
           )}
         </div>
 
