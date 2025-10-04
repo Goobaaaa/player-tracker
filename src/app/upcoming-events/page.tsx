@@ -41,12 +41,21 @@ export default function UpcomingEventsPage() {
     if (!formData.title.trim() || !formData.dateTime) return;
 
     try {
+      console.log('Creating event with data:', {
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        dateTime: formData.dateTime,
+        location: formData.location || undefined
+      });
+
       const response = await eventsApi.createEvent({
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
         dateTime: formData.dateTime,
         location: formData.location || undefined
       });
+
+      console.log('Event creation response:', response);
 
       if (response.data) {
         await loadEvents();
@@ -57,6 +66,8 @@ export default function UpcomingEventsPage() {
           dateTime: "",
           location: ""
         });
+      } else {
+        console.error('No data in response:', response);
       }
     } catch (error) {
       console.error('Failed to create event:', error);

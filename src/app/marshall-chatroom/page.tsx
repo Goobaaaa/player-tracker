@@ -50,17 +50,27 @@ export default function MarshallChatroomPage() {
     if (!newMessage.trim() && !selectedImage) return;
 
     try {
+      console.log('Sending message with data:', {
+        content: newMessage.trim(),
+        imageUrl: selectedImage || undefined,
+        reactions: undefined
+      });
+
       const response = await chatMessagesApi.createMessage({
         content: newMessage.trim(),
         imageUrl: selectedImage || undefined,
         reactions: undefined
       });
 
+      console.log('Message creation response:', response);
+
       if (response.data) {
         await loadMessages();
         setNewMessage("");
         setSelectedImage(null);
         scrollToBottom();
+      } else {
+        console.error('No data in message response:', response);
       }
     } catch (error) {
       console.error('Failed to send message:', error);

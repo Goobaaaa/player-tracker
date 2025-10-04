@@ -39,6 +39,14 @@ export default function QuoteWallPage() {
     if (!formData.quoteText.trim() || !formData.whoSaidIt.trim()) return;
 
     try {
+      console.log('Creating quote with data:', {
+        text: formData.quoteText.trim(),
+        author: formData.whoSaidIt.trim(),
+        context: formData.whenSaid.trim() || undefined,
+        whenSaid: formData.whenSaid.trim() || undefined,
+        whySaid: formData.whySaid.trim() || undefined
+      });
+
       const response = await quotesApi.createQuote({
         text: formData.quoteText.trim(),
         author: formData.whoSaidIt.trim(),
@@ -46,6 +54,8 @@ export default function QuoteWallPage() {
         whenSaid: formData.whenSaid.trim() || undefined,
         whySaid: formData.whySaid.trim() || undefined
       });
+
+      console.log('Quote creation response:', response);
 
       if (response.data) {
         await loadQuotes();
@@ -56,6 +66,8 @@ export default function QuoteWallPage() {
           whenSaid: "",
           whySaid: ""
         });
+      } else {
+        console.error('No data in quote response:', response);
       }
     } catch (error) {
       console.error('Failed to create quote:', error);
