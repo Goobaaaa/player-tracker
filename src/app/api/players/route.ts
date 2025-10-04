@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth-utils'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/players - Get all players
 export async function GET(request: NextRequest) {
