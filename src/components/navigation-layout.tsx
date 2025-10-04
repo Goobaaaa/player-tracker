@@ -2,37 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
+import { useSession } from "@/contexts/session-context";
 import Image from "next/image";
-import { LogOut, Home, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
+import { LogOut, Home, Car, Users, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
 
 interface NavigationLayoutProps {
   children: React.ReactNode;
 }
 
 export function NavigationLayout({ children }: NavigationLayoutProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string; username: string; role: string; isSuspended: boolean } | null>(null);
+  const { user, loading, signOut } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session, user: sessionUser }, error } = await mockGetSession();
-      if (error || !session) {
-        router.push("/login");
-        return;
-      }
-      setIsAuthenticated(true);
-      setUser(sessionUser);
-    };
-    checkAuth();
-  }, [router]);
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
     try {
-      const { mockSignOut } = await import("@/lib/mock-auth");
-      await mockSignOut();
+      await signOut();
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -54,7 +45,7 @@ export function NavigationLayout({ children }: NavigationLayoutProps) {
   // No filtering needed as all nav items are available to all users
   const filteredNavItems = navItems;
 
-  if (!isAuthenticated) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white">Loading...</div>
