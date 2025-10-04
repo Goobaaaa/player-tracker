@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
         username: true,
         name: true,
         role: true,
+        tagLine: true,
+        description: true,
+        bloodType: true,
+        hobby: true,
+        portraitUrl: true,
         isSuspended: true,
         createdAt: true,
         updatedAt: true
@@ -78,13 +83,23 @@ export async function POST(request: NextRequest) {
         username: userData.username,
         password: hashedPassword,
         name: userData.name,
-        role: (userData.role?.toUpperCase() as 'ADMIN' | 'MARSHALL') || 'MARSHALL'
+        role: (userData.role?.toUpperCase() as 'ADMIN' | 'MARSHALL') || 'MARSHALL',
+        tagLine: userData.tagLine || null,
+        description: userData.description || null,
+        bloodType: userData.bloodType || null,
+        hobby: userData.favouriteHobby || null,
+        portraitUrl: userData.portraitUrl || null
       },
       select: {
         id: true,
         username: true,
         name: true,
         role: true,
+        tagLine: true,
+        description: true,
+        bloodType: true,
+        hobby: true,
+        portraitUrl: true,
         isSuspended: true,
         createdAt: true
       }
