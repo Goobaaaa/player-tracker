@@ -153,7 +153,10 @@ export default function MarshallsPage() {
                         onError={(e) => {
                           // Fallback to default avatar if image fails to load
                           e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling.classList.remove('hidden');
+                          const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (nextElement) {
+                            nextElement.classList.remove('hidden');
+                          }
                         }}
                       />
                     ) : null}
