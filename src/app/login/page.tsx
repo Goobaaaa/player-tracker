@@ -29,15 +29,21 @@ function LoginPageContent() {
     setLoading(true);
     setError(null);
 
+    console.log('Login attempt:', { username, password: '***' });
+
     try {
       const result = await login(username, password);
+      console.log('Login result:', result);
 
       if (result.success) {
+        console.log('Redirecting to homepage...');
         router.push("/homepage");
       } else {
+        console.log('Login failed:', result.error);
         setError(result.error || "Login failed");
       }
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -57,7 +63,7 @@ function LoginPageContent() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <Input
-              id="username"
+              id="login-username"
               type="text"
               placeholder="Username"
               value={username}
@@ -69,7 +75,7 @@ function LoginPageContent() {
 
           <div>
             <Input
-              id="password"
+              id="login-password"
               type="password"
               placeholder="Password"
               value={password}
@@ -88,8 +94,7 @@ function LoginPageContent() {
           )}
 
           <div className="text-gray-400 text-xs text-center space-y-1">
-            <p>• Use admin/admin123 for administrator access</p>
-            <p>• Use marshall/marshall123 for marshall access</p>
+            <p>• Use admin/admin for administrator access</p>
             <p>• User accounts must be created by an administrator</p>
             <p>• Contact your admin if you need login credentials</p>
           </div>

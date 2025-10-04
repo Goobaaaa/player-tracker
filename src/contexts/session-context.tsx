@@ -59,18 +59,22 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string) => {
     try {
+      console.log('Session context login attempt:', { username, password: '***' });
       const result = await authApi.login(username, password);
+      console.log('Auth API result:', result);
 
       if (result.success && result.data) {
         const data = result.data as { user: User; message: string };
+        console.log('Setting user session:', data.user);
         setUser(data.user);
         setSession({ access_token: 'cookie-based' });
         return { success: true };
       } else {
+        console.log('Auth API returned error:', result.error);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Session context login error:', error);
       return { success: false, error: 'Login failed' };
     }
   };
