@@ -249,6 +249,17 @@ export const chatMessagesApi = {
     reactions?: string
   }) {
     return await apiClient.post('/chat-messages', data)
+  },
+
+  async updateMessage(id: string, data: {
+    content?: string
+    reactions?: string
+  }) {
+    return await apiClient.put('/chat-messages', { id, ...data })
+  },
+
+  async deleteMessage(id: string) {
+    return await apiClient.delete(`/chat-messages?id=${id}`)
   }
 }
 

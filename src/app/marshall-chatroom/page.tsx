@@ -75,55 +75,66 @@ export default function MarshallChatroomPage() {
     }
   };
 
-  const handleSaveEdit = (messageId: string) => {
-    const messageIndex = mockChatMessages.findIndex(m => m.id === messageId);
-    if (messageIndex > -1) {
-      mockChatMessages[messageIndex] = {
-        ...mockChatMessages[messageIndex],
-        content: editingContent,
-        editedAt: new Date().toISOString()
-      };
-      loadMessages();
-      setEditingMessageId(null);
-      setEditingContent("");
+  const handleSaveEdit = async (messageId: string) => {
+    try {
+      const response = await chatMessagesApi.updateMessage(messageId, {
+        content: editingContent
+      });
+
+      if (response.data) {
+        await loadMessages();
+        setEditingMessageId(null);
+        setEditingContent("");
+      }
+    } catch (error) {
+      console.error('Failed to update message:', error);
     }
   };
 
-  const handleDeleteMessage = (messageId: string) => {
+  const handleDeleteMessage = async (messageId: string) => {
     if (confirm("Are you sure you want to delete this message?")) {
-      const index = mockChatMessages.findIndex(m => m.id === messageId);
-      if (index > -1) {
-        mockChatMessages.splice(index, 1);
-        loadMessages();
+      try {
+        const response = await chatMessagesApi.deleteMessage(messageId);
+        if (response.data) {
+          await loadMessages();
+        }
+      } catch (error) {
+        console.error('Failed to delete message:', error);
       }
     }
   };
 
-  const handleAddReaction = (messageId: string, emoji: string) => {
-    const messageIndex = mockChatMessages.findIndex(m => m.id === messageId);
-    if (messageIndex > -1) {
-      const message = mockChatMessages[messageIndex];
-      const reactions = { ...message.reactions };
+  const handleAddReaction = async (messageId: string, emoji: string) => {
+    try {
+      // Find the current message to get existing reactions
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return;
+
+      const reactions = message.reactions ? JSON.parse(message.reactions) : {};
 
       if (!reactions[emoji]) {
         reactions[emoji] = [];
       }
 
-      const userIndex = reactions[emoji].indexOf(user?.id || '1');
+      const userIndex = reactions[emoji].indexOf(user?.id || 'unknown');
       if (userIndex > -1) {
         reactions[emoji].splice(userIndex, 1);
         if (reactions[emoji].length === 0) {
           delete reactions[emoji];
         }
       } else {
-        reactions[emoji].push(user?.id || '1');
+        reactions[emoji].push(user?.id || 'unknown');
       }
 
-      mockChatMessages[messageIndex] = {
-        ...message,
-        reactions
-      };
-      loadMessages();
+      const response = await chatMessagesApi.updateMessage(messageId, {
+        reactions: JSON.stringify(reactions)
+      });
+
+      if (response.data) {
+        await loadMessages();
+      }
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
     }
     setSelectedMessageForReaction(null);
   };
@@ -254,14 +265,14 @@ export default function MarshallChatroomPage() {
                         ))}
 
                         {/* Reactions */}
-                        {Object.keys(message.reactions).length > 0 && (
+                        {message.reactions && Object.keys(JSON.parse(message.reactions)).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {Object.entries(message.reactions).map(([emoji, userIds]) => (
+                            {Object.entries(JSON.parse(message.reactions)).map(([emoji, userIds]) => (
                               <button
                                 key={emoji}
                                 onClick={() => handleAddReaction(message.id, emoji)}
                                 className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${
-                                  userIds.includes(user?.id || '1')
+                                  userIds.includes(user?.id || 'unknown')
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                 }`}
