@@ -2,22 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockGetSession } from "@/lib/mock-auth";
 import { getAllTemplates, getUserTemplates } from "@/lib/mock-data";
 import { Template } from "@/lib/database";
 import Image from "next/image";
 import { Plus, Users, LogOut, Home, Car, MessageSquare, Camera, Quote, Gift, Calendar } from "lucide-react";
 import { UserManagement } from "@/components/user-management";
 import { CreateTemplateModal } from "@/components/create-template-modal";
+import { useSession } from "@/contexts/session-context";
 
 export default function HomePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string; username: string; role: string; isSuspended: boolean } | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const router = useRouter();
+  const { user, loading, signOut } = useSession();
 
   const loadTemplates = useCallback(() => {
     if (!user) return;
@@ -32,18 +31,14 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session, user: sessionUser }, error } = await mockGetSession();
-      if (error || !session) {
-        router.push("/login");
-        return;
-      }
-      setIsAuthenticated(true);
-      setUser(sessionUser);
+    if (!loading && !user) {
+      router.push("/login");
+      return;
+    }
+    if (user) {
       loadTemplates();
-    };
-    checkAuth();
-  }, [router, user, loadTemplates]);
+    }
+  }, [user, loading, router, loadTemplates]);
 
   const handleCreateTemplate = () => {
     setShowCreateTemplateModal(true);
@@ -63,8 +58,7 @@ export default function HomePage() {
   };
 
   const handleLogout = async () => {
-    const { mockSignOut } = await import("@/lib/mock-auth");
-    await mockSignOut();
+    await signOut();
     router.push("/login");
   };
 
@@ -79,7 +73,7 @@ export default function HomePage() {
     { icon: Calendar, label: "Upcoming Events", href: "/upcoming-events" },
   ];
 
-  if (!isAuthenticated) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white">Loading...</div>
