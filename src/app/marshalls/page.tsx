@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 // Disable static generation to prevent SessionProvider issues during build
 export const dynamic = 'force-dynamic';
-import { marshallsApi } from "@/lib/api-client";
+import { marshallsApi, usersApi } from "@/lib/api-client";
 import { useSession } from "@/contexts/session-context";
 import { User, X, Plus, Mail, Calendar, Phone, Heart, Briefcase, Shield } from "lucide-react";
 import { NavigationLayout } from "@/components/navigation-layout";
