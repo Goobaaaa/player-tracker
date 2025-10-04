@@ -29,7 +29,7 @@ export default function CommendationJarPage() {
   const loadCommendations = async () => {
     try {
       const response = await commendationsApi.getCommendations();
-      if (response.data && 'commendations' in response.data) {
+      if (response.data && typeof response.data === 'object' && 'commendations' in response.data) {
         setCommendations((response.data as { commendations: Commendation[] }).commendations);
       }
     } catch (error) {
