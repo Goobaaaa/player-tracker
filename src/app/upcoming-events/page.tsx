@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockEvents } from "@/lib/mock-data";
 import { Event } from "@/lib/database";
 import { Calendar, Plus, X, Clock, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
+import { eventsApi } from "@/lib/api-client";
 
 export default function UpcomingEventsPage() {
   const { user } = useSession();
@@ -25,31 +25,40 @@ export default function UpcomingEventsPage() {
     }
   }, [user]);
 
-  const loadEvents = () => {
-    setEvents(mockEvents.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()));
+  const loadEvents = async () => {
+    try {
+      const response = await eventsApi.getEvents();
+      if (response.data && typeof response.data === 'object' && 'events' in response.data) {
+        setEvents((response.data as { events: Event[] }).events);
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+    }
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (!formData.title.trim() || !formData.dateTime) return;
 
-    const newEvent: Event = {
-      id: `event-${Date.now()}`,
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      dateTime: formData.dateTime,
-      createdBy: user?.id || 'unknown',
-      createdByName: user?.name || 'Unknown User',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const response = await eventsApi.createEvent({
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        dateTime: formData.dateTime,
+        location: formData.location || undefined
+      });
 
-    mockEvents.push(newEvent);
-    loadEvents();
-    setShowAddModal(false);
-    setFormData({
-      title: "",
-      description: "",
-      dateTime: ""
-    });
+      if (response.data) {
+        await loadEvents();
+        setShowAddModal(false);
+        setFormData({
+          title: "",
+          description: "",
+          dateTime: ""
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create event:', error);
+    }
   };
 
   const getDaysInMonth = (date: Date) => {

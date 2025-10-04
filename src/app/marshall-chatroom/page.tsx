@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockChatMessages } from "@/lib/mock-data";
 import { ChatMessage } from "@/lib/database";
 import Image from "next/image";
 import { MessageSquare, Send, Trash2, Edit, X, Upload, Smile } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
+import { chatMessagesApi } from "@/lib/api-client";
 
 export default function MarshallChatroomPage() {
   const { user } = useSession();
@@ -31,32 +31,40 @@ export default function MarshallChatroomPage() {
     scrollToBottom();
   }, [messages]);
 
-  const loadMessages = () => {
-    setMessages(mockChatMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+  const loadMessages = async () => {
+    try {
+      const response = await chatMessagesApi.getMessages();
+      if (response.data && typeof response.data === 'object' && 'messages' in response.data) {
+        setMessages((response.data as { messages: ChatMessage[] }).messages);
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedImage) return;
 
-    const message: ChatMessage = {
-      id: `chat-${Date.now()}`,
-      authorId: user?.id || '1',
-      authorName: user?.name || 'Unknown',
-      content: newMessage.trim(),
-      createdAt: new Date().toISOString(),
-      reactions: {},
-      mediaUrls: selectedImage ? [selectedImage] : []
-    };
+    try {
+      const response = await chatMessagesApi.createMessage({
+        content: newMessage.trim(),
+        imageUrl: selectedImage || undefined,
+        reactions: undefined
+      });
 
-    mockChatMessages.push(message);
-    loadMessages();
-    setNewMessage("");
-    setSelectedImage(null);
-    scrollToBottom();
+      if (response.data) {
+        await loadMessages();
+        setNewMessage("");
+        setSelectedImage(null);
+        scrollToBottom();
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
   const handleEditMessage = (messageId: string) => {

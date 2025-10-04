@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockMediaItems } from "@/lib/mock-data";
 import { MediaItem } from "@/lib/database";
 import Image from "next/image";
 import { Camera, Upload, X, Plus, Eye, Trash2 } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
+import { mediaApi } from "@/lib/api-client";
 
 export default function MarshallMediaPage() {
   const { user } = useSession();
@@ -25,8 +25,15 @@ export default function MarshallMediaPage() {
     }
   }, [user]);
 
-  const loadMediaItems = () => {
-    setMediaItems(mockMediaItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadMediaItems = async () => {
+    try {
+      const response = await mediaApi.getMediaItems();
+      if (response.data && typeof response.data === 'object' && 'mediaItems' in response.data) {
+        setMediaItems((response.data as { mediaItems: MediaItem[] }).mediaItems);
+      }
+    } catch (error) {
+      console.error('Failed to load media items:', error);
+    }
   };
 
   const handleAddClick = () => {
@@ -51,24 +58,26 @@ export default function MarshallMediaPage() {
     }
   };
 
-  const handleAddMedia = () => {
+  const handleAddMedia = async () => {
     if (!newMediaUrl.trim()) return;
 
-    const newMedia: MediaItem = {
-      id: `media-${Date.now()}`,
-      url: newMediaUrl,
-      description: newMediaDescription.trim() || "No description provided",
-      uploaderId: user?.id || '1',
-      uploaderName: user?.name || 'Unknown',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const response = await mediaApi.createMediaItem({
+        url: newMediaUrl.trim(),
+        type: 'image',
+        caption: newMediaDescription.trim() || undefined
+      });
 
-    mockMediaItems.push(newMedia);
-    loadMediaItems();
-    setShowAddModal(false);
-    setNewMediaUrl("");
-    setNewMediaDescription("");
-    setPreviewImage(null);
+      if (response.data) {
+        await loadMediaItems();
+        setShowAddModal(false);
+        setNewMediaUrl("");
+        setNewMediaDescription("");
+        setPreviewImage(null);
+      }
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+    }
   };
 
   const handleDeleteMedia = (media: MediaItem) => {

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockQuotes } from "@/lib/mock-data";
 import { Quote } from "@/lib/database";
 import { MessageSquare, Plus, X, User, Calendar, HelpCircle } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
+import { quotesApi } from "@/lib/api-client";
 
 export default function QuoteWallPage() {
   const { user } = useSession();
@@ -24,33 +24,42 @@ export default function QuoteWallPage() {
     }
   }, [user]);
 
-  const loadQuotes = () => {
-    setQuotes(mockQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadQuotes = async () => {
+    try {
+      const response = await quotesApi.getQuotes();
+      if (response.data && typeof response.data === 'object' && 'quotes' in response.data) {
+        setQuotes((response.data as { quotes: Quote[] }).quotes);
+      }
+    } catch (error) {
+      console.error('Failed to load quotes:', error);
+    }
   };
 
-  const handleAddQuote = () => {
+  const handleAddQuote = async () => {
     if (!formData.quoteText.trim() || !formData.whoSaidIt.trim()) return;
 
-    const newQuote: Quote = {
-      id: `quote-${Date.now()}`,
-      quoteText: formData.quoteText.trim(),
-      whoSaidIt: formData.whoSaidIt.trim(),
-      whenSaid: formData.whenSaid.trim(),
-      whySaid: formData.whySaid.trim(),
-      submittedBy: user?.id || '1',
-      submittedByName: user?.name || 'Anonymous',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const response = await quotesApi.createQuote({
+        text: formData.quoteText.trim(),
+        author: formData.whoSaidIt.trim(),
+        context: formData.whenSaid.trim() || undefined,
+        whenSaid: formData.whenSaid.trim() || undefined,
+        whySaid: formData.whySaid.trim() || undefined
+      });
 
-    mockQuotes.push(newQuote);
-    loadQuotes();
-    setShowAddModal(false);
-    setFormData({
-      quoteText: "",
-      whoSaidIt: "",
-      whenSaid: "",
-      whySaid: ""
-    });
+      if (response.data) {
+        await loadQuotes();
+        setShowAddModal(false);
+        setFormData({
+          quoteText: "",
+          whoSaidIt: "",
+          whenSaid: "",
+          whySaid: ""
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create quote:', error);
+    }
   };
 
   return (
