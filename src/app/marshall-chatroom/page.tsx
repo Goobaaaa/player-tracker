@@ -111,10 +111,12 @@ export default function MarshallChatroomPage() {
       if (!message) return;
 
       let reactions: { [key: string]: string[] } = {};
-      try {
-        reactions = message.reactions ? JSON.parse(message.reactions as string) : {};
-      } catch {
-        reactions = {};
+      if (message.reactions) {
+        try {
+          reactions = JSON.parse(message.reactions) as { [key: string]: string[] };
+        } catch {
+          reactions = {};
+        }
       }
 
       if (!reactions[emoji]) {
@@ -272,10 +274,12 @@ export default function MarshallChatroomPage() {
                         {/* Reactions */}
                         {(() => {
                           let reactions: { [key: string]: string[] } = {};
-                          try {
-                            reactions = message.reactions ? JSON.parse(message.reactions as string) : {};
-                          } catch {
-                            reactions = {};
+                          if (message.reactions) {
+                            try {
+                              reactions = JSON.parse(message.reactions) as { [key: string]: string[] };
+                            } catch {
+                              reactions = {};
+                            }
                           }
                           return Object.keys(reactions).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
