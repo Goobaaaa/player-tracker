@@ -94,7 +94,6 @@ function LoginPageContent() {
           )}
 
           <div className="text-gray-400 text-xs text-center space-y-1">
-            <p>• Use admin/admin for administrator access</p>
             <p>• User accounts must be created by an administrator</p>
             <p>• Contact your admin if you need login credentials</p>
           </div>
