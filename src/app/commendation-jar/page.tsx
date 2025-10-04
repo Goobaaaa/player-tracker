@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { NavigationLayout } from "@/components/navigation-layout";
-import { mockCommendations } from "@/lib/mock-data";
 import { Commendation } from "@/lib/database";
 import Image from "next/image";
 import { Award, Plus, X, Calendar, User, Trophy } from "lucide-react";
+import { useSession } from "@/contexts/session-context";
+import { commendationsApi } from "@/lib/api-client";
 
 export default function CommendationJarPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const { user } = useSession();
   const [commendations, setCommendations] = useState<Commendation[]>([]);
   const [selectedCommendation, setSelectedCommendation] = useState<Commendation | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -20,37 +21,46 @@ export default function CommendationJarPage() {
   });
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadCommendations();
-  }, []);
+    if (user) {
+      loadCommendations();
+    }
+  }, [user]);
 
-  const loadCommendations = () => {
-    setCommendations(mockCommendations.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()));
+  const loadCommendations = async () => {
+    try {
+      const response = await commendationsApi.getCommendations();
+      if (response.data && 'commendations' in response.data) {
+        setCommendations((response.data as { commendations: Commendation[] }).commendations);
+      }
+    } catch (error) {
+      console.error('Failed to load commendations:', error);
+    }
   };
 
-  const handleAddCommendation = () => {
+  const handleAddCommendation = async () => {
     if (!formData.recipientName.trim() || !formData.shortReason.trim()) return;
 
-    const newCommendation: Commendation = {
-      id: `commend-${Date.now()}`,
-      recipientName: formData.recipientName.trim(),
-      shortReason: formData.shortReason.trim(),
-      fullExplanation: formData.fullExplanation.trim(),
-      issuedBy: user?.id || '1',
-      issuedByName: user?.name || 'Unknown',
-      imageUrl: formData.imageUrl || "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop",
-      issuedAt: new Date().toISOString()
-    };
+    try {
+      const response = await commendationsApi.createCommendation({
+        recipientName: formData.recipientName.trim(),
+        shortReason: formData.shortReason.trim(),
+        fullExplanation: formData.fullExplanation.trim() || undefined,
+        imageUrl: formData.imageUrl || undefined
+      });
 
-    mockCommendations.push(newCommendation);
-    loadCommendations();
-    setShowAddModal(false);
-    setFormData({
-      recipientName: "",
-      shortReason: "",
-      fullExplanation: "",
-      imageUrl: ""
-    });
+      if (response.data) {
+        await loadCommendations();
+        setShowAddModal(false);
+        setFormData({
+          recipientName: "",
+          shortReason: "",
+          fullExplanation: "",
+          imageUrl: ""
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create commendation:', error);
+    }
   };
 
   const handleCommendationClick = (commendation: Commendation) => {

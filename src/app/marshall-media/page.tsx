@@ -6,9 +6,10 @@ import { mockMediaItems } from "@/lib/mock-data";
 import { MediaItem } from "@/lib/database";
 import Image from "next/image";
 import { Camera, Upload, X, Plus, Eye, Trash2 } from "lucide-react";
+import { useSession } from "@/contexts/session-context";
 
 export default function MarshallMediaPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const { user } = useSession();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -19,9 +20,10 @@ export default function MarshallMediaPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadMediaItems();
-  }, []);
+    if (user) {
+      loadMediaItems();
+    }
+  }, [user]);
 
   const loadMediaItems = () => {
     setMediaItems(mockMediaItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));

@@ -8,7 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -237,6 +237,8 @@ model ChatMessage {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   content   String
+  imageUrl  String?
+  reactions String?
   timestamp DateTime @default(now())
 
   @@map("chat_messages")
@@ -244,6 +246,7 @@ model ChatMessage {
 
 model MediaItem {
   id        String   @id @default(cuid())
+  userId    String   @map("user_id")
   url       String
   type      String   // image, video, etc.
   caption   String?
@@ -256,17 +259,23 @@ model Quote {
   id        String   @id @default(cuid())
   text      String
   author    String
+  context   String?
+  whenSaid   String?
+  whySaid    String?
+  userId    String   @map("user_id")
   createdAt DateTime @default(now())
 
   @@map("quotes")
 }
 
 model Commendation {
-  id        String   @id @default(cuid())
-  recipient String   @map("recipient_id")
-  text      String
-  createdBy String   @map("created_by")
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  recipientName  String   @map("recipient_name")
+  shortReason    String   @map("short_reason")
+  fullExplanation String? @map("full_explanation")
+  imageUrl       String?
+  issuedBy       String   @map("issued_by")
+  createdAt      DateTime @default(now())
 
   @@map("commendations")
 }
@@ -275,9 +284,10 @@ model Event {
   id          String   @id @default(cuid())
   title       String
   description String?
-  date        DateTime
+  dateTime    DateTime @map("date_time")
   location    String?
-  attendees   String?
+  createdBy   String   @map("created_by")
+  createdByName String? @map("created_by_name")
   createdAt   DateTime @default(now())
 
   @@map("events")

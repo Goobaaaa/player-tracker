@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 // Disable static generation to prevent SessionProvider issues during build
 export const dynamic = 'force-dynamic';
-import { usersApi } from "@/lib/api-client";
+import { marshallsApi } from "@/lib/api-client";
 import { useSession } from "@/contexts/session-context";
 import { User, X, Plus, Mail, Calendar, Phone, Heart, Briefcase, Shield } from "lucide-react";
 import { NavigationLayout } from "@/components/navigation-layout";
@@ -46,7 +46,7 @@ export default function MarshallsPage() {
 
   const loadStaffMembers = async () => {
     try {
-      const response = await usersApi.getUsers();
+      const response = await marshallsApi.getMarshalls();
       if (response.data && typeof response.data === 'object' && 'users' in response.data) {
         const allUsers = (response.data as { users: StaffMember[] }).users;
         // Filter out the System Administrator account

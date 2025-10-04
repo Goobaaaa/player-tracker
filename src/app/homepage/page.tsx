@@ -125,16 +125,20 @@ export default function HomePage() {
                   <Users className="h-5 w-5" />
                   <span>Manage Users</span>
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
-                </button>
               </div>
             </div>
           )}
+
+          {/* User Actions - Available to all users */}
+          <div className="mt-8 pt-6 border-t border-gray-700">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 

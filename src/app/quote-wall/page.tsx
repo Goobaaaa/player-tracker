@@ -5,9 +5,10 @@ import { NavigationLayout } from "@/components/navigation-layout";
 import { mockQuotes } from "@/lib/mock-data";
 import { Quote } from "@/lib/database";
 import { MessageSquare, Plus, X, User, Calendar, HelpCircle } from "lucide-react";
+import { useSession } from "@/contexts/session-context";
 
 export default function QuoteWallPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const { user } = useSession();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,9 +19,10 @@ export default function QuoteWallPage() {
   });
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadQuotes();
-  }, []);
+    if (user) {
+      loadQuotes();
+    }
+  }, [user]);
 
   const loadQuotes = () => {
     setQuotes(mockQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));

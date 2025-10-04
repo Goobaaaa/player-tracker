@@ -197,3 +197,89 @@ export const usersApi = {
     return await apiClient.put(`/users/${id}`, { isSuspended: false })
   }
 }
+
+// Marshalls API (for viewing staff list - all authenticated users)
+export const marshallsApi = {
+  async getMarshalls() {
+    return await apiClient.get('/marshalls')
+  }
+}
+
+// Commendations API
+export const commendationsApi = {
+  async getCommendations() {
+    return await apiClient.get('/commendations')
+  },
+
+  async createCommendation(data: {
+    recipientName: string
+    shortReason: string
+    fullExplanation?: string
+    imageUrl?: string
+  }) {
+    return await apiClient.post('/commendations', data)
+  }
+}
+
+// Events API
+export const eventsApi = {
+  async getEvents() {
+    return await apiClient.get('/events')
+  },
+
+  async createEvent(data: {
+    title: string
+    description?: string
+    dateTime: string
+    location?: string
+  }) {
+    return await apiClient.post('/events', data)
+  }
+}
+
+// Chat Messages API
+export const chatMessagesApi = {
+  async getMessages() {
+    return await apiClient.get('/chat-messages')
+  },
+
+  async createMessage(data: {
+    content: string
+    imageUrl?: string
+    reactions?: string
+  }) {
+    return await apiClient.post('/chat-messages', data)
+  }
+}
+
+// Quotes API
+export const quotesApi = {
+  async getQuotes() {
+    return await apiClient.get('/quotes')
+  },
+
+  async createQuote(data: {
+    text: string
+    author: string
+    context?: string
+    whenSaid?: string
+    whySaid?: string
+  }) {
+    return await apiClient.post('/quotes', data)
+  }
+}
+
+// Media API
+export const mediaApi = {
+  async getMediaItems() {
+    return await apiClient.get('/media')
+  },
+
+  async createMediaItem(data: {
+    url: string
+    type?: string
+    caption?: string
+  }) {
+    return await apiClient.post('/media', data)
+  }
+}

@@ -6,9 +6,10 @@ import { mockChatMessages } from "@/lib/mock-data";
 import { ChatMessage } from "@/lib/database";
 import Image from "next/image";
 import { MessageSquare, Send, Trash2, Edit, X, Upload, Smile } from "lucide-react";
+import { useSession } from "@/contexts/session-context";
 
 export default function MarshallChatroomPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const { user } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -21,9 +22,10 @@ export default function MarshallChatroomPage() {
   const emojis = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "👏", "🙏", "💪", "🔥", "✅"];
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadMessages();
-  }, []);
+    if (user) {
+      loadMessages();
+    }
+  }, [user]);
 
   useEffect(() => {
     scrollToBottom();

@@ -5,9 +5,10 @@ import { NavigationLayout } from "@/components/navigation-layout";
 import { mockEvents } from "@/lib/mock-data";
 import { Event } from "@/lib/database";
 import { Calendar, Plus, X, Clock, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSession } from "@/contexts/session-context";
 
 export default function UpcomingEventsPage() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'admin' | 'marshall' } | null>(null);
+  const { user } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -19,9 +20,10 @@ export default function UpcomingEventsPage() {
   });
 
   useEffect(() => {
-    setUser({ id: '1', name: 'Demo User', email: 'demo@example.com', role: 'marshall' });
-    loadEvents();
-  }, []);
+    if (user) {
+      loadEvents();
+    }
+  }, [user]);
 
   const loadEvents = () => {
     setEvents(mockEvents.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()));
@@ -35,8 +37,8 @@ export default function UpcomingEventsPage() {
       title: formData.title.trim(),
       description: formData.description.trim(),
       dateTime: formData.dateTime,
-      createdBy: user?.id || '1',
-      createdByName: user?.name || 'Unknown',
+      createdBy: user?.id || 'unknown',
+      createdByName: user?.name || 'Unknown User',
       createdAt: new Date().toISOString()
     };
 
