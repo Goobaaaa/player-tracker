@@ -292,5 +292,9 @@ export const mediaApi = {
     caption?: string
   }) {
     return await apiClient.post('/media', data)
+  },
+
+  async deleteMediaItem(id: string) {
+    return await apiClient.delete(`/media?id=${id}`)
   }
 }

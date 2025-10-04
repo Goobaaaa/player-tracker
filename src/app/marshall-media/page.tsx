@@ -80,12 +80,15 @@ export default function MarshallMediaPage() {
     }
   };
 
-  const handleDeleteMedia = (media: MediaItem) => {
+  const handleDeleteMedia = async (media: MediaItem) => {
     if (confirm(`Are you sure you want to delete this media item?`)) {
-      const index = mockMediaItems.findIndex(m => m.id === media.id);
-      if (index > -1) {
-        mockMediaItems.splice(index, 1);
-        loadMediaItems();
+      try {
+        const response = await mediaApi.deleteMediaItem(media.id);
+        if (response.data) {
+          await loadMediaItems();
+        }
+      } catch (error) {
+        console.error('Failed to delete media item:', error);
       }
     }
   };

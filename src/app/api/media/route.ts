@@ -58,3 +58,34 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// DELETE /api/media - Delete a media item
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value
+    const decoded = verifyToken(token || '')
+
+    if (!decoded) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Media ID required' }, { status: 400 })
+    }
+
+    await prisma.mediaItem.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting media item:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
