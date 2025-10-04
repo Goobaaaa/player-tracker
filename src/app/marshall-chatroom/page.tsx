@@ -112,7 +112,7 @@ export default function MarshallChatroomPage() {
 
       let reactions: { [key: string]: string[] } = {};
       try {
-        reactions = message.reactions ? JSON.parse(message.reactions) : {};
+        reactions = message.reactions ? JSON.parse(message.reactions as string) : {};
       } catch {
         reactions = {};
       }
@@ -273,7 +273,7 @@ export default function MarshallChatroomPage() {
                         {(() => {
                           let reactions: { [key: string]: string[] } = {};
                           try {
-                            reactions = message.reactions ? JSON.parse(message.reactions) : {};
+                            reactions = message.reactions ? JSON.parse(message.reactions as string) : {};
                           } catch {
                             reactions = {};
                           }
