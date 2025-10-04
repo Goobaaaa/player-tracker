@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false
   },
 
+  // Ensure static export is not interfering with Vercel
+  output: undefined,
+
   // Configure domains for external images using remotePatterns
   images: {
     remotePatterns: [
