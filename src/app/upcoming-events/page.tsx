@@ -16,7 +16,8 @@ export default function UpcomingEventsPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    dateTime: ""
+    dateTime: "",
+    location: ""
   });
 
   useEffect(() => {
@@ -53,7 +54,8 @@ export default function UpcomingEventsPage() {
         setFormData({
           title: "",
           description: "",
-          dateTime: ""
+          dateTime: "",
+          location: ""
         });
       }
     } catch (error) {
