@@ -50,19 +50,11 @@ export default function MarshallChatroomPage() {
     if (!newMessage.trim() && !selectedImage) return;
 
     try {
-      console.log('Sending message with data:', {
-        content: newMessage.trim(),
-        imageUrl: selectedImage || undefined,
-        reactions: undefined
-      });
-
       const response = await chatMessagesApi.createMessage({
         content: newMessage.trim(),
         imageUrl: selectedImage || undefined,
         reactions: undefined
       });
-
-      console.log('Message creation response:', response);
 
       if (response.data) {
         await loadMessages();
@@ -124,7 +116,8 @@ export default function MarshallChatroomPage() {
       if (message.reactions) {
         try {
           reactions = JSON.parse(message.reactions as unknown as string) as { [key: string]: string[] };
-        } catch {
+        } catch (error) {
+          console.error('Error parsing reactions:', error);
           reactions = {};
         }
       }
@@ -287,7 +280,8 @@ export default function MarshallChatroomPage() {
                           if (message.reactions) {
                             try {
                               reactions = JSON.parse(message.reactions as unknown as string) as { [key: string]: string[] };
-                            } catch {
+                            } catch (error) {
+                              console.error('Error parsing reactions in display:', error);
                               reactions = {};
                             }
                           }
