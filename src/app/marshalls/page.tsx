@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 export const dynamic = 'force-dynamic';
 import { usersApi } from "@/lib/api-client";
 import { useSession } from "@/contexts/session-context";
-import { User, X, Plus } from "lucide-react";
+import { User, X, Plus, Mail, Calendar, Phone, Heart, Briefcase, Shield } from "lucide-react";
 import { NavigationLayout } from "@/components/navigation-layout";
 
 interface StaffMember {
@@ -16,12 +16,19 @@ interface StaffMember {
   role: string;
   isSuspended: boolean;
   createdAt: string;
+  tagLine?: string | null;
+  description?: string | null;
+  bloodType?: string | null;
+  hobby?: string | null;
+  portraitUrl?: string | null;
 }
 
 export default function MarshallsPage() {
   const { user: currentUser } = useSession();
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<StaffMember | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +69,16 @@ export default function MarshallsPage() {
     });
     setShowAddModal(true);
     setError(null);
+  };
+
+  const handleMemberClick = (member: StaffMember) => {
+    setSelectedMember(member);
+    setShowPreviewModal(true);
+  };
+
+  const handleClosePreview = () => {
+    setShowPreviewModal(false);
+    setSelectedMember(null);
   };
 
   const handleSaveMember = async () => {
@@ -123,23 +140,49 @@ export default function MarshallsPage() {
               {staffMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-all duration-200"
+                  onClick={() => handleMemberClick(member)}
+                  className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 hover:scale-105 transition-all duration-200 cursor-pointer shadow-lg"
                 >
-                  {/* Avatar placeholder */}
-                  <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <User className="h-10 w-10 text-gray-500" />
+                  {/* Profile Picture */}
+                  <div className="w-24 h-24 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-2 border-gray-600">
+                    {member.portraitUrl ? (
+                      <img
+                        src={member.portraitUrl}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to default avatar if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <User className="h-12 w-12 text-gray-500" />
                   </div>
 
                   {/* Member Info */}
                   <div className="text-center">
                     <h3 className="font-semibold text-white text-lg mb-1">{member.name}</h3>
-                    <p className="text-blue-400 text-sm font-medium mb-2">{member.role}</p>
-                    <p className="text-gray-400 text-sm mb-3">{member.username}</p>
-                    {member.isSuspended && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Suspended
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        member.role === 'ADMIN'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {member.role === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
+                        {member.role}
                       </span>
+                      {member.isSuspended && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          Suspended
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-400 text-sm mb-3">{member.username}</p>
+                    {member.tagLine && (
+                      <p className="text-gray-300 text-xs italic mb-2">"{member.tagLine}"</p>
                     )}
+                    <p className="text-gray-500 text-xs">Click to view details</p>
                   </div>
                 </div>
               ))}
@@ -245,6 +288,110 @@ export default function MarshallsPage() {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Creating..." : "Create User"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Member Preview Modal */}
+        {showPreviewModal && selectedMember && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/30">
+            <div className="bg-gray-800 rounded-lg max-w-2xl w-full p-6 shadow-2xl border border-gray-700">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Staff Member Details</h2>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Profile Picture Section */}
+                <div className="flex flex-col items-center">
+                  <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-600">
+                    {selectedMember.portraitUrl ? (
+                      <img
+                        src={selectedMember.portraitUrl}
+                        alt={selectedMember.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-16 w-16 text-gray-500" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Information Section */}
+                <div className="flex-1 space-y-4">
+                  {/* Basic Info */}
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">{selectedMember.name}</h3>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedMember.role === 'ADMIN'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {selectedMember.role === 'ADMIN' && <Shield className="h-4 w-4 mr-2" />}
+                        {selectedMember.role}
+                      </span>
+                      <span className="text-gray-400 text-sm">@{selectedMember.username}</span>
+                      {selectedMember.isSuspended && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                          Suspended
+                        </span>
+                      )}
+                    </div>
+                    {selectedMember.tagLine && (
+                      <p className="text-gray-300 italic">"{selectedMember.tagLine}"</p>
+                    )}
+                  </div>
+
+                  {/* Personal Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Heart className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-300">Blood Type:</span>
+                        <span className="text-white font-medium">{selectedMember.bloodType || 'Not specified'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Briefcase className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-300">Hobby:</span>
+                        <span className="text-white font-medium">{selectedMember.hobby || 'Not specified'}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-300">Joined:</span>
+                        <span className="text-white font-medium">
+                          {new Date(selectedMember.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {selectedMember.description && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">Description</h4>
+                      <p className="text-gray-400 text-sm leading-relaxed">{selectedMember.description}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleClosePreview}
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Close
                 </button>
               </div>
             </div>
