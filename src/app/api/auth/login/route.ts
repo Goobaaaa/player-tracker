@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateUser } from '@/lib/auth-utils'
+import { mockSignIn } from '@/lib/mock-auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await authenticateUser(username, password)
+    const result = await mockSignIn(username, password)
 
-    if (!result) {
+    if (result.error) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -23,11 +23,11 @@ export async function POST(request: NextRequest) {
 
     // Create HTTP-only cookie for better security
     const response = NextResponse.json({
-      user: result.user,
+      user: result.data.user,
       message: 'Login successful'
     })
 
-    response.cookies.set('auth-token', result.token, {
+    response.cookies.set('auth-token', result.data.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
